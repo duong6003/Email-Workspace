@@ -1,0 +1,706 @@
+# Screen and overlay traceability registry — seeded from
+# design-reference/screen-catalog.template.yaml and ui-inventory.yaml.
+# Produced by run 2026-08-10-eow-master-execplan, node `traceability_init`.
+# Update `status` and add `visual_baseline_path`/`production_render_path`/`diff_notes`
+# as each screen is migrated (see EXECPLAN.md section 12).
+
+version: 1
+run_id: 2026-08-10-eow-master-execplan
+
+screens:
+  - id: UI-AUTH-001
+    name: Login
+    route: /login
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-AUTH-001, BR-AUTH-002, BR-AUTH-005, BR-AUTH-006, BR-GEN-001, BR-GEN-004]
+    api_operations: [login, refreshSession, forgotPassword]
+    realtime_events: []
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    ported_to: apps/web/src/screens/auth/LoginScreen.tsx
+    visual_baseline_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M1-S1-signin/handoff-baseline/login-*.png
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M1-S1-signin/production/login-*.png
+    states_covered:
+      loading: "submit button shows login-spinner while POST /auth/login is in flight"
+      empty: not_applicable_to_this_screen
+      error: "generic 'Email hoặc mật khẩu không đúng.' on 401 (BR-AUTH-001 no-enumeration); distinct message on 429 lockout"
+      success: "redirects to /email/compose (or the originally attempted protected path) on 204"
+      permission_denied: not_applicable_public_screen
+    diff_notes: >-
+      DOM/class names and app/globals.css are byte-identical to the handoff
+      (verified via `diff`). The only intentional behavioural change: the
+      decorative .login-product-preview button now has tabIndex=-1 (axe
+      focusable-disabled fix; no visual change). Minor (~13px) vertical
+      offset observed between handoff-baseline and production screenshots at
+      1440x900, consistent across the login card only, most likely caused by
+      a font-loading/paint-timing race between the two dev runtimes
+      (document.fonts.ready confirmed Geist loads in both) rather than a
+      structural difference — not treated as a defect per
+      visual-acceptance.md's browser-rasterization allowance. A real,
+      pre-existing WCAG AA color-contrast issue was found in the handoff's
+      own --color-text-subtle token (#969095 on light backgrounds, ~2.9:1)
+      affecting the footer copyright/nav and the "authorized users only"
+      caption; inherited verbatim per the no-redesign-without-approval rule,
+      tracked as an axe-known-violation rather than silently changed — see
+      EXECPLAN Surprises & Discoveries and Decision Log for this node.
+
+  - id: UI-SHELL-001
+    name: Application shell
+    route: all authenticated routes
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-GEN-001, BR-GEN-004, BR-AUTH-003, BR-AUTH-004, BR-NOT-001, BR-NOT-004]
+    api_operations: [getCurrentUser, listNotifications]
+    realtime_events: [rt.connection.ready, rt.resync_required, notification.created, notification.updated, notification.read]
+    required_states: [loading, empty, error, success, permission_denied, reconnecting]
+    viewports: [desktop, tablet, mobile]
+    status: in_progress
+    ported_to: apps/web/src/app/AppShell.tsx
+    visual_baseline_path: not_captured_this_node_see_diff_notes
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M1-S1-signin/production/shell-*.png;.agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M1-S2-rbac/production/permission-denied-*.png;.agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M1-GATE/production/system-error-*.png;.agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M6-GATE/production/notifications-popover-reconnecting-*.png
+    states_covered:
+      loading: "RequireAuth shows a minimal auth-loading state while GET /auth/me resolves"
+      success: "sidebar/utility-bar/page-header/footer chrome render with the real signed-in user (name/role from /auth/me)"
+      permission_denied: >-
+        M1-S2: real, server-verified RBAC (BR-AUTH-003/004). GET /auth/me
+        returns the caller's real permissions (session:manage/campaign:read/
+        campaign:manage/content:manage/settings:manage/notification:read,
+        resolved server-side from user_role -> role_permission). AppShell
+        filters navGroups by permission (apps/web/src/app/nav.ts's
+        requiredPermission), so a role that cannot use a destination never
+        sees it in the sidebar; every route under the shell is wrapped in
+        apps/web/src/auth/RequirePermission.tsx, which renders
+        apps/web/src/screens/errors/PermissionDeniedScreen.tsx in place
+        (not a redirect) for a role lacking the route's permission -- e.g. a
+        Viewer typing /settings/senders directly. Built from the handoff's
+        existing module-card/workspace-module-frame layout and .status pill
+        vocabulary plus the existing `lock` icon (no new visual language;
+        the handoff itself has no permission_denied state to port, so there
+        is no baseline to diff against -- see diff_notes). Independently,
+        every server route also 403s for real (RFC 9457 problem, audit_log
+        rbac.denied with actor+endpoint) regardless of what the client
+        renders -- proven directly via API call in
+        apps/web/e2e/rbac.spec.ts's TC-AUTH-009 test, not just inferred
+        from the UI.
+      reconnecting: "M6-S1 built the mechanism (useRealtimeStatus() mapping the shared socket's connect/disconnect lifecycle to a display status) but the shell itself only ever showed it via pages that happened to open the socket. M6-S2's NotificationPopover gained its own 'Đang kết nối lại…' banner at M6-GATE CP5 (BR-NOT-012 client half) and is captured at all 3 viewports at M6-GATE CP6 (notifications-popover-reconnecting-{desktop,tablet,mobile}.png) -- CP6 also found and fixed a CSS negative-margin defect that had the banner overlapping the popover header (D-138), confirmed by individually inspecting each screenshot before and after the fix."
+      empty: not_applicable_to_chrome_itself
+      error: >-
+        M1-S3: implemented by apps/web/src/screens/errors/SystemErrorScreen.tsx,
+        rendered by RequireAuth in place of the shell for any non-401
+        session-check failure (e.g. a genuine backend 500/network outage),
+        distinct from the 401 case which still redirects to /login. Built
+        as its own <main>/<h1> landmark (unlike PermissionDeniedScreen,
+        which is always nested inside AppShell's own landmarks) because it
+        fully replaces the page — an axe landmark-one-main/page-has-main
+        regression found and fixed during M1-S3 (see EXECPLAN D-28).
+        Verified end-to-end via apps/web/e2e/errors.spec.ts (real-500 route
+        interception, "Thử lại" retry recovers the real shell, axe scan
+        clean beyond the known color-contrast finding). Visual evidence was
+        not captured until M1-GATE noticed the gap: this field previously
+        still said "deferred_to_M1-S3" after that node had already shipped
+        the screen — M1-GATE closed it by adding a production-only capture
+        block to visual-capture.spec.ts (no handoff baseline exists for
+        this state, same as permission_denied) and running it for real; see
+        evidence/visual/M1-GATE/production/system-error-*.png.
+    diff_notes: >-
+      Sidebar, utility bar, page header and footer DOM/classes are ported
+      verbatim from app/page.tsx L277-309. Command palette, help center,
+      notification popover and the profile dropdown overlay
+      (action-overlays.tsx, 39 overlay types) are out of this node's scope
+      (M2-M7); their trigger buttons are present with the handoff's DOM but
+      show a "coming soon" toast instead of opening an unbuilt overlay,
+      rather than doing nothing silently or faking an overlay. Sign-out is
+      wired directly to the profile button (POST /auth/logout with CSRF)
+      instead of going through the not-yet-ported profile overlay — a
+      deliberate, documented simplification (see EXECPLAN Decision Log) so
+      "wire sign-out" is genuinely real rather than a stub, without
+      building the full overlay system this node does not own. A handoff
+      baseline screenshot for the shell was not captured: the handoff's own
+      dev runtime (Next.js 16 + vinext + Cloudflare Workers RSC) falls back
+      to a native full-page form submit before React hydration attaches the
+      client onSubmit handler in that environment, so the mocked login could
+      not be automated through to the shell — visual equivalence is instead
+      evidenced by production screenshots at all 3 viewports plus verbatim
+      DOM/CSS construction (see EXECPLAN §12 "holds by construction").
+
+      M1-S2 addendum: permission_denied has no handoff baseline to diff
+      against (confirmed absent from design-reference/ui-source-
+      contract.yaml's required_states gap at ui_intake), so only a
+      production render exists (3 viewports, captured via
+      apps/web/e2e/visual-capture.spec.ts's new "M1-S2 permission_denied"
+      block). The only new visual surface added beyond the handoff's own
+      tokens/classes is a .status.danger CSS rule (globals.css, appended
+      at the file's end with an explanatory comment, not interleaved into
+      the byte-identical-ported body) that reuses the existing
+      --color-danger token and the exact color-mix(...) tint pattern
+      .login-error span already uses -- i.e. it extends established
+      vocabulary rather than introducing new color/typography. Also fixed a
+      real, previously-undiscovered axe landmark-unique violation on
+      AppShell's two unlabelled <nav> elements (sidebar + footer) while
+      building this screen's a11y test -- M1-S1 only ever axe-scanned the
+      public /login screen, which has no sidebar, so this defect existed
+      since M1-S1 but was never exercised until M1-S2's permission_denied
+      test ran axe against an authenticated route for the first time. Fixed
+      with aria-label on both <nav> elements (zero visual change; same
+      category as M1-S1's tabIndex=-1 fix, not a design-token decision like
+      the still-tracked color-contrast finding).
+
+  - id: UI-EMAIL-001
+    name: Compose
+    route: /email/compose
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-CMP-001, BR-CMP-004, BR-CMP-005, BR-CMP-006, BR-CMP-008, BR-TPL-003, BR-TPL-004,
+                     BR-TPL-005, BR-TPL-006, BR-TPL-008, BR-CFG-004, BR-SEG-008, BR-SEG-009, BR-CMP-002,
+                     BR-CMP-003, BR-CMP-009, BR-REC-003, BR-CMP-007, BR-CMP-010, BR-TPL-001, BR-TPL-012, BR-CF-008,
+                     BR-SCH-001, BR-SCH-002, BR-SCH-003, BR-SCH-004, BR-SCH-005, BR-SCH-006, BR-SCH-007,
+                     BR-SCH-008, BR-SCH-009, BR-SCH-010, BR-GEN-003]
+    api_operations: [listCustomFields, createCampaignDraft, getCampaign, updateCampaignDraft, previewCampaignAudience, listTemplates, validateCampaignAudience, acceptCampaignAudienceWaiver, sendCampaign, cancelCampaign, getCampaignSnapshot, scheduleCampaign, cancelCampaignSchedule]
+    realtime_events: [audience.validation_progress, audience.validation_completed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths:
+      - apps/web/src/screens/compose/ComposeDraftScreen.tsx
+      - apps/web/src/screens/compose/autosave-reducer.ts
+      - apps/web/src/screens/compose/autosave-reducer.test.ts
+      - apps/web/src/api/campaigns.ts
+      - apps/web/src/screens/compose/variable-catalogue.ts
+      - apps/web/src/api/customFields.ts
+      - apps/web/src/app/AppRoutes.tsx
+      - apps/web/src/overlays/RecipientPickerOverlay.tsx
+      - apps/web/src/overlays/TemplatePickerOverlay.tsx
+      - apps/web/src/overlays/SendConfirmOverlay.tsx
+      - apps/api/src/campaigns/audience-resolution.ts
+      - apps/api/src/campaigns/audience-candidates.repository.ts
+      - apps/api/src/campaigns/campaigns.service.ts
+      - apps/api/src/campaigns/campaigns.controller.ts
+      - apps/api/src/campaigns/recipient-variable-context.ts
+      - apps/api/src/campaigns/variable-validation.ts
+      - apps/api/src/campaigns/campaign-variable-validation.ts
+      - apps/api/src/campaigns/campaign-snapshot.ts
+      - apps/api/src/campaigns/campaign-snapshot.repository.ts
+      - apps/api/src/common/idempotency.service.ts
+      - apps/web/src/overlays/ScheduleSendOverlay.tsx
+      - apps/web/src/overlays/schedule-time-preview.ts
+      - apps/web/src/overlays/schedule-error-copy.ts
+      - apps/web/src/screens/compose/lock-countdown.ts
+      - apps/api/src/campaigns/schedule-time.ts
+      - apps/worker/src/campaign-dispatcher.ts
+      - apps/worker/src/notification-writer.ts
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M4-S1-campaign-draft/production/
+    states_covered:
+      success: "production capture at all 3 viewports: compose-success-*.png, a real draft created through the actual API with the handoff Composer DOM plus the additive name field and live M3-S2 variable panel. M4-S2 adds compose-recipient-resolved-*.png (evidence/visual/M4-S2-audience/production/), replacing the disabled 'Chưa chọn người nhận' placeholder with the real resolved count once an audience is applied. M4-S3 adds template-picker-*.png and send-confirm-{complete,missing,waived}-*.png (evidence/visual/M4-S3-variable-policy/production/): the templatePicker overlay listing real published templates, and sendConfirm's three real gating states (complete audience with CTA gated on confirm-check, missing required variable with CTA blocked, and post-waiver with CTA unblocked). M4-S4 adds send-confirm-{idle,sending,success,error}-*.png and compose-{frozen-banner,cancelled-editable}-*.png (evidence/visual/M4-S4-snapshot/production/): sendConfirm's primary CTA is now a real terminal action against a live campaign_snapshot (BR-CMP-007/010) -- idle (gated on confirm-check), sending (CTA disabled+aria-busy, mount-scoped Idempotency-Key), sendSuccess (frozen/sendable/skipped counts), and a failed send (RFC 9457 detail shown, CTA re-enabled for retry with the same key) -- and the compose screen itself gains the frozen banner with every field read-only and a cancel-to-refresh action (BR-CF-008/BR-TPL-001/BR-TPL-012), each individually inspected at all 3 viewports rather than trusted from the green Playwright run alone. M5-S2 adds schedule-send-{idle,submitting,dst-error,lead-time-error}-*.png and compose-scheduled-{banner,locked}-*.png (evidence/visual/M5-S2-schedule/production/): a new \"Hẹn giờ\" trigger opens the real scheduleSend overlay (ScheduleSendOverlay.tsx, ported from the handoff's action-overlays.tsx scheduleSend branch) -- a real IANA zone list plus a client-side local-time/UTC preview (BR-GEN-003), the DST gap/repeat and lead/horizon 422s rendered as human copy with one-click fixes rather than a raw problem body (A19, schedule-error-copy.ts), and the same mount-scoped Idempotency-Key discipline as sendConfirm. Once scheduled, the compose screen shows a dedicated `scheduled` banner (ScheduledBanner in ComposeDraftScreen.tsx) instead of the generic frozen banner: resolved local time + zone, a live countdown to the 2-minute lock window (lock-countdown.ts), and \"Đổi giờ\"/\"Hủy lịch\" actions that disable themselves with the reason stated once inside the lock window rather than letting the user trigger a 409 (A20)."
+      loading: not_captured_separately_see_diff_notes
+      empty: not_applicable_to_this_screen
+      error: "M4-S4 send-confirm-error-*.png: a failed sendCampaign (RFC 9457 problem detail) surfaced in-overlay with the CTA re-enabled for retry using the same Idempotency-Key."
+      permission_denied: covered_by_the_shared_RequirePermission_gate_see_UI_SHELL_001
+    diff_notes: >-
+      M4-S1 ports the handoff Composer DOM and keeps M3-S2's live variable catalogue.
+      The mandatory campaign-name Field is an additive business-rule field absent from
+      the handoff, using the handoff Field vocabulary (DEC-034 precedent). Autosave
+      sends serialized PATCH requests with If-Match from the last response body's version;
+      the shell save indicator is real through Outlet context. Audience validation,
+      preview and send remain owned by M4-S2/M4-S3/M5. The drafts search filters the
+      bounded API page client-side because the approved contract has no search parameter.
+      Checkpoint 7 correction: ComposeVariablesScreen.tsx (M3-S2's original standalone
+      screen) was removed as a genuine dead file once ComposeDraftScreen's own inline
+      variable panel superseded it (ARCH-NO-ORPHANS caught it; see EXECPLAN D-43) --
+      the shared variable-catalogue.ts module it both used is untouched. M4-S2 resolves
+      the recipient field: previewCampaignAudience is debounced against state.draft.audience
+      and the field's dot/label/small-text now show the live actionable count and skip
+      total instead of the M4-S1 placeholder. recipientPicker (below) is the overlay this
+      field opens; its own visual evidence is separate
+      (evidence/visual/M4-S2-audience/production/recipient-picker-*.png) since it is a
+      distinct overlay component, not part of this screen's own DOM. M4-S3 replaces the
+      OpenAPI stub `validateTemplateAudience` (a template-scoped preview endpoint that never
+      had a real caller) with two campaign-scoped operations, `validateCampaignAudience` and
+      `acceptCampaignAudienceWaiver`, both reusing the shared `renderTemplateVariables`
+      engine so the P0 missing-variable check and the actual send always agree (BR-CMP-006).
+      templatePicker (a minimal new overlay, not in the M4-S1/M4-S2 scope) and sendConfirm
+      (ported from the handoff's action-overlays.tsx, wired to real validation/waiver data
+      instead of the handoff's fixed numbers) are both new overlays this screen opens; their
+      CTA's mock "send" behavior intentionally still just closes the dialog, matching M4-S1's
+      own mock-button precedent, since no real send/schedule endpoint exists yet (M5-S2/M5-S3).
+
+      M5-S2 makes scheduleSend real: ScheduleSendOverlay.tsx replaces the handoff's toast-only
+      "Lên lịch gửi 121 email" CTA with a genuine `POST /campaigns/{id}/schedule`, and
+      SendConfirmOverlay.tsx's own docstring no longer states "Hẹn giờ remains omitted" since
+      that omission is what this node closes. The AppShell.tsx page-header's disabled "Hẹn giờ
+      gửi" placeholder button (a leftover M4-S1 stub, `title="Sẽ có trong milestone tiếp theo"`)
+      is removed as a direct consequence -- it duplicated the new real "Hẹn giờ" trigger inside
+      the compose card itself and would otherwise sit right next to it, disabled, confusing
+      real functionality with a decoy (found via the e2e locator collision this caused, not
+      anticipated in the plan). The zone `<select>` cannot rely on `Intl.supportedValuesOf`
+      alone: this host's ICU/CLDR data omits a bare 'UTC' entry entirely and lists
+      'Asia/Saigon' rather than 'Asia/Ho_Chi_Minh' -- both are this feature's own reference
+      zones throughout apps/api's tests, so ScheduleSendOverlay.tsx force-includes them
+      rather than trusting enumeration to have them (found by the DST/lead-time e2e specs
+      timing out on `selectOption`, not assumed). `scheduledAtUtc`/`scheduledTimezone` and a
+      `scheduleLockWindowSeconds` config echo were added to `CampaignDraft`/`Campaign` (both
+      contract and `asDraft()`) as an in-checkpoint additive backend patch -- CP0-CP5 had
+      never needed `GET /campaigns/{id}` to expose the schedule instant or the lock-window
+      config, but the persistent scheduled banner and its live countdown cannot survive a
+      page reload without them.
+
+  - id: UI-EMAIL-002
+    name: Drafts
+    route: /email/drafts
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-CMP-001, BR-CMP-011, BR-CMP-012, BR-GEN-006]
+    api_operations: [listCampaigns, getCampaign, updateCampaignDraft, deleteCampaignDraft, duplicateCampaign]
+    realtime_events: []
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths:
+      - apps/web/src/screens/drafts/DraftsScreen.tsx
+      - apps/web/src/api/campaigns.ts
+      - apps/api/src/campaigns/campaigns.controller.ts
+      - apps/api/src/campaigns/campaigns.service.ts
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M4-S1-campaign-draft/production/
+    states_covered:
+      success: "production capture at all 3 viewports: drafts-success-*.png, a real bounded draft list with server-computed completeness (verified by direct image inspection after a fix: the test originally raced its own loading state and had been screenshotting the loading spinner under the name 'success' at all 3 viewports -- see EXECPLAN D-42)"
+      loading: "the draft-summary role=status branch is exercised by every drafts test before data resolves; not separately captured"
+      empty: "production capture at all 3 viewports: drafts-empty-*.png, backed by a real empty-list API response"
+      error: "production capture at all 3 viewports: drafts-error-*.png, server 500 problem+json, reuses the .permission-denied-card vocabulary per the TemplatesScreen/RecipientsScreen precedent (distinguished by heading text, not a separate class)"
+      permission_denied: "production capture at all 3 viewports: drafts-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks content:manage"
+    diff_notes: >-
+      Production screen ports the handoff Drafts DOM with real campaign data and
+      server-computed completeness. Loading, empty, error and permission_denied states
+      are additive states required by the UI source contract. Search is intentionally
+      client-side over the bounded status=draft page. The handoff's Export HTML action
+      is omitted because no endpoint or owning M4 business rule exists (DEC-053); the
+      handoff's draftSaved success modal is not built because this slice's save model is
+      debounced autosave with no explicit save action to trigger it from (DEC-054).
+
+  - id: UI-REC-001
+    name: Recipients — all
+    route: /recipients
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-REC-001, BR-REC-002, BR-REC-003, BR-REC-004, BR-REC-007, BR-REC-008,
+                     BR-REC-009, BR-REC-010, BR-GEN-002, BR-GEN-006, BR-SEG-010, BR-CF-001, BR-CF-002, BR-CF-003]
+    api_operations: [listRecipients, createRecipient, getRecipient, updateRecipient, deleteRecipient, listCustomFields,
+                     listRecipientLists, listTags, getRecipientSegments, addRecipientListMembers, removeRecipientListMembers,
+                     addTagMembers, removeTagMembers]
+    realtime_events: [bulk_update.progress, bulk_update.completed, export.completed, recipient.segment_changed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/recipients/RecipientsScreen.tsx, apps/web/src/overlays/AddRecipientOverlay.tsx,
+                 apps/web/src/overlays/RecipientActionsOverlay.tsx, apps/web/src/overlays/RecipientFilterOverlay.tsx,
+                 apps/web/src/api/recipients.ts, apps/web/src/api/customFields.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M2-S1-recipients/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: recipients-loading-*.png (recipients response held pending so the card is on screen) -- added at M2-GATE, the screen's own required_states had omitted it"
+      empty: "production capture at all 3 viewports: recipients-empty-*.png"
+      error: "production capture at all 3 viewports: recipients-error-*.png (server 500 problem+json)"
+      success: "production capture at all 3 viewports: recipients-success-*.png, backed by a real API write to PostgreSQL"
+      permission_denied: "production capture at all 3 viewports: recipients-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks recipient:read -- added at M2-GATE alongside loading"
+    diff_notes: >
+      M2-S1: DOM/class names ported verbatim from the handoff's Recipients "all"
+      view (page.tsx function Recipients, recipientView === "all" branch) and
+      the addRecipient/recipientFilter/recipientActions overlays
+      (action-overlays.tsx), wired to the real API instead of mock data/toasts.
+      lists/tags/imports tabs render the same tablist chrome but their bodies
+      are honest placeholders (M2-S2/M2-S4 scope, not built here). loading/
+      empty/error states are new (absent from the handoff per ui_intake's
+      required-state gap finding, same as M1-S2/M1-S3's additions) and reuse
+      the existing module-card/.status-danger/warning-icon vocabulary rather
+      than inventing new visual language; no handoff-baseline screenshot
+      exists for any of the captured states (production-only, matching the
+      M1-S2 permission_denied / M1-S3 system-error precedent) -- success-state
+      visual equivalence holds by construction (verbatim DOM/class names +
+      the byte-identical globals.css already ported at M1-S1). Two real a11y
+      bugs found+fixed via axe (table checkboxes missing accessible names;
+      empty actions <th>).
+
+      M2-GATE addendum: `loading` and `permission_denied` were missing from
+      this screen's own required_states despite the DOM/route mechanism they
+      exercise (the loading module-card; RequirePermission) already existing
+      since M2-S1 -- the earlier note that permission_denied "needed no
+      separate capture" undercounted the screen's own acceptance list.
+      Corrected with dedicated production captures at all 3 viewports.
+
+      M2-S3 addendum: AddRecipientOverlay/RecipientActionsOverlay both gained
+      a real "Trường tùy chỉnh" section (numbered step 3 in the add form)
+      that fetches GET /custom-fields and renders one typed input per
+      admin-defined field (text/number/date/boolean-select/enum-select),
+      wired to POST/PATCH /recipients' customData -- the EXECPLAN §8
+      acceptance detail "appear in the recipient form". New production
+      screenshot captured at 3 viewports under
+      evidence/visual/M2-S3-custom-fields/production/recipient-form-with-custom-fields-*.png.
+
+      M2-S2 addendum: the all-recipient table now requests a recipient's full
+      server-backed tag collection and exposes its remainder through an
+      accessible +n popover. The recipient filter and add/edit forms load the
+      same list/tag catalog, and selected list/tag filters run against
+      server-side membership queries rather than client filtering.
+
+  - id: UI-REC-002
+    name: Recipients — lists
+    route: /recipients/lists
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-SEG-001, BR-SEG-002, BR-SEG-004, BR-SEG-005, BR-SEG-007, BR-REC-005]
+    api_operations: [listRecipientLists, createRecipientList, getRecipientList, updateRecipientList,
+                     deleteRecipientList, addRecipientListMembers, removeRecipientListMembers, listRecipients]
+    realtime_events: [recipient.segment_changed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/recipients/RecipientsScreen.tsx, apps/web/src/overlays/ManageSegmentOverlay.tsx,
+                 apps/web/src/overlays/RecipientFilterOverlay.tsx, apps/web/src/api/segments.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M2-S2-lists-tags/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: recipient-lists-loading-*.png (segment response held pending so the card is on screen)"
+      empty: "production capture at all 3 viewports: recipient-lists-empty-*.png"
+      error: "production capture at all 3 viewports: recipient-lists-error-*.png (server 500 problem+json)"
+      success: "production capture at all 3 viewports: recipient-lists-success-*.png, backed by a real API write to PostgreSQL"
+      permission_denied: "production capture at all 3 viewports: recipients-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks recipient:read"
+    diff_notes: >
+      M2-S2 ports the approved lists tab shell and cards into the existing
+      `/recipients` tab state, replacing the placeholder with loading, empty,
+      error and server-backed success states. Create/edit/delete uses the
+      shared action overlay; a scheduled-campaign delete refusal is shown in
+      the overlay. “Xem thành viên” applies the real server list filter.
+
+  - id: UI-REC-003
+    name: Recipients — tags
+    route: /recipients/tags
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-SEG-001, BR-SEG-002, BR-SEG-003, BR-SEG-004, BR-SEG-006, BR-REC-006]
+    api_operations: [listTags, createTag, getTag, updateTag, deleteTag, addTagMembers, removeTagMembers,
+                     getRecipientSegments, listRecipients]
+    realtime_events: [recipient.segment_changed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/recipients/RecipientsScreen.tsx, apps/web/src/overlays/ManageSegmentOverlay.tsx,
+                 apps/web/src/overlays/RecipientFilterOverlay.tsx, apps/web/src/api/segments.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M2-S2-lists-tags/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: recipient-tags-loading-*.png (segment response held pending so the card is on screen)"
+      empty: "production capture at all 3 viewports: recipient-tags-empty-*.png"
+      error: "production capture at all 3 viewports: recipient-tags-error-*.png (server 500 problem+json)"
+      success: "production capture at all 3 viewports: recipient-tags-success-*.png, backed by a real API write to PostgreSQL"
+      permission_denied: "production capture at all 3 viewports: recipients-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks recipient:read"
+    diff_notes: >
+      M2-S2 replaces the tags placeholder with the approved directory/card
+      vocabulary, a validated fixed palette and CRUD overlay. The all-tab
+      table and filter consume the same tag catalog; the +n popover exposes
+      every tag returned by the tenant-scoped API.
+      permission_denied is captured once and shared with UI-REC-001/UI-REC-002,
+      and this is a property of the implementation rather than a shortcut in
+      the evidence: lists and tags are tabs inside the single `/recipients`
+      route, so RequirePermission denies before the tabstrip is ever rendered.
+      There is no tags-specific denied screen that could be captured.
+
+  - id: UI-REC-004
+    name: Recipients — imports
+    route: /recipients/imports
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-IMP-001, BR-IMP-002, BR-IMP-003, BR-IMP-004, BR-IMP-005, BR-IMP-006, BR-IMP-007]
+    api_operations: [listImportJobs, createImportJob, getImportJob, previewImportJob, getImportJobErrorFile]
+    realtime_events: [import.progress, import.completed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/recipients/RecipientsScreen.tsx, apps/web/src/overlays/ImportRecipientsOverlay.tsx,
+                 apps/web/src/screens/recipients/import-preview.ts, apps/web/src/screens/recipients/csv-import.ts,
+                 apps/web/src/screens/recipients/spreadsheet-import.ts, apps/web/src/api/import-jobs.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M2-S4-import-bulk/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: recipients-imports-loading-*.png (import-jobs response held pending so the card is on screen)"
+      empty: "production capture at all 3 viewports: recipients-imports-empty-*.png"
+      error: "production capture at all 3 viewports: recipients-imports-error-*.png (server 500 problem+json)"
+      success: "production capture at all 3 viewports: recipients-imports-success-*.png, backed by a real import job created through the actual API"
+      permission_denied: "production capture at all 3 viewports: recipients-imports-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks recipient:read"
+    diff_notes: >
+      M2-S4 (via M2-GATE): this screen had never been inventoried -- status
+      was `not_inventoried` with no code_paths and no evidence, discovered
+      missing when M2-GATE evaluated UI-REC-001..004 against
+      design-reference/visual-acceptance.md's per-screen requirement. The
+      import tab (index 3 of the same [role="tab"] tablist UI-REC-002/003
+      use) was already implemented by M2-S4's ImportRecipientsOverlay and
+      job-history table; only the catalog entry and visual evidence were
+      missing, not the screen itself. Captured the same way as
+      UI-REC-002/003: loading/empty/error via page.route (client render-path
+      states, not data-dependent), success against a real API-created job,
+      permission_denied against the real viewer account.
+
+  - id: UI-TPL-001
+    name: Templates
+    route: /templates
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-TPL-001, BR-TPL-002, BR-TPL-005, BR-TPL-006, BR-TPL-009, BR-TPL-010, BR-TPL-012]
+    api_operations: [listTemplates, createTemplate, getTemplate, updateTemplate, archiveTemplate,
+                     publishTemplate, getTemplateVersion, previewTemplateVersion, sendTemplateVersionTest]
+    realtime_events: [template.published]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/templates/TemplatesScreen.tsx, apps/web/src/api/templates.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M3-S1-templates/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: templates-loading-*.png (templates list response held pending so the skeleton grid is on screen)"
+      empty: "production capture at all 3 viewports: templates-empty-*.png"
+      error: "production capture at all 3 viewports: templates-error-*.png (server 500 problem+json)"
+      success: "production capture at all 3 viewports: templates-success-*.png, backed by a real template created through the actual API"
+      permission_denied: "production capture at all 3 viewports: templates-permission-denied-*.png, signed in as the real demo-viewer@acme.vn account, which genuinely lacks content:manage"
+    diff_notes: 'No handoff screen owns /templates (same class of gap as UI-REC-004/UI-CF-001), so
+                 this is production-only like the M2-S1/M2-S3/M2-S4 precedent. BR-TPL-001/BR-TPL-012
+                 remain listed here because the screen renders their prerequisite state (published
+                 version, immutable history), but their rule-level closure is owned by M4-S4-snapshot
+                 under EXECPLAN DEC-046, not by this screen entry. M3-GATE condition 3 found
+                 composePreview/sendTest (2 of the 7 milestone-M3 overlays) had no UI at all despite
+                 M3-S3 shipping their API; added as new overlays on templateActions'' "Xem trước"
+                 button (published templates only), backed by a new latestVersionId field on the
+                 Template response (DEC-052). Production capture at all 3 viewports:
+                 evidence/visual/M3-GATE/production/compose-preview-*.png (device toggle, sample-
+                 recipient switch, real server-merged content) and send-test-*.png (recipient always
+                 the authenticated actor, matching BR-TPL-011). templatePicker/templateDetail/
+                 templateFilter remain unbuilt, each for a recorded reason under DEC-052 rather than
+                 silently absent.'
+
+  - id: UI-CFG-001
+    name: Settings — sender configurations
+    route: /settings/senders
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-CFG-001, BR-CFG-002, BR-CFG-003, BR-CFG-004, BR-CFG-005, BR-CFG-007,
+                     BR-SEC-001, BR-SEC-002, BR-AUTH-004]
+    api_operations: []
+    realtime_events: [sender.state_changed]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/settings/SenderSettingsScreen.tsx, apps/web/src/api/senderConfigs.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M5-S1-sender-config/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: sender-configs-loading-*.png"
+      empty: "production capture at all 3 viewports: sender-configs-empty-*.png"
+      error: "production capture at all 3 viewports: sender-configs-error-*.png"
+      success: >-
+        production capture at all 3 viewports: sender-configs-success-*.png, backed by a real
+        SMTP sender config created through the API with secrets stored only as a masked
+        secretRef. Tablet (768x1024) was blocked from CP13 through CP16 by F-6 (master-list/
+        detail-panel collision once the list held more than 3 rows): CP14 partially fixed the
+        inner .config-master-detail grid but a second, higher-level constraint on the outer
+        .settings-workspace/.workspace-module-frame container (fixed height:760px,
+        overflow:hidden for the whole <=1000px range in globals.css) still clipped the screen
+        -- confirmed a true no-op via pixel-identical before/after comparison (EXECPLAN D-72).
+        CP16 (commit 63ea5e2) added a scoped `@media (min-width:761px) and (max-width:1000px)`
+        rule on the 3-class selector `.sender-settings-screen.settings-workspace.workspace-
+        module-frame` releasing height/overflow at that exact gap. Independently re-verified:
+        rebuilt, re-captured against an isolated stack, and the tablet success render grew from
+        1035px to 1227px tall with the master list and detail panel now separated into distinct
+        cards, full detail content visible (including masked secret reference), and the page
+        footer no longer clipped. Regression spot-check across loading/empty/error/create-
+        overlay/permission-denied at tablet, plus success at mobile and desktop, found no
+        side effects from the change.
+      permission_denied: "production capture at all 3 viewports: sender-configs-permission-denied-*.png"
+
+  - id: UI-CFG-002
+    name: Settings — default sending policy
+    route: /settings/policy
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-CFG-006, BR-SEND-007, BR-SEND-006, BR-AUTH-004, BR-SEC-002]
+    api_operations: []
+    realtime_events: [quota.threshold_reached]
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/settings/SenderSettingsScreen.tsx, apps/web/src/api/senderConfigs.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M5-S1-sender-config/production/
+    states_covered:
+      loading: "production capture at all 3 viewports: sending-policy-loading-*.png"
+      empty: not_applicable_to_this_screen
+      error: "production capture at all 3 viewports: sending-policy-error-*.png (shared error copy with UI-CFG-001, filed non-blocking as F-5)"
+      success: >-
+        production capture at all 3 viewports: sending-policy-success-*.png. Backend enforces
+        (verified via CP18 reproduction against the live service, PUT /sending-policy) that a
+        populated defaultSenderConfigId must reference a sender with status=verified, rejecting
+        otherwise with ConflictException{code:SENDER_NOT_USABLE}. Note: this constraint has no
+        exact 1:1 traceability.csv rule_id — closest is BR-CFG-002 ("campaign validation chặn
+        sender pending/failed/disabled"), but that rule's acceptance text is scoped to campaign-
+        send-time validation, not policy-set-time. BR-CFG-006 (cited here in an earlier draft)
+        is a distinct, unrelated M7 oversubscription/reservation rule and does NOT apply to this
+        constraint — flagged to Codex to confirm/assign the correct rule_id or add a new one.
+      permission_denied: "production capture at all 3 viewports: sending-policy-permission-denied-*.png"
+
+  - id: UI-CF-001
+    name: Settings — custom fields
+    route: /settings/custom-fields
+    source_files: []
+    business_rules: [BR-CF-001, BR-CF-002, BR-CF-003, BR-CF-009]
+    api_operations: [listCustomFields, createCustomField, getCustomField, updateCustomField, deleteCustomField]
+    realtime_events: []
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths: [apps/web/src/screens/settings/CustomFieldsScreen.tsx, apps/web/src/overlays/ManageCustomFieldOverlay.tsx,
+                 apps/web/src/api/customFields.ts]
+    visual_baseline_path: null
+    production_render_path: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/M2-S3-custom-fields/production/
+    diff_notes: >
+      M2-S3: no screen in the approved UI handoff owns this destination --
+      source_files is empty because there is nothing to port. The handoff's
+      Settings component only has sender-config/default-policy tabs, and its
+      "customVariableBuilder" overlay is a compose-time *derived*-variable
+      builder (algorithm/action chaining), a different concept from an
+      admin-defined typed schema field. Built new from the existing
+      workspace-module-frame / module-frame-toolbar / module-card /
+      table-wrap / action-overlay vocabulary RecipientsScreen and
+      AddRecipientOverlay already established (M2-S1), per DEC-011's
+      precedent for a required surface absent from the handoff (see EXECPLAN
+      Decision Log DEC-034). loading/empty/error/success states captured;
+      permission_denied is covered by the existing route-level
+      RequirePermission wrapper (M1-S2), no separate capture needed. UI-REC-001
+      (AddRecipientOverlay / RecipientActionsOverlay) is also extended by this
+      node with a real "Trường tùy chỉnh" section rendering the tenant's
+      custom fields as typed inputs -- see UI-REC-001's own diff_notes
+      addendum below.
+
+  - id: UI-HIS-001
+    name: Send history
+    route: /history
+    source_files: [design-reference/ui-handoff-v2/source/app/page.tsx]
+    business_rules: [BR-HIS-001, BR-HIS-004, BR-HIS-005, BR-HIS-007, BR-HIS-008,
+                     BR-SEND-003, BR-SEND-004, BR-SEND-005]
+    api_operations: [getCampaignProgress]
+    realtime_events: [campaign.state_changed, campaign.progress, campaign.issue_detected, schedule.state_changed]
+    required_states: [loading, empty, error, success, permission_denied, reconnecting]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths:
+      - apps/web/src/screens/history/HistoryScreen.tsx
+      - apps/web/src/screens/history/history-countdown.ts
+      - apps/web/src/screens/history/HistoryFilterDialog.tsx
+      - apps/web/src/screens/history/ResendConfirmDialog.tsx
+      - apps/web/src/api/history.ts
+      - apps/api/src/campaigns/campaigns.controller.ts
+      - apps/api/src/campaigns/campaigns.service.ts
+      - apps/api/src/campaigns/history-query.ts
+      - apps/api/src/campaigns/dto/history.dto.ts
+      - apps/api/src/campaigns/resend.service.ts
+      - apps/api/src/campaigns/exports.service.ts
+      - apps/api/src/campaigns/exports.controller.ts
+    visual_baseline_path: null
+    production_render_path: production-only (no handoff route counterpart -- ComingSoon stood in its place); evidence/visual/M6-S3-history-recovery/production/ (list/empty/error/filter/resend/permission_denied/export drilldown); evidence/visual/M6-GATE/production/ (reconnecting, 3 viewports)
+    states_covered:
+      loading: not_captured_separately_see_diff_notes
+      empty: "M6-S3: history-list-empty-desktop-1440x900.png -- a real 200 response with items:[], the 'Chưa có chiến dịch nào trong lịch sử gửi.' copy."
+      error: "M6-S3: history-list-error-desktop-1440x900.png -- a real 500 from GET /campaigns/history rendered as 'Không thể tải lịch sử gửi' with a Thử lại retry, not a raw problem body."
+      success: "M6-S3: history-list-{desktop,tablet,mobile}.png -- real mixed campaign statuses (completed/partial_failed) from a genuine send-fixture DAG, BR-SEND-003 progress bars, BR-HIS-004 serverTime-driven countdowns, resend confirm/success dialogs. D-126 fixed before capture: both HistoryFilterDialog.tsx and ResendConfirmDialog.tsx originally rendered off the established .overlay-backdrop/.action-overlay structure and were invisible, clipped by workspace-module-frame's overflow:hidden."
+      permission_denied: "M6-S3: history-drawer-viewer-no-export-desktop-1440x900.png -- a Viewer (holds campaign:read, so /history itself is reachable) sees the row/drawer stat tiles without the drill-down/export affordances at all (hidden, not merely disabled); the BR-HIS-007 boundary."
+      reconnecting: "M6-GATE CP6: history-list-reconnecting-{desktop,tablet,mobile}.png. The first capture attempt found the shared socket was never actually connected on this screen at all (D-138) -- fixed via a realtime.gateway.ts baseline-connect capability; all 3 viewports now show 'Đang kết nối lại…' correctly, no overlap."
+    diff_notes: >-
+      M6-S3 replaces the ComingSoon placeholder with the real /history list, porting
+      the handoff's History component structure (module-frame-toolbar, SearchBox,
+      FilterButton, history-table). D-126 (found individually inspecting M6-S3 CP12
+      screenshots): HistoryFilterDialog.tsx and ResendConfirmDialog.tsx both shipped
+      with non-standard modal-overlay/modal-panel classes absent from globals.css,
+      fully clipped by workspace-module-frame's overflow:hidden -- fixed to the
+      established .overlay-backdrop/.action-overlay structure before this screen
+      could be marked migrated. D-138 (M6-GATE CP6): this screen reads
+      useRealtimeStatus() for its reconnecting banner but never calls
+      subscribeToCampaigns/subscribeToJobs itself and has no polling interval -- it
+      depends entirely on a socket connection opened by some other page in the same
+      session (e.g. the drawer). The gateway now supports a baseline connection with
+      no room request; nothing in this screen proactively opens one yet (disclosed,
+      not fixed here -- see D-138's own EXECPLAN.md entry).
+
+  - id: UI-HIS-002
+    name: Campaign detail (live progress)
+    route: /history/:campaignId
+    source_files: [design-reference/ui-handoff-v2/source/app/action-overlays.tsx]
+    business_rules: [BR-HIS-002, BR-HIS-003, BR-HIS-005, BR-HIS-008, BR-SEND-001, BR-SEND-002,
+                     BR-SEND-003, BR-SEND-009, BR-SEND-010]
+    api_operations: [getCampaignProgress, cancelCampaign]
+    realtime_events: [campaign.progress, campaign.state_changed, campaign.issue_detected]
+    required_states: [loading, empty, error, success, permission_denied, reconnecting]
+    viewports: [desktop, tablet, mobile]
+    status: migrated
+    code_paths:
+      - apps/web/src/screens/history/CampaignProgressDrawer.tsx
+      - apps/web/src/screens/history/eta-format.ts
+      - apps/web/src/api/realtime.ts
+      - apps/web/src/api/realtime-status.ts
+      - apps/api/src/campaigns/campaigns.controller.ts
+      - apps/api/src/campaigns/campaigns.service.ts
+      - apps/api/src/campaigns/progress-math.ts
+      - apps/api/src/campaigns/progress-snapshot.ts
+      - apps/api/src/campaigns/send-state-machine.ts
+      - apps/api/src/realtime/realtime.gateway.ts
+      - apps/api/src/realtime/realtime-campaign-rooms.ts
+      - apps/worker/src/campaign-send/send.ts
+      - apps/worker/src/campaign-send/run.ts
+      - apps/worker/src/campaign-send/progress-math.ts
+      - apps/worker/src/campaign-send/progress-snapshot.ts
+      - apps/worker/src/progress-reconcile.ts
+    visual_baseline_path: null
+    production_render_path: production-only (the approved handoff's historyDetail overlay has no real-route counterpart); evidence/visual/M6-S1-realtime-progress/production/ (real mid-flight counts/ETA, reconnecting at desktop); evidence/visual/M6-S3-history-recovery/production/ (permission_denied, export drilldown); evidence/visual/M6-GATE/production/ (reconnecting, 3 viewports)
+    states_covered:
+      loading: not_captured_separately_see_diff_notes
+      empty: not_applicable_to_this_screen (the drawer only opens for a real, already-existing campaign execution)
+      error: not_captured_separately_see_diff_notes
+      success: "M6-S1: history-drawer-{desktop,tablet,mobile}.png -- a real mid-flight send with genuine progress counts and ETA (BR-HIS-002/BR-SEND-003/005), a real send-fixture DAG, not mocked state. M6-S3 adds history-drawer-export-drilldown-desktop-1440x900.png (BR-HIS-003/007 export creation and download link)."
+      permission_denied: "M6-S3: history-drawer-viewer-no-export-desktop-1440x900.png -- a Viewer sees stat tiles without export/drill-down affordances (hidden, not disabled)."
+      reconnecting: "M6-S1 captured desktop only (history-drawer-reconnecting-desktop-1440x900.png). M6-GATE CP6 fills tablet/mobile (history-drawer-reconnecting-{tablet,mobile}.png) -- all 3 viewports now covered."
+    diff_notes: >-
+      M6-S1 builds this as a real route (/history/:campaignId) rather than the
+      approved handoff's historyDetail overlay (no production-only route counterpart
+      existed before this node) -- content rebuilt as a page using the handoff's
+      action-overlays.tsx historyDetail branch as the visual reference, per
+      design-reference/visual-acceptance.md §12. REST-first load
+      (getCampaignProgress) plus campaign.progress socket hints per ADR-010; a
+      reconnect REST-reconciles rather than trusting the socket as the only copy of
+      state (AGENTS.md §2).
+
+overlays:
+  - {id: command,               milestone: M1, business_rules: [BR-AUTH-004], status: not_inventoried}
+  - {id: help,                  milestone: M1, business_rules: [BR-GEN-001], status: not_inventoried}
+  - {id: profile,               milestone: M1, business_rules: [BR-AUTH-002, BR-AUTH-003], status: not_inventoried}
+  - {id: notifications,         milestone: M6, business_rules: [BR-NOT-001, BR-NOT-004, BR-NOT-006, BR-NOT-010, BR-NOT-012], status: not_inventoried}
+  - {id: sender,                milestone: M5, business_rules: [BR-CFG-001, BR-CFG-004], status: not_inventoried}
+  - {id: recipientPicker,       milestone: M4, business_rules: [BR-SEG-008, BR-SEG-009, BR-CMP-002], status: not_inventoried}
+  - {id: importExcel,           milestone: M2, business_rules: [BR-IMP-001, BR-IMP-002, BR-IMP-003, BR-IMP-004], status: not_inventoried}
+  - {id: templatePicker,        milestone: M3, business_rules: [BR-TPL-001, BR-TPL-002], status: not_inventoried}
+  - {id: importHtml,            milestone: M3, business_rules: [BR-TPL-006, BR-TPL-009], status: not_inventoried}
+  - {id: tagPicker,             milestone: M2, business_rules: [BR-REC-006, BR-SEG-001], status: not_inventoried}
+  - {id: manageTags,            milestone: M2, business_rules: [BR-SEG-002, BR-SEG-003, BR-SEG-006], status: not_inventoried}
+  - {id: customVariableBuilder, milestone: M2, business_rules: [BR-CF-001, BR-CF-002, BR-CF-003, BR-CF-005], status: not_inventoried}
+  - {id: sendTest,              milestone: M3, business_rules: [BR-TPL-011], status: not_inventoried}
+  - {id: sendConfirm,           milestone: M4, business_rules: [BR-CMP-008, BR-CMP-009, BR-CMP-010, BR-CMP-005, BR-GEN-005], status: not_inventoried}
+  - {id: scheduleSend,          milestone: M5, business_rules: [BR-SCH-001, BR-SCH-002, BR-SCH-003, BR-SCH-004], status: not_inventoried}
+  - {id: sendSuccess,           milestone: M4, business_rules: [BR-NOT-001], status: not_inventoried}
+  - {id: draftSaved,            milestone: M4, business_rules: [BR-CMP-001], status: not_inventoried}
+  - {id: draftActions,          milestone: M4, business_rules: [BR-CMP-011, BR-GEN-006], status: not_inventoried}
+  - {id: composePreview,        milestone: M3, business_rules: [BR-TPL-005, BR-TPL-007, BR-TPL-012], status: not_inventoried}
+  - {id: addRecipient,          milestone: M2, business_rules: [BR-REC-001, BR-REC-002, BR-REC-003], status: not_inventoried}
+  - {id: bulkCustomData,        milestone: M2, business_rules: [BR-CF-004, BR-CF-006, BR-CF-007, BR-CF-008, BR-CF-009], status: not_inventoried}
+  - {id: recipientFilter,       milestone: M2, business_rules: [BR-REC-008], status: not_inventoried}
+  - {id: recipientActions,      milestone: M2, business_rules: [BR-REC-010, BR-GEN-006], status: not_inventoried}
+  - {id: createList,            milestone: M2, business_rules: [BR-SEG-002, BR-SEG-005], status: not_inventoried}
+  - {id: templateDetail,        milestone: M3, business_rules: [BR-TPL-002, BR-TPL-005, BR-TPL-012], status: not_inventoried}
+  - {id: templateActions,       milestone: M3, business_rules: [BR-TPL-001, BR-TPL-010], status: not_inventoried}
+  - {id: templateFilter,        milestone: M3, business_rules: [BR-TPL-001], status: not_inventoried}
+  - {id: mailConfigForm,        milestone: M5, business_rules: [BR-CFG-001, BR-CFG-002, BR-SEC-001], status: not_inventoried}
+  - {id: editMailConfig,        milestone: M5, business_rules: [BR-CFG-001, BR-CFG-002, BR-CFG-007, BR-SEC-001], status: not_inventoried}
+  - {id: configActions,         milestone: M5, business_rules: [BR-CFG-007], status: not_inventoried}
+  - {id: configFilter,          milestone: M5, business_rules: [BR-CFG-001], status: not_inventoried}
+  - {id: setDefaultConfirm,     milestone: M5, business_rules: [BR-CFG-004], status: not_inventoried}
+  - {id: deleteConfigConfirm,   milestone: M5, business_rules: [BR-CFG-007, BR-SCH-009], status: not_inventoried}
+  - {id: testConnection,        milestone: M5, business_rules: [BR-CFG-003], status: not_inventoried}
+  - {id: settingsSaved,         milestone: M5, business_rules: [BR-CFG-006], status: not_inventoried}
+  - {id: historyFilter,         milestone: M6, business_rules: [BR-HIS-001], status: not_inventoried}
+  - {id: historyDetail,         milestone: M6, business_rules: [BR-HIS-002, BR-HIS-003, BR-SEND-009, BR-SEND-010], status: not_inventoried}
+  - {id: resendConfirm,         milestone: M6, business_rules: [BR-HIS-005, BR-CMP-010, BR-GEN-005], status: not_inventoried}
+  - {id: resendSuccess,         milestone: M6, business_rules: [BR-NOT-001], status: not_inventoried}

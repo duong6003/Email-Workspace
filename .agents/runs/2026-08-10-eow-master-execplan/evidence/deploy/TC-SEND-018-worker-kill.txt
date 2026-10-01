@@ -1,0 +1,11 @@
+
+ RUN  v4.1.10 /home/duong.vu/workspace/mail-operation/eow-m7-s4/apps/worker
+
+ ✓ src/campaign-send/worker-restart.integration.test.ts (1 test) 10331ms
+     ✓ SIGKILLed active work is stalled and redelivered rather than lost or completed twice  10312ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:04:19
+   Duration  10.55s (transform 22ms, setup 0ms, import 136ms, tests 10.33s, environment 0ms)
+

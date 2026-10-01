@@ -1,0 +1,29 @@
+version: 2
+scope: coding_agent_only
+explicit_exclusion: product_runtime_workflows
+default_after_approval: graph_with_bounded_node_loops
+precedence:
+  - stop_if_approval_scope_exceeded
+  - schedule_if_agent_must_wait_for_future_time_or_external_condition
+  - graph_if_multi_domain_dependencies_or_parallel_work
+  - loop_if_iterative_implementation_or_repair
+  - direct_if_atomic
+modes:
+  direct:
+    use_when: one_atomic_agent_action
+    required: [approval_scope, input_contract, success_condition, verification, report]
+  loop:
+    policy: .agents/agent-loop.yaml
+  schedule:
+    policy: .agents/agent-schedule.yaml
+  graph:
+    policy: .agents/agent-graph.yaml
+composition:
+  default: graph_contains_bounded_loops
+  scheduled_graph: schedule_resume_of_specific_graph_node
+  scheduled_loop: allowed_only_with_persisted_checkpoint_and_deadline
+state:
+  schema: .agents/schemas/run-state.schema.json
+  location: .agents/runs/<run-id>/state.json
+  update_after: [node_start, material_action, verification, checkpoint, terminal_transition]
+terminal_states: [completed, blocked, cancelled, failed]

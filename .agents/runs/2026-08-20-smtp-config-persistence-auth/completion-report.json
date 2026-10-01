@@ -1,0 +1,38 @@
+{
+  "runId": "2026-08-20-smtp-config-persistence-auth",
+  "status": "completed",
+  "scopeDelivered": [
+    "Durable encrypted SMTP credential persistence shared by API and worker",
+    "Reliable sender form value restoration with explicit credential availability state",
+    "Authentication-aware SMTP probing and actionable 553 not-logged-in history messages",
+    "Clear separation between sender configuration and campaign recipient selection"
+  ],
+  "changes": [
+    "Added tenant-RLS sender_credential storage encrypted with AES-256-GCM and a shared deployment key",
+    "Changed worker validation and delivery to decrypt the persisted credential while retaining legacy environment-reference compatibility",
+    "Invalidated verification whenever host, port, username, sender address or credential changes",
+    "Changed connection testing to verify the session and submit one test email to the configured sender address",
+    "Updated the settings UI to retain all non-secret values, show whether a credential is available, and explain conditional username/password requirements",
+    "Classified EENVELOPE 553 not-logged-in failures as authentication and rendered repair guidance in delivery history"
+  ],
+  "verification": [
+    "pnpm check passed: 1244 tests passed, 0 skipped and 0 failed; previous checkpoint was 1235 passed and 0 skipped",
+    "Focused API, worker, web, credential-package and architecture tests passed",
+    "OpenAPI compatibility, Compose interpolation, bundle validation, UI handoff status and traceability plan validation passed",
+    "Migration 068 executed successfully against the validation PostgreSQL instance with RLS enabled and forced",
+    "Screenshot capture was excluded by the user and was not performed"
+  ],
+  "traceability": [
+    "ADR-030 records encrypted shared sender credential storage and sender-envelope probing",
+    "BR-CFG-001 and BR-CFG-003 traceability now names migration 068 and executing persistence/authentication tests",
+    "OpenAPI exposes credentialConfigured while retaining the masked write-only secret contract",
+    "Deployment documentation and examples require EOW_SENDER_CREDENTIAL_KEY for API and worker"
+  ],
+  "remainingRisks": [
+    "Production must set the same 64-hex-character EOW_SENDER_CREDENTIAL_KEY for API and worker before restart",
+    "Rotating that key requires a reviewed credential re-encryption or re-entry procedure",
+    "The production web build retains the pre-existing non-blocking large-chunk warning",
+    "No real Alta SMTP credential or production deployment was used during verification"
+  ],
+  "resumeNode": null
+}

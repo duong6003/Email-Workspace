@@ -1,0 +1,25 @@
+# Normalise line endings to LF in the repository and on checkout.
+#
+# The reason is the same one that motivated putting this project under version
+# control at all: several agents edit the same files from different shells
+# (PowerShell, Git Bash) on Windows, and without this a single tool writing CRLF
+# turns "what did the other agent change?" into a whole-file diff that answers
+# nothing. `core.autocrlf` is a per-machine setting and cannot be relied on.
+#
+# Migration checksums hash exact raw bytes. Line-ending policy makes normal
+# source diffs readable; it does not normalize checksum inputs.
+* text=auto eol=lf
+
+# Scanner parity fixtures deliberately retain CRLF bytes. Their exact physical
+# lines prove COPY payload handling matches LF inputs.
+/packages/architecture-tests/fixtures/migration-runner/999_cp1_runner_copy_payload_crlf_probe.sql -text
+/packages/architecture-tests/fixtures/migration-runner/999_cp1_runner_copy_post_terminator_crlf_probe.sql -text
+
+# Visual evidence and other binaries must never be line-ending filtered.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.xlsx binary
+*.pdf binary

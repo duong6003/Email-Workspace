@@ -1,0 +1,329 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${EOW_POSTGRES_DB:-eow}
+      POSTGRES_USER: ${EOW_POSTGRES_USER:-eow}
+      POSTGRES_PASSWORD: ${EOW_POSTGRES_PASSWORD:?Set EOW_POSTGRES_PASSWORD in .env}
+    ports:
+      - '${EOW_POSTGRES_BIND:-127.0.0.1}:${EOW_POSTGRES_PORT:-55432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # `-h 127.0.0.1` is load-bearing, not decoration: without a host pg_isready
+      # probes the local socket, which the initdb-phase temporary server answers
+      # while `listen_addresses=''` still refuses every TCP client. Measured on
+      # this exact image -- see ARCH-DEPLOY-CONTRACT for the sampled window.
+      # Every dependent (migrate, api, worker, scheduler) connects over TCP.
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [backend]
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--requirepass', '${EOW_REDIS_PASSWORD:?Set EOW_REDIS_PASSWORD in .env}']
+    ports:
+      - '${EOW_REDIS_BIND:-127.0.0.1}:${EOW_REDIS_PORT:-56379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$${EOW_REDIS_PASSWORD}" ping | grep PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    environment:
+      EOW_REDIS_PASSWORD: ${EOW_REDIS_PASSWORD:?Set EOW_REDIS_PASSWORD in .env}
+    networks: [backend]
+
+  # ADR-043 §1: the object store for builder image assets. MinIO here, S3/R2/
+  # Spaces in production via the same env vars -- the adapter is the only thing
+  # that knows the difference.
+  #
+  # Bound to 127.0.0.1 like postgres/redis/mailpit, not 0.0.0.0. On this
+  # machine's Docker Desktop a 0.0.0.0 publish silently stops forwarding: the
+  # container stays healthy, `docker port` shows the mapping, and every request
+  # from the host is refused. Matching the pattern the other infra services
+  # already use avoids re-discovering that.
+  minio:
+    profiles: [dev]
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    # The bucket is a directory under the data dir, so creating it here means it
+    # exists before the server reports healthy -- measured 2026-09-03: a
+    # pre-made directory is listed and read/written as a normal bucket.
+    #
+    # This replaces a `minio/mc` one-shot that `api` gated on. That gating was
+    # the bug: minio-init is dev-only, api is not, so a production bring-up
+    # (no --profile) was refused outright with "service api depends on undefined
+    # service minio-init: invalid compose project". Every local gate stayed
+    # green because dev runs with --profile dev; CI's own compose validation
+    # would have caught it, but only after `pnpm check` had already passed.
+    # ARCH-DEPLOY-CONTRACT now catches it in the test suite instead.
+    entrypoint:
+      - sh
+      - -c
+      - 'mkdir -p "/data/${EOW_ASSET_BUCKET:-eow-assets}" && exec minio server /data --console-address :9001'
+    environment:
+      MINIO_ROOT_USER: ${EOW_MINIO_ROOT_USER:-eow}
+      # Required, not defaulted, for the same reason EOW_SMTP_HOST is: a
+      # fallback password would let a deployment come up with a well-known
+      # credential on the store that holds every tenant's uploaded images, and
+      # nothing would surface the mistake.
+      MINIO_ROOT_PASSWORD: ${EOW_MINIO_ROOT_PASSWORD:?Set EOW_MINIO_ROOT_PASSWORD in .env}
+    ports:
+      - '${EOW_MINIO_BIND:-127.0.0.1}:${EOW_MINIO_PORT:-59000}:9000'
+      - '${EOW_MINIO_BIND:-127.0.0.1}:${EOW_MINIO_CONSOLE_PORT:-59001}:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'mc ready local || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [backend]
+
+  mailpit:
+    # Dev-only mail catcher. Gated behind `dev` so a production bring-up
+    # (`docker compose --env-file .env up -d --build --wait`, no profile) never
+    # starts it. Paired with the required `EOW_SMTP_HOST` below: without the
+    # profile there is no mailpit to fall back to, and without a value there is
+    # no interpolation to succeed, so misrouted production mail cannot happen
+    # silently in either direction. Local dev enables it via `--profile dev`
+    # (see the `infra:*`/`deploy:*` scripts in package.json).
+    profiles: [dev]
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - '${EOW_MAILPIT_BIND:-127.0.0.1}:${EOW_MAILPIT_PORT:-8025}:8025'
+      - '${EOW_MAILPIT_BIND:-127.0.0.1}:${EOW_MAILPIT_SMTP_PORT:-1025}:1025'
+    networks: [backend]
+
+  migrate:
+    image: postgres:17-alpine
+    restart: 'no'
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${EOW_POSTGRES_DB:-eow}
+      PGUSER: ${EOW_POSTGRES_USER:-eow}
+      PGPASSWORD: ${EOW_POSTGRES_PASSWORD:?Set EOW_POSTGRES_PASSWORD in .env}
+      EOW_POSTGRES_APP_PASSWORD: ${EOW_POSTGRES_APP_PASSWORD:?Set EOW_POSTGRES_APP_PASSWORD in .env}
+    volumes:
+      - ./database:/database:ro
+    command: ['sh', '/database/migrate.sh']
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      WEB_ORIGIN: ${EOW_WEB_ORIGIN:-http://localhost:8080}
+      DATABASE_URL: postgresql://eow_app:${EOW_POSTGRES_APP_PASSWORD:?Set EOW_POSTGRES_APP_PASSWORD in .env}@postgres:5432/${EOW_POSTGRES_DB:-eow}
+      REDIS_URL: redis://:${EOW_REDIS_PASSWORD:?Set EOW_REDIS_PASSWORD in .env}@redis:6379/0
+      SESSION_SECRET: ${EOW_SESSION_SECRET:?Set EOW_SESSION_SECRET in .env}
+      SENDER_CREDENTIAL_KEY: ${EOW_SENDER_CREDENTIAL_KEY:?Set EOW_SENDER_CREDENTIAL_KEY in .env}
+      # ADR-043. ASSET_PUBLIC_ORIGIN is frozen into every published email, so it
+      # must be the externally reachable origin -- Task 32 measured that a
+      # relative src is stripped by the sanitizer, and a wrong value here breaks
+      # images in mail that can no longer be edited.
+      ASSET_PUBLIC_ORIGIN: ${EOW_WEB_ORIGIN:-http://localhost:8080}
+      ASSET_STORAGE_ENDPOINT: http://minio:9000
+      ASSET_STORAGE_REGION: ${EOW_ASSET_REGION:-us-east-1}
+      ASSET_STORAGE_BUCKET: ${EOW_ASSET_BUCKET:-eow-assets}
+      ASSET_STORAGE_ACCESS_KEY: ${EOW_MINIO_ROOT_USER:-eow}
+      ASSET_STORAGE_SECRET_KEY: ${EOW_MINIO_ROOT_PASSWORD:?Set EOW_MINIO_ROOT_PASSWORD in .env}
+      ASSET_STORAGE_FORCE_PATH_STYLE: 'true'
+      # Required, not defaulted. A `:-mailpit` fallback routes every outgoing
+      # message to the dev catcher when a deployment forgets the variable, and
+      # nothing surfaces the mistake -- mail simply never leaves the host. The
+      # same argument applies to the sender address: an unset `EOW_SMTP_FROM`
+      # must fail at `compose config` time rather than send real campaigns
+      # from `no-reply@example.test`. Local dev supplies both from `.env`.
+      SMTP_HOST: ${EOW_SMTP_HOST:?Set EOW_SMTP_HOST in .env}
+      SMTP_PORT: ${EOW_SMTP_PORT:-1025}
+      SMTP_FROM: ${EOW_SMTP_FROM:?Set EOW_SMTP_FROM in .env}
+      SMTP_CONNECTION_TIMEOUT_MS: ${EOW_SMTP_CONNECTION_TIMEOUT_MS:-10000}
+      SMTP_GREETING_TIMEOUT_MS: ${EOW_SMTP_GREETING_TIMEOUT_MS:-10000}
+      SMTP_SOCKET_TIMEOUT_MS: ${EOW_SMTP_SOCKET_TIMEOUT_MS:-30000}
+      NOTIFICATION_RETENTION_DAYS: ${EOW_NOTIFICATION_RETENTION_DAYS:-90}
+      LOG_LEVEL: ${EOW_LOG_LEVEL:-info}
+      METRICS_PORT: ${EOW_API_METRICS_PORT:-9464}
+      TZ: ${EOW_TIMEZONE:-Etc/UTC}
+      CAMPAIGN_AUDIENCE_LIMIT: ${EOW_CAMPAIGN_AUDIENCE_LIMIT:-100000}
+      EXPORT_INLINE_MAX_ROWS: ${EOW_EXPORT_INLINE_MAX_ROWS:-500}
+      EXPORT_ARTIFACT_TTL_HOURS: ${EOW_EXPORT_ARTIFACT_TTL_HOURS:-72}
+      HISTORY_EVENT_RETENTION_DAYS: ${EOW_HISTORY_EVENT_RETENTION_DAYS:-365}
+      # M5-S4 (BR-SEND-008). Unset (the default) means the webhook route
+      # returns 503 and accepts nothing -- the correct posture for a
+      # deployment with no provider callbacks configured, never a silent
+      # fallback to accepting unverified events.
+      PROVIDER_WEBHOOK_SECRET: ${EOW_PROVIDER_WEBHOOK_SECRET:-}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/api/v1/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks: [backend]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      RUNTIME_PROFILE: worker
+      DATABASE_URL: postgresql://eow_app:${EOW_POSTGRES_APP_PASSWORD:?Set EOW_POSTGRES_APP_PASSWORD in .env}@postgres:5432/${EOW_POSTGRES_DB:-eow}
+      OUTBOX_DATABASE_URL: postgresql://eow_app:${EOW_POSTGRES_APP_PASSWORD:?Set EOW_POSTGRES_APP_PASSWORD in .env}@postgres:5432/${EOW_POSTGRES_DB:-eow}
+      REDIS_URL: redis://:${EOW_REDIS_PASSWORD:?Set EOW_REDIS_PASSWORD in .env}@redis:6379/0
+      SENDER_CREDENTIAL_KEY: ${EOW_SENDER_CREDENTIAL_KEY:?Set EOW_SENDER_CREDENTIAL_KEY in .env}
+      WORKER_CONCURRENCY: ${EOW_WORKER_CONCURRENCY:-10}
+      NOTIFICATION_RETENTION_DAYS: ${EOW_NOTIFICATION_RETENTION_DAYS:-90}
+      EXPORT_ARTIFACT_TTL_HOURS: ${EOW_EXPORT_ARTIFACT_TTL_HOURS:-72}
+      HISTORY_EVENT_RETENTION_DAYS: ${EOW_HISTORY_EVENT_RETENTION_DAYS:-365}
+      SMTP_HOST: ${EOW_SMTP_HOST:?Set EOW_SMTP_HOST in .env}
+      SMTP_PORT: ${EOW_SMTP_PORT:-1025}
+      SMTP_FROM: ${EOW_SMTP_FROM:?Set EOW_SMTP_FROM in .env}
+      SMTP_CONNECTION_TIMEOUT_MS: ${EOW_SMTP_CONNECTION_TIMEOUT_MS:-10000}
+      SMTP_GREETING_TIMEOUT_MS: ${EOW_SMTP_GREETING_TIMEOUT_MS:-10000}
+      SMTP_SOCKET_TIMEOUT_MS: ${EOW_SMTP_SOCKET_TIMEOUT_MS:-30000}
+      LOG_LEVEL: ${EOW_LOG_LEVEL:-info}
+      METRICS_PORT: ${EOW_WORKER_METRICS_PORT:-9465}
+      TZ: ${EOW_TIMEZONE:-Etc/UTC}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ['CMD', 'node', '-e', 'process.kill(1,0)']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [backend]
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: scheduler
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      RUNTIME_PROFILE: scheduler
+      DATABASE_URL: postgresql://eow_app:${EOW_POSTGRES_APP_PASSWORD:?Set EOW_POSTGRES_APP_PASSWORD in .env}@postgres:5432/${EOW_POSTGRES_DB:-eow}
+      REDIS_URL: redis://:${EOW_REDIS_PASSWORD:?Set EOW_REDIS_PASSWORD in .env}@redis:6379/0
+      SCHEDULER_TICK_MS: ${EOW_SCHEDULER_TICK_MS:-60000}
+      LOG_LEVEL: ${EOW_LOG_LEVEL:-info}
+      TZ: ${EOW_TIMEZONE:-Etc/UTC}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ['CMD', 'node', '-e', 'process.kill(1,0)']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [backend]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args:
+        VITE_API_URL: /api/v1
+        VITE_SOCKET_URL: ''
+    restart: unless-stopped
+    ports:
+      - '${EOW_HTTP_BIND:-0.0.0.0}:${EOW_HTTP_PORT:-8080}:8080'
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks: [backend]
+
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v3.6.0
+    restart: unless-stopped
+    command: ['--config.file=/etc/prometheus/prometheus.yml', '--storage.tsdb.path=/prometheus']
+    volumes:
+      - ./deploy/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      api: {condition: service_healthy}
+      worker: {condition: service_healthy}
+    # ARCH-DEPLOY-CONTRACT requires every long-running service to be gated.
+    # Prometheus ships /-/healthy and the image has wget, so this is a real
+    # probe rather than an allowlist entry -- an opt-in stack that cannot
+    # report its own health is not worth starting.
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9090/-/healthy']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks: [backend]
+
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:12.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${EOW_GRAFANA_ADMIN_PASSWORD:-}
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+    ports:
+      - '${EOW_GRAFANA_BIND:-127.0.0.1}:${EOW_GRAFANA_PORT:-3001}:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/observability/grafana-dashboard-provider.yml:/etc/grafana/provisioning/dashboards/eow.yml:ro
+      - ./deploy/observability/dashboard.json:/var/lib/grafana/dashboards/eow.json:ro
+    depends_on:
+      - prometheus
+    # Same reasoning as prometheus above: Grafana exposes /api/health and the
+    # image ships wget, so the opt-in stack gates on a real probe.
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+    networks: [backend]
+
+volumes:
+  postgres_data:
+  minio_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  backend:
+    driver: bridge

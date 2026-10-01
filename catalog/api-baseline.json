@@ -1,0 +1,212 @@
+[
+  [
+    "POST",
+    "/api/v1/auth/login",
+    "Public",
+    "Đăng nhập",
+    "200/401/429"
+  ],
+  [
+    "POST",
+    "/api/v1/auth/refresh",
+    "Authenticated",
+    "Rotate token",
+    "200/401"
+  ],
+  [
+    "POST",
+    "/api/v1/auth/logout",
+    "Authenticated",
+    "Thu hồi phiên",
+    "204"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/recipients",
+    "Operator",
+    "List/tạo recipient",
+    "200/201/409/422"
+  ],
+  [
+    "GET, PATCH, DELETE",
+    "/api/v1/recipients/{id}",
+    "Operator",
+    "Chi tiết/sửa/xóa mềm",
+    "200/204/404/409"
+  ],
+  [
+    "POST",
+    "/api/v1/recipients/bulk-jobs",
+    "Operator",
+    "Bulk tag/list/custom data/delete/export",
+    "202/422"
+  ],
+  [
+    "POST",
+    "/api/v1/recipients/imports",
+    "Operator",
+    "Tạo import job",
+    "202/413/422"
+  ],
+  [
+    "GET",
+    "/api/v1/imports/{jobId}",
+    "Operator",
+    "Tiến độ và kết quả import",
+    "200/404"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/lists",
+    "Operator",
+    "List master data",
+    "200/201/409"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/tags",
+    "Operator",
+    "Tag master data",
+    "200/201/409"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/custom-fields",
+    "Admin",
+    "Định nghĩa custom field",
+    "200/201/409/422"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/templates",
+    "Operator",
+    "List/tạo template draft",
+    "200/201"
+  ],
+  [
+    "POST",
+    "/api/v1/templates/{id}/publish",
+    "Operator",
+    "Publish version bất biến",
+    "201/422"
+  ],
+  [
+    "POST",
+    "/api/v1/template-versions/{id}/preview",
+    "Operator",
+    "Render preview",
+    "200/422"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/campaigns",
+    "Operator",
+    "List/tạo draft campaign",
+    "200/201"
+  ],
+  [
+    "PATCH",
+    "/api/v1/campaigns/{id}",
+    "Operator",
+    "Sửa draft với If-Match",
+    "200/409/422"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/audience-preview",
+    "Operator",
+    "Resolve/dedupe/variable validation",
+    "200/202/422"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/send",
+    "Operator",
+    "Snapshot và gửi ngay",
+    "202/409/422/429"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/schedule",
+    "Operator",
+    "Snapshot và hẹn giờ",
+    "202/409/422"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/cancel",
+    "Operator",
+    "Hủy scheduled/sending",
+    "202/409"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/pause",
+    "Operator",
+    "Pause execution",
+    "202/409"
+  ],
+  [
+    "POST",
+    "/api/v1/campaigns/{id}/resume",
+    "Operator",
+    "Resume execution",
+    "202/409"
+  ],
+  [
+    "GET",
+    "/api/v1/campaigns/{id}/progress",
+    "Viewer",
+    "Snapshot tiến độ",
+    "200/404"
+  ],
+  [
+    "GET",
+    "/api/v1/campaigns/{id}/events",
+    "Viewer",
+    "SSE progress stream",
+    "200/401"
+  ],
+  [
+    "GET",
+    "/api/v1/history",
+    "Viewer",
+    "List lịch sử/filter",
+    "200"
+  ],
+  [
+    "GET",
+    "/api/v1/history/{id}/recipients",
+    "Viewer",
+    "Drill-down theo trạng thái",
+    "200/403"
+  ],
+  [
+    "GET, POST",
+    "/api/v1/sender-accounts",
+    "Admin",
+    "List/tạo sender",
+    "200/201/422"
+  ],
+  [
+    "POST",
+    "/api/v1/sender-accounts/{id}/test",
+    "Admin",
+    "Test kết nối",
+    "200/422/504"
+  ],
+  [
+    "POST",
+    "/api/v1/webhooks/providers/{provider}",
+    "Provider",
+    "Delivery/bounce/complaint",
+    "200/400/401"
+  ],
+  [
+    "GET",
+    "/api/v1/audit-logs",
+    "Admin/Auditor",
+    "Tra cứu audit",
+    "200/403"
+  ]
+]

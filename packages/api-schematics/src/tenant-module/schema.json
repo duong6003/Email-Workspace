@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "EowTenantModule",
+  "title": "EOW tenant module",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "$default": { "$source": "argv", "index": 0 } },
+    "entity": { "type": "string", "description": "Existing entity class, ending in Entity." },
+    "entityPath": { "type": "string", "description": "Entity import path relative to apps/api/src/database/entities, without extension." },
+    "readPermission": { "type": "string", "default": "RECIPIENT_READ" },
+    "managePermission": { "type": "string", "default": "RECIPIENT_MANAGE" },
+    "path": { "type": "string", "default": "apps/api/src" }
+  },
+  "required": ["name", "entity", "entityPath"]
+}

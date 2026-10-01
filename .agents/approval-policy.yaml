@@ -1,0 +1,29 @@
+version: 1
+principle: one_start_approval_then_autonomous_delivery_within_scope
+start_gate:
+  accepted_evidence: [explicit_approval, approved_plan, direct_build_or_change_request]
+  grants:
+    - inspect_and_edit_workspace_files
+    - create_forward_migrations_and_tests
+    - install_declared_dependencies
+    - run_local_services_builds_tests_and_formatters
+    - iterate_repairs_within_budget
+    - update_docs_contracts_and_traceability
+    - create_local_delivery_artifacts
+no_additional_approval_for:
+  - implementation_details_consistent_with_accepted_adrs
+  - routine_refactors_required_by_the_task
+  - safe_local_test_data
+  - lint_type_build_and_test_repairs
+  - non_destructive_dependency_resolution
+stop_gates:
+  - production_deploy_or_external_publish_not_explicitly_approved
+  - destructive_or_irreversible_data_action
+  - secret_credential_or_paid_external_action_outside_configured_tools
+  - material_business_semantics_ambiguity
+  - security_privacy_legal_or_compliance_owner_decision
+  - requested_scope_or_authority_exceeded
+  - repair_budget_exhausted_with_no_new_evidence
+on_stop:
+  persist: [completed_work, evidence, exact_blocker, safe_options, recommended_choice, resume_node]
+  ask_one_concise_decision: true

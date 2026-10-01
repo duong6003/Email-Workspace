@@ -1,0 +1,14 @@
+{
+  "session_id": "01a0f6f8-91d6-7501-8dcb-423fb4fee146",
+  "native_session_id": "01a0f6f8-91d6-7501-8dcb-423fb4fee146",
+  "started_at": "2026-10-01T10:18:45.337Z",
+  "cwd": "C:\\Works\\Projects\\Email operations workspace\\email-operations-workspace",
+  "state_root": "C:\\Works\\Projects\\Email operations workspace\\email-operations-workspace\\.omx\\state\\sessions\\01a0f6f8-91d6-7501-8dcb-423fb4fee146",
+  "pid": 70600,
+  "platform": "win32",
+  "identity_schema_version": 2,
+  "process_identity": {
+    "platform": "win32",
+    "birth": "134353235184750579"
+  }
+}

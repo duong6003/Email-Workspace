@@ -1,0 +1,456 @@
+﻿id,module,feature,rule_ids,priority,type,preconditions,test_data,steps,expected,automation,layer,status,owner,notes
+TC-GEN-001,Nền tảng,Tên sản phẩm,BR-GEN-001,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tên sản phẩm.
+2. Thực hiện hành vi: Tên hiển thị của ứng dụng là 'Email Operations Workspace'. Khu vực thương hiệu trong header chỉ hiển thị logo Altasoftware, không lặp lại tên sản phẩm.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Tên mới xuất hiện ở title, login và shell; header chỉ còn logo, không có chuỗi 'Email Content Sender by Altasoftware'.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-GEN-002,Nền tảng,Phạm vi tenant,BR-GEN-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Phạm vi tenant.
+2. Thực hiện hành vi: Mọi dữ liệu nghiệp vụ phải thuộc một organization/tenant và không được đọc chéo tenant.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Mọi truy vấn và lệnh ghi bắt buộc có organization_id lấy từ token; test chéo tenant trả 404 hoặc 403.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-GEN-003,Nền tảng,Múi giờ,BR-GEN-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Múi giờ.
+2. Thực hiện hành vi: Tất cả timestamp lưu UTC; thời gian hiển thị và lịch gửi sử dụng timezone IANA của người dùng hoặc chiến dịch.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả timestamp ISO-8601 UTC và timezone_name; UI render đúng timezone đã chọn.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-GEN-004,Nền tảng,Trạng thái tương tác,BR-GEN-004,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Trạng thái tương tác.
+2. Thực hiện hành vi: Control có hover, focus-visible, pressed, disabled và loading; vùng được chọn phải highlight toàn bộ khung.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Keyboard focus nhìn thấy rõ; click vào mọi vùng của control chọn đúng; selected state phủ đủ border, nền và nội dung.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-GEN-005,Nền tảng,Idempotency,BR-GEN-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Idempotency.
+2. Thực hiện hành vi: Các lệnh có thể tạo tác vụ gửi/import/bulk update phải hỗ trợ Idempotency-Key.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Gửi lại cùng key và payload không tạo bản ghi/job thứ hai; khác payload với cùng key trả 409.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-GEN-006,Nền tảng,Xóa mềm,BR-GEN-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xóa mềm.
+2. Thực hiện hành vi: Recipient, list, tag, template và campaign sử dụng soft delete khi đã có tham chiếu lịch sử.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Bản ghi biến mất khỏi danh sách hoạt động nhưng lịch sử và audit vẫn truy xuất được; ID không bị tái sử dụng.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-001,Xác thực & phân quyền,Đăng nhập,BR-AUTH-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Đăng nhập.
+2. Thực hiện hành vi: Người dùng đăng nhập bằng email và mật khẩu; thông tin không hợp lệ trả lỗi chung, không tiết lộ tài khoản có tồn tại.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Email/password hợp lệ tạo access và refresh token; lỗi trả 401 với thông báo chung.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-002,Xác thực & phân quyền,Phiên đăng nhập,BR-AUTH-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Phiên đăng nhập.
+2. Thực hiện hành vi: Access token ngắn hạn; refresh token xoay vòng và bị thu hồi khi logout hoặc đổi mật khẩu.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Refresh token cũ không dùng lại được sau rotation; logout làm phiên hiện tại mất hiệu lực.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-003,Xác thực & phân quyền,Vai trò,BR-AUTH-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Vai trò.
+2. Thực hiện hành vi: Hệ thống có tối thiểu Admin, Operator và Viewer.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Admin quản trị cấu hình; Operator quản lý nội dung và gửi; Viewer chỉ xem lịch sử/báo cáo.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-004,Xác thực & phân quyền,Kiểm soát chức năng,BR-AUTH-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Kiểm soát chức năng.
+2. Thực hiện hành vi: API kiểm quyền phía server, không dựa vào việc ẩn nút trên UI.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Viewer gọi API tạo/sửa/xóa nhận 403; log ghi actor và endpoint.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-005,Xác thực & phân quyền,Khóa tạm,BR-AUTH-005,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Khóa tạm.
+2. Thực hiện hành vi: Sau số lần đăng nhập sai cấu hình được, tài khoản/IP bị rate limit hoặc khóa tạm.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Mặc định 5 lần/15 phút; phản hồi 429 và có Retry-After.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-006,Xác thực & phân quyền,Quên mật khẩu,BR-AUTH-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Quên mật khẩu.
+2. Thực hiện hành vi: Link đặt lại mật khẩu dùng một lần và hết hạn.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Token hết hạn sau 30 phút, dùng lại trả lỗi; thay mật khẩu thu hồi các phiên cũ.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-001,Người nhận,Email duy nhất,BR-REC-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Email duy nhất.
+2. Thực hiện hành vi: Email người nhận là bắt buộc và duy nhất trong một tenant sau khi chuẩn hóa chữ thường và khoảng trắng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tạo email trùng trả 409 và trả recipient_id hiện hữu; tenant khác có thể dùng cùng email.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-002,Người nhận,Dữ liệu cơ bản,BR-REC-002,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Dữ liệu cơ bản.
+2. Thực hiện hành vi: Recipient hỗ trợ họ, tên, điện thoại, phòng ban, chức danh, địa điểm và trạng thái nhận email.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API validate độ dài/định dạng; trường không bắt buộc có thể để trống.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-003,Người nhận,Trạng thái nhận email,BR-REC-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Trạng thái nhận email.
+2. Thực hiện hành vi: Trạng thái gồm active, paused, unsubscribed và bounced; chỉ active đủ điều kiện gửi.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Audience preview phân loại và loại các trạng thái không đủ điều kiện; lý do được hiển thị.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-004,Người nhận,Hủy đăng ký,BR-REC-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Hủy đăng ký.
+2. Thực hiện hành vi: unsubscribed không thể được bật lại bằng import hoặc bulk update thông thường.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Chỉ Admin qua luồng xác nhận/re-consent mới được chuyển về active; mọi thay đổi có audit.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-005,Người nhận,Nhiều danh sách,BR-REC-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Nhiều danh sách.
+2. Thực hiện hành vi: Một recipient có thể thuộc nhiều list; thao tác là 'Quản lý danh sách', không phải chuyển độc quyền.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Thêm vào list B không xóa membership list A; membership trùng không tạo bản ghi mới.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-006,Người nhận,Nhiều tag,BR-REC-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Nhiều tag.
+2. Thực hiện hành vi: Một recipient có thể có nhiều tag; bảng hiển thị tối đa 2 tag và +n.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả toàn bộ tag; UI hiển thị đúng +n và popover đầy đủ.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-007,Người nhận,Tìm kiếm,BR-REC-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tìm kiếm.
+2. Thực hiện hành vi: Tìm theo email, họ tên, phòng ban và giá trị custom field được đánh index.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Kết quả đúng tenant, không phân biệt hoa thường cho email/tên; phân trang ổn định.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-008,Người nhận,Lọc,BR-REC-008,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Lọc.
+2. Thực hiện hành vi: Bộ lọc list/tag hỗ trợ nhiều giá trị và toán tử match any/match all.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",match any trả hợp; match all trả giao; bộ đếm dùng cùng query với dữ liệu.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-009,Người nhận,Thao tác hàng loạt,BR-REC-009,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Thao tác hàng loạt.
+2. Thực hiện hành vi: Các dòng đã chọn có thanh thao tác gắn tag, quản lý list, cập nhật custom data, xuất và xóa.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Toàn bộ hàng được highlight; job trả số thành công/thất bại và file lỗi.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-REC-010,Người nhận,Xóa có lịch sử,BR-REC-010,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xóa có lịch sử.
+2. Thực hiện hành vi: Xóa recipient không được làm mất campaign history.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Campaign recipient snapshot vẫn giữ email/tên/merge data ở thời điểm gửi; PII retention tuân chính sách.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-001,Danh sách & Tag,Khác biệt List và Tag,BR-SEG-001,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Khác biệt List và Tag.
+2. Thực hiện hành vi: List là tập người nhận được quản lý có chủ đích; Tag là nhãn phân loại dùng linh hoạt.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",UI có tab Tất cả/Danh sách/Tag/Import và mô tả rõ ngữ nghĩa.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-002,Danh sách & Tag,Tên duy nhất,BR-SEG-002,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tên duy nhất.
+2. Thực hiện hành vi: Tên list và tag không trùng trong cùng loại và tenant sau khi trim, so sánh không phân biệt hoa thường.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tạo trùng trả 409; đổi tên kiểm tra cùng quy tắc.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-003,Danh sách & Tag,Màu tag,BR-SEG-003,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Màu tag.
+2. Thực hiện hành vi: Tag có màu từ palette chuẩn; màu không ảnh hưởng ngữ nghĩa lọc.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Mã màu được validate; light/dark mode đạt tương phản tối thiểu theo token.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-004,Danh sách & Tag,Đếm thành viên,BR-SEG-004,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Đếm thành viên.
+2. Thực hiện hành vi: Số thành viên của list/tag phản ánh recipient chưa bị xóa mềm, không đếm membership trùng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Count được cập nhật cuối cùng nhất quán hoặc eventual consistency dưới 5 giây.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-005,Danh sách & Tag,Xóa list,BR-SEG-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xóa list.
+2. Thực hiện hành vi: Xóa list chỉ xóa membership, không xóa recipient.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Recipient vẫn tồn tại và giữ tag/list khác; campaign snapshot không đổi.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-006,Danh sách & Tag,Xóa tag,BR-SEG-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xóa tag.
+2. Thực hiện hành vi: Xóa tag gỡ tag khỏi recipient nhưng không xóa recipient hoặc custom data.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tag biến mất khỏi bộ lọc sau khi job hoàn tất; audit ghi số membership bị gỡ.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-007,Danh sách & Tag,Nguồn dữ liệu thống nhất,BR-SEG-007,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Nguồn dữ liệu thống nhất.
+2. Thực hiện hành vi: Tag/list trong bảng, filter, form recipient và popup audience dùng chung API/master data.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","ID, tên, màu và số lượng nhất quán ở mọi màn hình.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-008,Danh sách & Tag,Audience theo segment,BR-SEG-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Audience theo segment.
+2. Thực hiện hành vi: Chiến dịch có thể chọn nhiều list/tag; hệ thống hợp nhất và khử trùng theo recipient_id.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Một recipient thuộc nhiều nguồn chỉ nhận một message trong campaign.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-009,Danh sách & Tag,Loại trừ,BR-SEG-009,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Loại trừ.
+2. Thực hiện hành vi: Audience builder hỗ trợ exclude list/tag/recipient.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Recipient nằm ở include và exclude bị loại; preview nêu lý do excluded.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEG-010,Danh sách & Tag,Phân trang,BR-SEG-010,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Phân trang.
+2. Thực hiện hành vi: Danh sách list/tag có phân trang, sort và search phía server.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Sort ổn định theo tên/id; page size giới hạn cấu hình.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-001,Dữ liệu tùy chỉnh,Định nghĩa trường,BR-CF-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Định nghĩa trường.
+2. Thực hiện hành vi: Custom field có key duy nhất, label, type, required flag, default value và validation.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Key chỉ a-z, 0-9, underscore, bắt đầu bằng chữ; đổi label không đổi key.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-002,Dữ liệu tùy chỉnh,Kiểu dữ liệu,BR-CF-002,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Kiểu dữ liệu.
+2. Thực hiện hành vi: Hỗ trợ text, number, date, boolean và enum; giá trị được lưu theo kiểu, không chỉ chuỗi.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API từ chối sai kiểu; filter/sort dùng semantics đúng kiểu.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-003,Dữ liệu tùy chỉnh,Trường hệ thống,BR-CF-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Trường hệ thống.
+2. Thực hiện hành vi: Email, first_name, last_name và unsubscribe_url là biến hệ thống, không được tạo custom field trùng key.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tạo key bị bảo lưu trả 422 với danh sách key hợp lệ.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-004,Dữ liệu tùy chỉnh,Cập nhật hàng loạt,BR-CF-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Cập nhật hàng loạt.
+2. Thực hiện hành vi: Bulk update custom data chọn phạm vi theo recipient đã chọn, list, tag hoặc bộ lọc hiện tại.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Trước chạy hiển thị scope, estimated_count, field/value và dry-run validation.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-005,Dữ liệu tùy chỉnh,Không mở rộng phạm vi,BR-CF-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Không mở rộng phạm vi.
+2. Thực hiện hành vi: Backend phải resolve scope tại lúc xác nhận job và không cập nhật người mới gia nhập segment sau đó.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Job lưu recipient snapshot/selection token; count processed không vượt resolved_count.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-006,Dữ liệu tùy chỉnh,Kết quả bulk,BR-CF-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Kết quả bulk.
+2. Thực hiện hành vi: Bulk job trả processed, succeeded, failed, skipped và file lỗi theo từng dòng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",UI theo dõi trạng thái queued/running/completed/failed; lỗi không làm mất kết quả thành công.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-007,Dữ liệu tùy chỉnh,Idempotent bulk,BR-CF-007,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Idempotent bulk.
+2. Thực hiện hành vi: Retry cùng job/idempotency key không áp dụng lặp lại ngoài ý muốn.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Mỗi recipient-field chỉ có một kết quả cho cùng job; retry tiếp tục phần chưa hoàn tất.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-008,Dữ liệu tùy chỉnh,Ảnh hưởng chiến dịch,BR-CF-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Ảnh hưởng chiến dịch.
+2. Thực hiện hành vi: Bulk update sau khi campaign đã snapshot không tự thay đổi merge data của campaign đã lên lịch.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",UI cảnh báo; campaign phải được hủy/refresh audience để lấy dữ liệu mới.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CF-009,Dữ liệu tùy chỉnh,Audit giá trị,BR-CF-009,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Audit giá trị.
+2. Thực hiện hành vi: Thay đổi custom data ghi field key, actor, source job và before/after theo chính sách che PII.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Audit tra được theo recipient/job; secret hoặc nội dung nhạy cảm được mask.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-001,Import,Định dạng file,BR-IMP-001,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Định dạng file.
+2. Thực hiện hành vi: Import hỗ trợ CSV/XLSX, giới hạn kích thước và số dòng cấu hình.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",File sai loại/quá giới hạn bị từ chối trước khi tạo job; mặc định 50 MB/100.000 dòng.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-002,Import,Mapping,BR-IMP-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Mapping.
+2. Thực hiện hành vi: Người dùng map cột sang trường hệ thống, custom field, list và tag; email bắt buộc.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Không cho tiếp tục nếu email chưa map hoặc hai cột map vào cùng trường đơn trị.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-003,Import,Preview,BR-IMP-003,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Preview.
+2. Thực hiện hành vi: Hiển thị preview tối thiểu 20 dòng và lỗi mapping/kiểu dữ liệu trước khi chạy.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Lỗi theo cell có row/column/reason; người dùng có thể quay lại sửa mapping.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-004,Import,Upsert,BR-IMP-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Upsert.
+2. Thực hiện hành vi: Import cho chọn create only, update existing hoặc create and update; khóa đối sánh là normalized email.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Kết quả phân biệt created/updated/skipped/failed; không tạo duplicate.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-005,Import,Consent,BR-IMP-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Consent.
+2. Thực hiện hành vi: Import không được chuyển recipient unsubscribed/bounced về active nếu không qua quyền và luồng consent.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Giá trị active trong file bị ignore/failed theo policy; audit ghi lý do.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-006,Import,Xử lý bất đồng bộ,BR-IMP-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xử lý bất đồng bộ.
+2. Thực hiện hành vi: Import lớn chạy background, có progress và có thể xem lại lịch sử.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả 202 + job_id; tiến độ cập nhật dưới 5 giây; có file kết quả.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-IMP-007,Import,Tính nguyên tử theo dòng,BR-IMP-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tính nguyên tử theo dòng.
+2. Thực hiện hành vi: Lỗi một dòng không rollback các dòng hợp lệ khác.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Job hoàn thành partial_success; tổng count khớp tổng dòng dữ liệu.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-001,Template & biến,Vòng đời template,BR-TPL-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Vòng đời template.
+2. Thực hiện hành vi: Template có draft, published và archived; campaign chỉ gửi từ version đã publish hoặc snapshot content hợp lệ.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Sửa draft không thay đổi campaign đã dùng version cũ.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-002,Template & biến,Version,BR-TPL-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Version.
+2. Thực hiện hành vi: Mỗi lần publish tạo template_version bất biến gồm subject, HTML, text và variable schema.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Version cũ đọc được; update trực tiếp version trả 409/405.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-003,Template & biến,Cú pháp biến,BR-TPL-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Cú pháp biến.
+2. Thực hiện hành vi: Biến sử dụng cú pháp {{variable_key}}; key phải tồn tại trong schema hệ thống/custom field.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Parser phát hiện biến không hợp lệ, lặp và cú pháp hỏng trước publish.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-004,Template & biến,Required và optional,BR-TPL-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Required và optional.
+2. Thực hiện hành vi: Mỗi biến được đánh required/optional; optional có thể có default.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Publish lưu schema; render required thiếu trả lỗi, optional thiếu dùng default hoặc rỗng theo cấu hình.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-005,Template & biến,Preview,BR-TPL-005,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Preview.
+2. Thực hiện hành vi: Preview cho chọn recipient thật hoặc dữ liệu mẫu và hiển thị subject/HTML/text sau merge.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Preview không tạo send job; dữ liệu thiếu được liệt kê theo variable_key.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-006,Template & biến,Sanitize HTML,BR-TPL-006,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Sanitize HTML.
+2. Thực hiện hành vi: HTML template được sanitize và giới hạn nội dung nguy hiểm; link được validate.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Script/event handler bị loại; URL scheme nguy hiểm bị chặn; kết quả có warning.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-007,Template & biến,Text fallback,BR-TPL-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Text fallback.
+2. Thực hiện hành vi: Template gửi production phải có text part hoặc backend tự sinh text part có thể đọc.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",MIME message có HTML và text; không chứa raw HTML trong text part.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-008,Template & biến,Unsubscribe,BR-TPL-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Unsubscribe.
+2. Thực hiện hành vi: Email marketing/bulk bắt buộc có unsubscribe_url và header List-Unsubscribe khi policy yêu cầu.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Validation chặn schedule/send nếu thiếu; transactional campaign có policy riêng.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-009,Template & biến,Tài nguyên,BR-TPL-009,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tài nguyên.
+2. Thực hiện hành vi: Ảnh dùng URL HTTPS hoặc asset storage được phép; không nhúng base64 quá giới hạn.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Validator trả warning/error theo kích thước; asset không public trái phép.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-010,Template & biến,Tên template,BR-TPL-010,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tên template.
+2. Thực hiện hành vi: Tên template duy nhất trong tenant sau khi trim, không phân biệt hoa thường.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tạo/đổi tên trùng trả 409.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-011,Template & biến,Test email,BR-TPL-011,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Test email.
+2. Thực hiện hành vi: Test email chỉ gửi tới địa chỉ xác nhận, có nhãn test và không tính vào campaign statistics.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Audit có actor/recipient; message tagged test; history tách riêng.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-TPL-012,Template & biến,Khả năng tái lập,BR-TPL-012,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Khả năng tái lập.
+2. Thực hiện hành vi: Campaign snapshot template version và merge schema tại lúc xác nhận gửi/lên lịch.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Thay đổi template sau đó không làm đổi nội dung campaign đã snapshot.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-001,Soạn & Audience,Campaign draft,BR-CMP-001,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Campaign draft.
+2. Thực hiện hành vi: Email soạn dở được lưu draft, có subject, template/version, sender, audience definition và settings.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Autosave không làm mất dữ liệu; optimistic concurrency ngăn ghi đè phiên mới hơn.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-002,Soạn & Audience,Khử trùng audience,BR-CMP-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Khử trùng audience.
+2. Thực hiện hành vi: Audience hợp từ list/tag/import/manual được khử trùng theo recipient_id/normalized email.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Preview total_unique đúng; một recipient chỉ có một campaign_recipient.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-003,Soạn & Audience,Kiểm tra đủ điều kiện,BR-CMP-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Kiểm tra đủ điều kiện.
+2. Thực hiện hành vi: Trước gửi, backend loại unsubscribed, paused, hard-bounced, deleted và suppressed.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Preview trả actionable/skipped theo reason; skipped không vào sending queue.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-004,Soạn & Audience,Kiểm tra biến,BR-CMP-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Kiểm tra biến.
+2. Thực hiện hành vi: Backend kiểm required variables trên toàn audience trước send/schedule.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Trả complete_count, missing_count, breakdown theo variable và sample recipient.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-005,Soạn & Audience,Xử lý thiếu biến,BR-CMP-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Xử lý thiếu biến.
+2. Thực hiện hành vi: Không được âm thầm gửi required variable rỗng. Người dùng chỉ có thể sửa dữ liệu, dùng default hợp lệ hoặc xác nhận loại người thiếu biến.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Mặc định block; exclude tạo snapshot skipped_reason=MISSING_VARIABLE; quyết định được audit.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-006,Soạn & Audience,Optional variable,BR-CMP-006,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Optional variable.
+2. Thực hiện hành vi: Optional variable thiếu dùng default của template; nếu không có default mới render rỗng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Preview và message thực tế dùng cùng render engine và kết quả.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-007,Soạn & Audience,Audience snapshot,BR-CMP-007,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Audience snapshot.
+2. Thực hiện hành vi: Khi xác nhận send/schedule, hệ thống đóng băng danh sách recipient và merge data dùng cho lần gửi đó.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Recipient/list/tag/custom data thay đổi sau snapshot không thay đổi campaign; refresh yêu cầu hủy và tạo snapshot mới.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-008,Soạn & Audience,Review trước gửi,BR-CMP-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Review trước gửi.
+2. Thực hiện hành vi: Màn review hiển thị sender, subject, audience counts, exclusions, variable issues, thời gian và timezone.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Chỉ enable CTA khi validation P0 pass; user phải xác nhận cảnh báo có thể bỏ qua.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-009,Soạn & Audience,Giới hạn audience,BR-CMP-009,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Giới hạn audience.
+2. Thực hiện hành vi: Campaign vượt quota hoặc giới hạn tenant không được schedule/send.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả 422/429 với limit/current/requested và hướng xử lý.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-010,Soạn & Audience,Chống gửi trùng,BR-CMP-010,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Chống gửi trùng.
+2. Thực hiện hành vi: Double-click hoặc retry network không tạo hai campaign execution.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Idempotency key trả cùng campaign/job; UI CTA loading và disabled.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-011,Soạn & Audience,Chỉnh sửa sau gửi,BR-CMP-011,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Chỉnh sửa sau gửi.
+2. Thực hiện hành vi: Campaign đã sending/completed không chỉnh nội dung/audience; có thể duplicate thành draft mới.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",PUT trả 409; duplicate tạo ID mới và không sao chép progress.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CMP-012,Soạn & Audience,Tên campaign,BR-CMP-012,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tên campaign.
+2. Thực hiện hành vi: Campaign có tên nội bộ bắt buộc, không gửi tới người nhận.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tên xuất hiện trong history/audit; không được chèn tự động vào subject/body.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-001,Hẹn giờ,Thời gian hợp lệ,BR-SCH-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Thời gian hợp lệ.
+2. Thực hiện hành vi: scheduled_at phải ở tương lai ít nhất 2 phút và không quá 12 tháng, các ngưỡng là cấu hình.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Ngoài khoảng trả 422 với min/max timestamp.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-002,Hẹn giờ,Timezone IANA,BR-SCH-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Timezone IANA.
+2. Thực hiện hành vi: Người dùng chọn timezone IANA; backend lưu scheduled_at UTC và timezone_name gốc.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Round-trip hiển thị đúng local time kể cả DST.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-003,Hẹn giờ,DST không tồn tại,BR-SCH-003,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng DST không tồn tại.
+2. Thực hiện hành vi: Giờ local không tồn tại do DST bị từ chối; giờ lặp phải yêu cầu chọn offset.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả lỗi có candidate offsets; không tự đoán.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-004,Hẹn giờ,Validation trước schedule,BR-SCH-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Validation trước schedule.
+2. Thực hiện hành vi: Schedule chỉ thành công khi sender, template, audience, consent, variable và quota validation pass.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",API trả validation_report; không tạo scheduled job nếu có blocking error.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-005,Hẹn giờ,Khóa chỉnh sửa,BR-SCH-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Khóa chỉnh sửa.
+2. Thực hiện hành vi: Campaign scheduled được chỉnh/hủy trước lock window 2 phút; chỉnh sửa tạo lại snapshot và validation.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Trong lock window update trả 409; cancel trước lock chuyển cancelled.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-006,Hẹn giờ,Thực thi một lần,BR-SCH-006,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Thực thi một lần.
+2. Thực hiện hành vi: Scheduler dùng distributed lock/idempotency để enqueue campaign đúng một lần.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Nhiều scheduler replica không tạo duplicate sending job.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-007,Hẹn giờ,Trễ lịch,BR-SCH-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Trễ lịch.
+2. Thực hiện hành vi: Nếu worker trễ, campaign vẫn chạy và ghi actual_started_at/delay_seconds; vượt threshold thì cảnh báo.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",History hiển thị thời gian dự kiến và thực tế; alert khi delay > 60 giây.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-008,Hẹn giờ,Hủy lịch,BR-SCH-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Hủy lịch.
+2. Thực hiện hành vi: Hủy campaign chưa bắt đầu không gửi message nào và giải phóng quota reservation nếu có.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Status cancelled, pending recipients=0 queued; audit ghi actor/reason.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-009,Hẹn giờ,Thay đổi cấu hình sender,BR-SCH-009,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Thay đổi cấu hình sender.
+2. Thực hiện hành vi: Sender account bị disable trước giờ chạy làm campaign blocked, không tự chuyển sender khác.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Campaign status blocked; owner nhận cảnh báo và có thể chọn sender mới rồi revalidate.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SCH-010,Hẹn giờ,Thông báo,BR-SCH-010,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Thông báo.
+2. Thực hiện hành vi: Tạo, sửa, hủy và lỗi schedule tạo notification cho owner theo cấu hình.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Notification chứa campaign, time/timezone, trạng thái và link; không lộ secret.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-001,Gửi & tiến độ,State machine,BR-SEND-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng State machine.
+2. Thực hiện hành vi: Campaign execution đi qua queued, validating, sending, paused, completed, partial_failed, failed hoặc cancelled.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Transition ngoài state machine trả 409; mọi transition có timestamp và actor/system reason.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-002,Gửi & tiến độ,Message state,BR-SEND-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Message state.
+2. Thực hiện hành vi: Mỗi campaign recipient có pending, queued, submitted, delivered, bounced, failed, skipped hoặc cancelled.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Counts theo trạng thái cộng lại bằng total_snapshot; không đếm trùng event.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-003,Gửi & tiến độ,Công thức tiến độ,BR-SEND-003,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Công thức tiến độ.
+2. Thực hiện hành vi: Progress gửi = số recipient ở terminal send state / số actionable recipient; delivered được hiển thị riêng khỏi sent/submitted.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","0..100%, không giảm; completed chỉ khi mọi actionable terminal.",Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-004,Gửi & tiến độ,Realtime,BR-SEND-004,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Realtime.
+2. Thực hiện hành vi: History detail cập nhật progress gần thời gian thực qua SSE/WebSocket, có polling fallback.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Độ trễ UI p95 dưới 5 giây; mất kết nối tự reconnect từ last_event_id.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-005,Gửi & tiến độ,ETA,BR-SEND-005,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng ETA.
+2. Thực hiện hành vi: ETA tính từ rolling throughput của các message gần nhất; chưa đủ dữ liệu hiển thị đang ước tính.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",ETA không âm; biến mất khi complete; không dùng failed/skipped để thổi phồng throughput.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-006,Gửi & tiến độ,Retry,BR-SEND-006,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Retry.
+2. Thực hiện hành vi: Lỗi tạm thời retry exponential backoff có jitter; lỗi vĩnh viễn không retry.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Tối đa 5 lần mặc định; mỗi attempt có provider response và next_retry_at.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-007,Gửi & tiến độ,Rate limit,BR-SEND-007,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Rate limit.
+2. Thực hiện hành vi: Worker tuân rate limit tenant/sender/provider và quota ngày.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Không vượt cấu hình; message chờ không bị mất; 429 provider được retry theo Retry-After.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-008,Gửi & tiến độ,Provider webhook,BR-SEND-008,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Provider webhook.
+2. Thực hiện hành vi: Webhook delivered/bounced/complaint được xác thực chữ ký, idempotent và map về message.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Webhook trùng không tăng count; chữ ký sai trả 401/400 và không ghi state.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-009,Gửi & tiến độ,Pause/Resume,BR-SEND-009,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Pause/Resume.
+2. Thực hiện hành vi: Operator có thể pause campaign đang sending; message đã submitted không thu hồi, message chưa queued dừng lại.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Pause đạt hiệu lực trong 10 giây; resume tiếp tục phần còn lại, không gửi trùng.",Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-010,Gửi & tiến độ,Cancel khi đang gửi,BR-SEND-010,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Cancel khi đang gửi.
+2. Thực hiện hành vi: Cancel dừng phần chưa gửi và đánh cancelled; message đã submitted tiếp tục nhận delivery event.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Counts cuối cùng phân biệt sent và cancelled; cảnh báo không thể thu hồi email đã gửi.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-011,Gửi & tiến độ,Suppression cập nhật,BR-SEND-011,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Suppression cập nhật.
+2. Thực hiện hành vi: Hard bounce/complaint cập nhật recipient suppression để các campaign sau không gửi.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Event tạo suppression atomically; campaign hiện tại không retry lỗi vĩnh viễn.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-012,Gửi & tiến độ,Render deterministic,BR-SEND-012,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Render deterministic.
+2. Thực hiện hành vi: Message render từ snapshot template và merge data, không đọc dữ liệu recipient live trong worker.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Retry cùng recipient tạo nội dung logic giống nhau; content_hash được lưu.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEND-013,Gửi & tiến độ,Observability,BR-SEND-013,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Observability.
+2. Thực hiện hành vi: Mỗi campaign/job/message có correlation_id; log, metric và trace không chứa secret hoặc body đầy đủ.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Có dashboard queue lag, throughput, error rate, webhook lag; tìm log theo campaign_id.",Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-001,Lịch sử,Danh sách lịch sử,BR-HIS-001,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Danh sách lịch sử.
+2. Thực hiện hành vi: History hiển thị campaign name, subject, sender, created/scheduled/started/completed, status và progress.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Sort mặc định mới nhất; filter theo status/date/sender/creator; server pagination.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-002,Lịch sử,Chi tiết tiến độ,BR-HIS-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Chi tiết tiến độ.
+2. Thực hiện hành vi: Chi tiết hiển thị tổng, chờ, đang xử lý, submitted/sent, delivered, failed, bounced, skipped, ETA.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Counts cùng nguồn backend và cập nhật realtime; tooltip giải thích sent khác delivered.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-003,Lịch sử,Drill-down,BR-HIS-003,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Drill-down.
+2. Thực hiện hành vi: Người dùng có thể lọc recipient theo message status và tải danh sách lỗi theo quyền.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Export chạy background nếu lớn; dữ liệu PII theo RBAC.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-004,Lịch sử,Scheduled row,BR-HIS-004,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Scheduled row.
+2. Thực hiện hành vi: Campaign đã lên lịch xuất hiện trong history với scheduled time/timezone và action sửa/hủy khi được phép.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Không hiển thị progress gửi trước khi bắt đầu; countdown dùng server time.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-005,Lịch sử,Partial failure,BR-HIS-005,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Partial failure.
+2. Thực hiện hành vi: Campaign có cả thành công và lỗi kết thúc partial_failed, không gộp thành failed toàn bộ.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Summary và export nêu rõ counts/reasons; retry tạo execution mới có liên kết parent.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-006,Lịch sử,Retention,BR-HIS-006,P2,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Retention.
+2. Thực hiện hành vi: Campaign summary giữ tối thiểu 24 tháng; message event chi tiết theo chính sách tenant, mặc định 12 tháng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Job purge có audit và không phá aggregate report; chính sách cấu hình được.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-007,Lịch sử,Export,BR-HIS-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Export.
+2. Thực hiện hành vi: Export history/audience không bao gồm secret và tôn trọng field-level permission.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Viewer không được export nếu thiếu quyền; file có expiry và audit download.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-HIS-008,Lịch sử,Tính nhất quán,BR-HIS-008,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Tính nhất quán.
+2. Thực hiện hành vi: Progress summary được reconcile định kỳ từ message state để sửa sai lệch counter/event.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Reconciliation idempotent; chênh lệch được metric/audit và UI tự cập nhật.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-001,Cấu hình gửi,Sender account,BR-CFG-001,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Sender account.
+2. Thực hiện hành vi: Admin cấu hình sender identity/account; secret được lưu trong secret manager, không trả lại qua API.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",GET chỉ trả masked metadata; log/audit không chứa credential.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-002,Cấu hình gửi,Verify sender,BR-CFG-002,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Verify sender.
+2. Thực hiện hành vi: Sender phải verified và active trước khi dùng.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Campaign validation chặn sender pending/failed/disabled.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-003,Cấu hình gửi,Test connection,BR-CFG-003,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Test connection.
+2. Thực hiện hành vi: Admin có thể test connection mà không lưu secret lỗi; kết quả trả mã lỗi an toàn.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Timeout hữu hạn; không echo password/token; audit có outcome.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-004,Cấu hình gửi,From/Reply-To,BR-CFG-004,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng From/Reply-To.
+2. Thực hiện hành vi: From address phải thuộc sender identity đã verify; Reply-To được validate và có thể khác.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Địa chỉ giả mạo bị từ chối; message headers đúng cấu hình.,Có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-005,Cấu hình gửi,Provider adapter,BR-CFG-005,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Provider adapter.
+2. Thực hiện hành vi: Backend dùng interface provider chung để đổi SMTP/API provider mà không đổi campaign domain.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Adapter chuẩn hóa send result, error classification và webhook event.",Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-006,Cấu hình gửi,Quota,BR-CFG-006,P0,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Quota.
+2. Thực hiện hành vi: Mỗi sender/tenant có quota và rate limit cấu hình; quota được kiểm khi review và thực thi.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Không oversubscribe khi nhiều campaign song song; reservation được release khi cancel.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-CFG-007,Cấu hình gửi,Disable sender,BR-CFG-007,P1,Functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Disable sender.
+2. Thực hiện hành vi: Disable sender không xóa lịch sử; campaign scheduled liên quan chuyển blocked.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",History vẫn hiển thị sender snapshot; notification gửi owner.,Nên có,API + UI,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-001,Bảo mật & vận hành,Mã hóa,BR-SEC-001,P0,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Mã hóa.
+2. Thực hiện hành vi: Traffic dùng TLS; database, object storage, backup và secret được mã hóa at rest.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Security scan xác nhận không có plaintext secret; TLS policy đạt chuẩn tổ chức.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-002,Bảo mật & vận hành,Audit,BR-SEC-002,P0,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Audit.
+2. Thực hiện hành vi: Ghi immutable audit cho login, config, recipient bulk/import, template publish, send/schedule/pause/cancel/export.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Audit có actor, tenant, action, target, timestamp, correlation_id và diff đã mask.",Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-003,Bảo mật & vận hành,PII,BR-SEC-003,P0,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng PII.
+2. Thực hiện hành vi: PII chỉ hiện theo quyền; log, metric và error payload không chứa recipient list/body email đầy đủ.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",DLP/log scan không phát hiện secret hoặc body; export có expiry.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-004,Bảo mật & vận hành,Backup/DR,BR-SEC-004,P1,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Backup/DR.
+2. Thực hiện hành vi: PostgreSQL backup PITR; mục tiêu đề xuất RPO 15 phút, RTO 4 giờ.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Diễn tập restore định kỳ đạt mục tiêu hoặc có biên bản chênh lệch.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-005,Bảo mật & vận hành,Availability,BR-SEC-005,P1,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Availability.
+2. Thực hiện hành vi: API nghiệp vụ mục tiêu 99,9% tháng; gửi bất đồng bộ chịu được restart worker.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Job không mất/không trùng sau restart; SLO dashboard và alert tồn tại.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-006,Bảo mật & vận hành,Hiệu năng,BR-SEC-006,P1,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Hiệu năng.
+2. Thực hiện hành vi: Đề xuất MVP: 100.000 recipient/campaign, 100 message/giây/tenant có thể cấu hình; list API p95 dưới 500 ms.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Load test với dữ liệu mục tiêu đạt ngưỡng, không vi phạm rate limit/provider quota.",Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-007,Bảo mật & vận hành,Event delivery,BR-SEC-007,P0,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng Event delivery.
+2. Thực hiện hành vi: Internal event và webhook dùng at-least-once; consumer phải idempotent và có dead-letter queue.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.","Replay event không đổi count sai; DLQ có alert, inspect và replay có kiểm soát.",Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-SEC-008,Bảo mật & vận hành,API versioning,BR-SEC-008,P2,Non-functional,Có tenant và tài khoản đúng vai trò; dữ liệu nền cần thiết đã được tạo.,Bộ dữ liệu hợp lệ đại diện và một biến thể không hợp lệ theo rule.,"1. Mở chức năng API versioning.
+2. Thực hiện hành vi: Public/internal REST API có prefix /api/v1 và quy tắc backward compatibility.
+3. Kiểm tra phản hồi UI/API, dữ liệu lưu và audit/event liên quan.",Breaking change tạo version mới; OpenAPI và error schema được publish cùng release.,Có,API/Integration,Not Run,,Baseline traceability test; bổ sung dữ liệu biên theo môi trường.
+TC-AUTH-007,Xác thực & phân quyền,Thông báo đăng nhập không lộ tài khoản,BR-AUTH-001,P0,Security,Có một email tồn tại và một email không tồn tại.,Sai mật khẩu; email không tồn tại.,"1. Gửi login với email tồn tại nhưng sai mật khẩu.
+2. Gửi login với email không tồn tại.
+3. So sánh status, body và thời gian phản hồi.","Hai phản hồi cùng schema/thông báo chung, không xác nhận sự tồn tại của tài khoản.",Có,API + UI,Not Run,,
+TC-AUTH-008,Xác thực & phân quyền,Refresh token replay,BR-AUTH-002,P0,Security,Đã đăng nhập và có refresh token R1.,R1,"1. Dùng R1 để lấy token mới và R2.
+2. Dùng lại R1.
+3. Dùng R2 sau khi phát hiện replay.",R1 dùng lại bị từ chối; token family bị thu hồi theo policy và audit có sự kiện bất thường.,Có,API + UI,Not Run,,
+TC-AUTH-009,Xác thực & phân quyền,Viewer gọi API gửi,"BR-AUTH-003, BR-AUTH-004",P0,Authorization,"Tài khoản Viewer, draft campaign hợp lệ.",Viewer access token,"1. Ẩn/disable nút Gửi trên UI.
+2. Gọi trực tiếp POST send bằng token Viewer.",API trả 403; không tạo execution/job; audit ghi denied action.,Có,API + UI,Not Run,,
+TC-REC-011,Người nhận,Chuẩn hóa email trùng,BR-REC-001,P0,Validation,Chưa có recipient.,User@Example.com và ' user@example.com ',"1. Tạo recipient bằng email thứ nhất.
+2. Tạo recipient bằng email thứ hai trong cùng tenant.",Lần hai trả 409 và tham chiếu recipient đã có; chỉ một bản ghi tồn tại.,Có,API + UI,Not Run,,
+TC-REC-012,Người nhận,Unsubscribed không bị import bật lại,"BR-REC-004, BR-IMP-005",P0,Compliance,Recipient đang unsubscribed.,File có cùng email và status=active,"1. Import với chế độ update existing.
+2. Mở recipient và audit.",Recipient vẫn unsubscribed; dòng import skipped/failed với reason CONSENT_REQUIRED.,Có,API + UI,Not Run,,
+TC-SEG-011,Danh sách & Tag,Khử trùng nhiều nguồn,"BR-SEG-008, BR-CMP-002",P0,Functional,Một recipient thuộc 2 list và 2 tag được chọn.,Audience include 4 nguồn,"1. Tạo audience từ cả 4 nguồn.
+2. Chạy preview và snapshot.",total_unique=1 cho recipient; chỉ tạo một campaign_recipient/message.,Có,API + UI,Not Run,,
+TC-SEG-012,Danh sách & Tag,Include và exclude,BR-SEG-009,P1,Functional,Recipient thuộc list Include và tag Exclude.,"Include list A, exclude tag X","1. Tạo audience rule.
+2. Preview audience.",Recipient bị excluded; breakdown có reason EXCLUDED_BY_TAG.,Có,API + UI,Not Run,,
+TC-CF-010,Dữ liệu tùy chỉnh,Key bị bảo lưu,"BR-CF-001, BR-CF-003",P0,Validation,Admin ở trang custom fields.,"email, first_name, unsubscribe_url",1. Tạo lần lượt các key bị bảo lưu.,"Mỗi request trả 422, không tạo field và trả danh sách reserved keys.",Có,API + UI,Not Run,,
+TC-CF-011,Dữ liệu tùy chỉnh,Bulk scope snapshot,"BR-CF-004, BR-CF-005",P0,Integration,Tag VIP hiện có 1.000 recipient.,Update employee_code='A' theo tag VIP,"1. Dry-run và xác nhận job.
+2. Thêm 100 recipient mới vào tag khi job đang queued.
+3. Chờ job hoàn tất.",resolved_count và processed_count là 1.000; 100 người mới không bị cập nhật.,Có,API + UI,Not Run,,
+TC-CF-012,Dữ liệu tùy chỉnh,Retry bulk không áp dụng lặp,"BR-CF-006, BR-CF-007",P0,Reliability,Bulk job bị ngắt sau 60%.,Cùng Idempotency-Key,"1. Retry request cùng key.
+2. Chạy worker tới completed.
+3. Kiểm tra item result và audit.",Mỗi recipient-field chỉ cập nhật một lần; tổng unique result bằng resolved_count.,Có,API + UI,Not Run,,
+TC-CF-013,Dữ liệu tùy chỉnh,Bulk update sau snapshot,"BR-CF-008, BR-CMP-007",P0,Functional,Campaign đã scheduled với field department='Sales'.,Đổi department='Marketing' cho audience,"1. Chạy bulk update sau khi campaign scheduled.
+2. Preview message snapshot và message khi thực thi.",Campaign vẫn dùng 'Sales'; UI cảnh báo dữ liệu scheduled không tự cập nhật.,Có,API + UI,Not Run,,
+TC-IMP-008,Import,Hai cột map cùng trường,BR-IMP-002,P0,Validation,File có cột Email và Work Email.,Map cả hai vào email,"1. Upload file.
+2. Chọn mapping trùng và tiếp tục.",Không cho tiếp tục; highlight cả hai mapping và thông báo trường đơn trị bị map nhiều lần.,Có,API + UI,Not Run,,
+TC-IMP-009,Import,Partial success,"BR-IMP-003, BR-IMP-007",P1,Integration,"File 100 dòng, 3 email sai và 2 number sai kiểu.",CSV lỗi hỗn hợp,"1. Preview và chạy import.
+2. Chờ completed.
+3. Tải file lỗi.","Job partial_success; succeeded=95, failed=5; file lỗi đúng row/column/reason; không rollback dòng hợp lệ.",Có,API + UI,Not Run,,
+TC-TPL-013,Template & biến,Publish biến không tồn tại,BR-TPL-003,P0,Validation,Không có custom field employee_grade.,Body chứa {{employee_grade}},"1. Lưu draft.
+2. Publish template.","Draft có thể lưu với warning theo policy nhưng publish bị chặn, trả UNKNOWN_VARIABLE.",Có,API + UI,Not Run,,
+TC-TPL-014,Template & biến,Sanitize HTML nguy hiểm,BR-TPL-006,P0,Security,Editor đang mở template.,"script, onerror, javascript: URL","1. Dán HTML nguy hiểm.
+2. Preview và publish.
+3. Kiểm tra HTML snapshot.",Thành phần nguy hiểm bị loại/chặn; không thực thi script; validation report liệt kê thay đổi.,Có,API + UI,Not Run,,
+TC-TPL-015,Template & biến,Version bất biến,"BR-TPL-001, BR-TPL-002, BR-TPL-012",P0,Functional,Template v1 published và campaign đã snapshot.,Sửa subject/body thành v2,"1. Publish v2.
+2. Mở lại campaign cũ và chạy gửi.",Campaign cũ dùng v1; campaign mới có thể chọn v2; v1 không bị sửa.,Có,API + UI,Not Run,,
+TC-CMP-013,Soạn & Audience,Thiếu required variable mặc định block,"BR-CMP-004, BR-CMP-005",P0,Functional,Template yêu cầu {{employee_code}}; 10/100 recipient thiếu.,Audience 100 recipient,"1. Chạy validate audience.
+2. Không chọn phương án xử lý và nhấn Gửi/Hẹn giờ.","Validation hiển thị complete=90, missing=10; CTA bị chặn; không tạo send/schedule job.",Có,API + UI,Not Run,,
+TC-CMP-014,Soạn & Audience,Loại recipient thiếu biến,BR-CMP-005,P0,Functional,10/100 recipient thiếu required variable.,Chọn 'Loại người thiếu dữ liệu',"1. Xem breakdown và sample.
+2. Xác nhận loại 10 người.
+3. Schedule campaign.","Snapshot có actionable=90, skipped=10 reason MISSING_VARIABLE; audit ghi quyết định và actor.",Có,API + UI,Not Run,,
+TC-CMP-015,Soạn & Audience,Default cho optional variable,BR-CMP-006,P1,Functional,Template optional {{location}} default='Văn phòng'.,Recipient không có location,"1. Preview với recipient.
+2. Gửi test và gửi thật.",Cả preview/test/production render 'Văn phòng' bằng cùng engine.,Có,API + UI,Not Run,,
+TC-CMP-016,Soạn & Audience,Double click Gửi,"BR-GEN-005, BR-CMP-010",P0,Reliability,Campaign validation pass.,Hai request đồng thời cùng Idempotency-Key,"1. Double-click CTA hoặc gửi hai request đồng thời.
+2. Kiểm tra campaign execution, job và messages.",Chỉ một execution/job được tạo; cả response tham chiếu cùng resource.,Có,API + UI,Not Run,,
+TC-SCH-011,Hẹn giờ,DST giờ không tồn tại,"BR-SCH-002, BR-SCH-003",P1,Date/Time,Timezone có DST.,Local time nằm trong khoảng spring-forward,"1. Chọn ngày/giờ không tồn tại.
+2. Gửi schedule request.","UI/API từ chối, nêu lý do và gợi ý thời gian hợp lệ; không tự dịch giờ.",Có,API + UI,Not Run,,
+TC-SCH-012,Hẹn giờ,Hai scheduler replica,BR-SCH-006,P0,Concurrency,Campaign scheduled đến hạn; hai scheduler cùng chạy.,Cùng campaign_id/schedule_id,"1. Cho hai replica acquire cùng thời điểm.
+2. Quan sát queue và execution.",Chỉ một replica enqueue; một execution; metric duplicate_prevented tăng nếu tranh chấp.,Có,API + UI,Not Run,,
+TC-SCH-013,Hẹn giờ,Sender bị disable trước giờ chạy,"BR-SCH-009, BR-CFG-007",P0,Integration,Campaign scheduled với sender S.,Disable S trước thời điểm chạy,"1. Disable sender.
+2. Đến thời điểm scheduled.
+3. Mở history/notification.","Campaign chuyển blocked, không gửi; owner nhận cảnh báo và history giữ sender snapshot.",Có,API + UI,Not Run,,
+TC-SEND-014,Gửi & tiến độ,Counter không đếm event trùng,"BR-SEND-002, BR-SEND-008",P0,Integration,Message đã submitted.,Hai webhook delivered cùng event_id,"1. Gửi webhook hợp lệ lần 1.
+2. Replay lần 2.
+3. Kiểm tra state/counters.",Message delivered một lần; delivered_count tăng đúng 1; lần replay trả idempotent success.,Có,API + UI,Not Run,,
+TC-SEND-015,Gửi & tiến độ,Progress monotonic,"BR-SEND-002, BR-SEND-003",P0,Functional,Campaign 100 actionable recipient.,Chuỗi event out-of-order và duplicate,"1. Phát event submitted/delivered/failed không theo thứ tự.
+2. Đọc progress sau mỗi batch.",Progress luôn 0..100 và không giảm; tổng trạng thái bằng 100 sau reconcile.,Có,API + UI,Not Run,,
+TC-SEND-016,Gửi & tiến độ,Reconnect realtime,BR-SEND-004,P1,Reliability,Đang xem campaign sending.,Ngắt mạng 20 giây,"1. Ghi nhận last_event_id.
+2. Ngắt kết nối và phát thêm event.
+3. Kết nối lại.",Client resume từ last_event_id hoặc refetch snapshot; không mất/nhân đôi cập nhật; UI hội tụ dưới 5 giây.,Có,API + UI,Not Run,,
+TC-SEND-017,Gửi & tiến độ,429 provider,"BR-SEND-006, BR-SEND-007",P0,Integration,Provider giả lập trả 429 Retry-After=30.,10 messages,"1. Worker gửi batch.
+2. Quan sát attempts/next_retry_at.
+3. Cho provider thành công sau 30 giây.",Không retry trước 30 giây; không vượt rate; message gửi một lần thành công sau retry.,Có,API + UI,Not Run,,
+TC-SEND-018,Gửi & tiến độ,Worker restart,"BR-SEND-006, BR-SEC-005, BR-SEC-007",P0,Recovery,"Campaign đang sending, queue có message in-flight.",Kill worker sau provider accepted nhưng trước ack queue,"1. Khởi động lại worker.
+2. Cho message được redeliver.
+3. Reconcile provider/message state.",Không gửi trùng nhờ provider/message idempotency; job tiếp tục và hoàn tất.,Có,API + UI,Not Run,,
+TC-SEND-019,Gửi & tiến độ,Pause và resume,BR-SEND-009,P1,Functional,Campaign 10.000 recipient đang sending.,Pause sau 20%,"1. Nhấn Pause.
+2. Theo dõi queue trong 10 giây.
+3. Nhấn Resume.",Không enqueue mới sau thời hạn; đã submitted vẫn cập nhật; resume gửi phần còn lại không trùng.,Có,API + UI,Not Run,,
+TC-HIS-009,Lịch sử,Partial failure summary,"BR-HIS-002, BR-HIS-005",P0,Functional,"Campaign có 90 sent, 5 failed, 5 skipped.",Mixed terminal states,"1. Hoàn tất worker.
+2. Mở list và detail history.
+3. Export error list.",Status partial_failed; progress 100%; counts 90/5/5; export chứa đúng 5 failed và lý do.,Có,API + UI,Not Run,,
+TC-HIS-010,Lịch sử,Reconcile counter lệch,BR-HIS-008,P1,Recovery,Cố ý làm summary delivered_count lệch message states.,"Summary=80, actual=82","1. Chạy reconciliation job.
+2. Đọc API/history và metrics.",Summary sửa thành 82 idempotently; audit/metric ghi delta; UI nhận update.,Có,API + UI,Not Run,,
+TC-CFG-008,Cấu hình gửi,API không trả secret,"BR-CFG-001, BR-SEC-003",P0,Security,Admin đã lưu SMTP/API credential.,GET/list/update response và logs,"1. Gọi GET sender account.
+2. Cập nhật metadata không đổi secret.
+3. Tìm kiếm log/trace.",Không response/log nào chứa secret; chỉ masked/has_secret flag; gửi vẫn dùng secret hiện hữu.,Có,API + UI,Not Run,,
+TC-SEC-009,Bảo mật & vận hành,Tenant isolation,"BR-GEN-002, BR-AUTH-004",P0,Security,Tenant A và B có resource ID biết trước.,Token A truy cập ID B,"1. Gọi GET/PUT/DELETE resource B bằng token A.
+2. Thử filter/search đoán dữ liệu.",Không lộ resource; 404/403 nhất quán; không thay đổi dữ liệu; security audit ghi attempt.,Có,API + UI,Not Run,,
+TC-SEC-010,Bảo mật & vận hành,DLQ replay idempotent,BR-SEC-007,P0,Recovery,Event lỗi đã vào DLQ sau max retry.,Replay cùng event 2 lần,"1. Sửa nguyên nhân.
+2. Replay event.
+3. Replay lại và kiểm tra counters/audit.",Consumer xử lý đúng một hiệu ứng; replay lần hai không thay đổi state/count.,Có,API + UI,Not Run,,
+TC-SEC-011,Bảo mật & vận hành,Load campaign 100k,BR-SEC-006,P1,Performance,Môi trường performance có 100.000 recipient và provider stub.,"Campaign 100k, rate=100 msg/s","1. Snapshot/validate audience.
+2. Chạy send với worker scale mục tiêu.
+3. Đo API p95, queue lag, throughput, error.",Không mất/trùng; throughput đạt cấu hình; list API p95 <500 ms; progress p95 <5 giây.,Có,API + UI,Not Run,,
+TC-SEC-012,Bảo mật & vận hành,Rate limit login,BR-AUTH-005,P1,Security,Endpoint login hoạt động.,6 lần sai từ cùng IP/account,"1. Gửi liên tiếp credential sai.
+2. Kiểm tra lần vượt ngưỡng và Retry-After.",Request vượt ngưỡng trả 429; không tạo phiên; thời gian khóa đúng cấu hình.,Có,API + UI,Not Run,,
+TC-SEC-013,Bảo mật & vận hành,SQL/NoSQL injection,"BR-SEC-001, BR-SEC-003",P0,Security,Các endpoint search/filter/import hoạt động.,"Payload injection trong search, tag, custom field","1. Gửi payload injection qua query/body/file.
+2. Kiểm tra DB, response và log.",Không thực thi injection; response an toàn; log không lộ stack/secret.,Có,API + UI,Not Run,,
+TC-SEC-014,Bảo mật & vận hành,XSS stored trong recipient/template,"BR-TPL-006, BR-SEC-003",P0,Security,Có quyền tạo recipient/template.,"HTML/script trong name, tag, custom field, template","1. Lưu payload.
+2. Mở bảng, popup, preview và history.",Payload được escape/sanitize theo ngữ cảnh; không thực thi script.,Có,API + UI,Not Run,,
+TC-SEC-015,Bảo mật & vận hành,Restore PITR,BR-SEC-004,P1,Disaster Recovery,Có backup và WAL/PITR.,Mốc khôi phục trước sự cố giả lập,"1. Tạo dữ liệu chuẩn và ghi nhận checksum.
+2. Giả lập mất DB.
+3. Restore và đối chiếu.",Khôi phục trong RTO; mất dữ liệu không vượt RPO; job/event reconcile không tạo gửi trùng.,Có,API + UI,Not Run,,
+TC-SEC-016,Bảo mật & vận hành,SSE 10.000 kết nối,"BR-SEND-004, BR-SEC-005",P1,Performance,Hạ tầng staging giống production.,10.000 client SSE và 1.000 event/s,"1. Tăng tải dần.
+2. Đo connection error, lag, CPU/memory.
+3. Restart một replica.",Kết nối hội tụ/reconnect; p95 event lag <5 giây; không mất sự kiện quan trọng.,Có,API + UI,Not Run,,
+TC-SEC-017,Bảo mật & vận hành,Object storage export expiry,"BR-HIS-003, BR-HIS-007",P1,Security,Có file export hoàn tất.,Signed URL trước và sau expiry,"1. Tải file khi còn hạn.
+2. Tải sau expiry.
+3. Thử tenant khác dùng URL/ID.",Chỉ user có quyền tải trong thời hạn; sau expiry bị từ chối; audit ghi download.,Có,API + UI,Not Run,,

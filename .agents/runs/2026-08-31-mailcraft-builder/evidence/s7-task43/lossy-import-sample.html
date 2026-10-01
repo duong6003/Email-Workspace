@@ -1,0 +1,74 @@
+<!--
+  FROZEN SAMPLE -- do not edit.
+
+  S7 Task 43 decision 4.2. The sanitizer-report design's acceptance said the
+  report must "name all 16" declarations the block audit found by hand. That
+  yardstick stopped measuring anything: ADR-040 allowed 3 of those back,
+  ADR-042 another 4, and S2 Task 5/6 fixed the rest in the emitter, so running
+  it against builder output today finds nothing to report. A yardstick measured
+  against moving code is not a yardstick.
+
+  This file replaces it. It is imported HTML, which is what S7 is about -- the
+  builder's own output has its own gate in builder-block-sanitizer.test.ts, and
+  that one asserts the opposite: that nothing goes missing.
+
+  Every one of the six loss kinds appears here exactly once, so the expected
+  report is a closed set that ARCH-MAILCRAFT-FIDELITY can assert in full rather
+  than spot-check:
+
+    stylesheet  the <style> block below carrying url(...)
+    media       the @media rule in the surviving stylesheet
+    tag         <script> and <iframe>
+    image       the hero, pointed at http://
+    attribute   aria-label on the social link
+    style       background, border-top, opacity and font shorthands
+
+  Editing this file changes what the gate proves. If a new loss kind needs
+  covering, add a sibling sample rather than growing this one -- the closed set
+  is the point.
+-->
+<html>
+<head>
+  <style>
+    .container { width: 600px; }
+    @media (max-width: 600px) { .container { width: 100% !important; } }
+  </style>
+  <style>
+    .tracked { background-image: url(https://analytics.example.test/pixel.gif); }
+  </style>
+</head>
+<body>
+  <table class="container" role="presentation">
+    <tr>
+      <td>
+        <img src="http://cdn.example.test/hero.png" alt="Ảnh đầu thư" width="600">
+      </td>
+    </tr>
+    <tr>
+      <td style="background:#173f33;padding:12px">
+        <a href="https://example.test/mua" style="color:#ffffff">Mua ngay</a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <hr style="border:0;border-top:2px solid #173f33;margin:16px 0">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span style="font:italic 700 14px Arial, sans-serif">Bản tin tháng</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="https://example.test/fb" aria-label="Facebook" title="Facebook">f</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="opacity:0">Dòng xem trước của hộp thư</td>
+    </tr>
+  </table>
+  <script>window.track('open');</script>
+  <iframe src="https://example.test/embed"></iframe>
+</body>
+</html>

@@ -1,0 +1,28 @@
+import { Body, Controller, Get, Post, Req, UnauthorizedException } from '@nestjs/common';
+import type { AuthenticatedRequest } from '../auth/authenticated-request.js';
+import { AuditLog } from '../common/decorators/audit-log.decorator.js';
+import { RequirePermission } from '../common/decorators/require-permission.decorator.js';
+import { PERMISSIONS } from '../common/permissions.js';
+import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
+import { <%= camelize(name) %>CreateSchema, type <%= classify(name) %>CreateDto } from './dto/<%= dasherize(name) %>.dto.js';
+import { <%= classify(name) %>Service } from './<%= dasherize(name) %>.service.js';
+
+@Controller('<%= dasherize(name) %>')
+export class <%= classify(name) %>Controller {
+  constructor(private readonly service: <%= classify(name) %>Service) {}
+
+  @Get()
+  @RequirePermission(PERMISSIONS.<%= readPermission %>)
+  list(@Req() request: AuthenticatedRequest) {
+    if (!request.auth) throw new UnauthorizedException('Not authenticated.');
+    return this.service.list(request.auth.tenantId);
+  }
+
+  @Post()
+  @RequirePermission(PERMISSIONS.<%= managePermission %>)
+  @AuditLog({ action: '<%= dasherize(name) %>.created', entityType: '<%= dasherize(name) %>' })
+  create(@Req() request: AuthenticatedRequest, @Body(new ZodValidationPipe(<%= camelize(name) %>CreateSchema)) body: <%= classify(name) %>CreateDto) {
+    if (!request.auth) throw new UnauthorizedException('Not authenticated.');
+    return this.service.create(request.auth.tenantId, body);
+  }
+}

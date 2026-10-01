@@ -1,0 +1,575 @@
+Creating network "eow-m7s4_backend" with driver "bridge"
+Building api
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  295.6MB
+Step 1/33 : FROM node:22.22.0-alpine AS dependencies
+ ---> 463254b4a812
+Step 2/33 : WORKDIR /workspace
+ ---> Using cache
+ ---> e949cc3667a1
+Step 3/33 : RUN corepack enable && corepack install --global pnpm@11.21.0
+ ---> Using cache
+ ---> a03b4d5cc91d
+Step 4/33 : COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ ---> Using cache
+ ---> 76a92c4e63e4
+Step 5/33 : COPY apps/web/package.json apps/web/package.json
+ ---> Using cache
+ ---> f1ca33fabb4c
+Step 6/33 : COPY apps/api/package.json apps/api/package.json
+ ---> Using cache
+ ---> 4affb4021ac2
+Step 7/33 : COPY apps/worker/package.json apps/worker/package.json
+ ---> Using cache
+ ---> 539722f3be7c
+Step 8/33 : COPY apps/scheduler/package.json apps/scheduler/package.json
+ ---> Using cache
+ ---> 1423f0e1310e
+Step 9/33 : COPY packages/contracts/package.json packages/contracts/package.json
+ ---> Using cache
+ ---> 5efc1adb11db
+Step 10/33 : COPY packages/architecture-tests/package.json packages/architecture-tests/package.json
+ ---> Using cache
+ ---> 2b6a5896b3ce
+Step 11/33 : COPY packages/api-schematics/package.json packages/api-schematics/package.json
+ ---> Using cache
+ ---> 72b7ce9e0db7
+Step 12/33 : COPY packages/runtime-orchestration/package.json packages/runtime-orchestration/package.json
+ ---> Using cache
+ ---> 2ffba8a901c9
+Step 13/33 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> df9497dba60f
+Step 14/33 : FROM dependencies AS build
+ ---> df9497dba60f
+Step 15/33 : COPY apps ./apps
+ ---> Using cache
+ ---> e763f8402240
+Step 16/33 : COPY packages ./packages
+ ---> Using cache
+ ---> 88cfb4b5d1ba
+Step 17/33 : COPY contracts ./contracts
+ ---> Using cache
+ ---> 3d90efd59be9
+Step 18/33 : COPY vitest.shared.ts ./vitest.shared.ts
+ ---> Using cache
+ ---> d18fe9768a00
+Step 19/33 : ARG VITE_API_URL=/api/v1
+ ---> Using cache
+ ---> 1ad8b1e66c62
+Step 20/33 : ARG VITE_SOCKET_URL=
+ ---> Using cache
+ ---> 071ff614fc0d
+Step 21/33 : ENV VITE_API_URL=$VITE_API_URL
+ ---> Using cache
+ ---> 8e4a612777dd
+Step 22/33 : ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ ---> Using cache
+ ---> e855bda39751
+Step 23/33 : RUN pnpm --filter @eow/contracts build       && pnpm --filter @eow/web build       && pnpm --filter @eow/api build       && pnpm --filter @eow/worker build       && pnpm --filter @eow/scheduler build
+ ---> Using cache
+ ---> 94da074755d0
+Step 24/33 : FROM node:22.22.0-alpine AS api
+ ---> 463254b4a812
+Step 25/33 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 26/33 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 27/33 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 28/33 : COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
+ ---> Using cache
+ ---> 4ba61a062262
+Step 29/33 : COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+ ---> Using cache
+ ---> c497e1d67144
+Step 30/33 : COPY --from=build /workspace/apps/api/dist ./apps/api/dist
+ ---> Using cache
+ ---> 80f5f2cca973
+Step 31/33 : USER node
+ ---> Using cache
+ ---> 1b47f49b8e33
+Step 32/33 : EXPOSE 3000
+ ---> Using cache
+ ---> 920da2a289f7
+Step 33/33 : CMD ["node", "apps/api/dist/main.js"]
+ ---> Using cache
+ ---> bdc5c562a5bf
+Successfully built bdc5c562a5bf
+Successfully tagged eow-m7s4_api:latest
+Building worker
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  295.6MB
+Step 1/42 : FROM node:22.22.0-alpine AS dependencies
+ ---> 463254b4a812
+Step 2/42 : WORKDIR /workspace
+ ---> Using cache
+ ---> e949cc3667a1
+Step 3/42 : RUN corepack enable && corepack install --global pnpm@11.21.0
+ ---> Using cache
+ ---> a03b4d5cc91d
+Step 4/42 : COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ ---> Using cache
+ ---> 76a92c4e63e4
+Step 5/42 : COPY apps/web/package.json apps/web/package.json
+ ---> Using cache
+ ---> f1ca33fabb4c
+Step 6/42 : COPY apps/api/package.json apps/api/package.json
+ ---> Using cache
+ ---> 4affb4021ac2
+Step 7/42 : COPY apps/worker/package.json apps/worker/package.json
+ ---> Using cache
+ ---> 539722f3be7c
+Step 8/42 : COPY apps/scheduler/package.json apps/scheduler/package.json
+ ---> Using cache
+ ---> 1423f0e1310e
+Step 9/42 : COPY packages/contracts/package.json packages/contracts/package.json
+ ---> Using cache
+ ---> 5efc1adb11db
+Step 10/42 : COPY packages/architecture-tests/package.json packages/architecture-tests/package.json
+ ---> Using cache
+ ---> 2b6a5896b3ce
+Step 11/42 : COPY packages/api-schematics/package.json packages/api-schematics/package.json
+ ---> Using cache
+ ---> 72b7ce9e0db7
+Step 12/42 : COPY packages/runtime-orchestration/package.json packages/runtime-orchestration/package.json
+ ---> Using cache
+ ---> 2ffba8a901c9
+Step 13/42 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> df9497dba60f
+Step 14/42 : FROM dependencies AS build
+ ---> df9497dba60f
+Step 15/42 : COPY apps ./apps
+ ---> Using cache
+ ---> e763f8402240
+Step 16/42 : COPY packages ./packages
+ ---> Using cache
+ ---> 88cfb4b5d1ba
+Step 17/42 : COPY contracts ./contracts
+ ---> Using cache
+ ---> 3d90efd59be9
+Step 18/42 : COPY vitest.shared.ts ./vitest.shared.ts
+ ---> Using cache
+ ---> d18fe9768a00
+Step 19/42 : ARG VITE_API_URL=/api/v1
+ ---> Using cache
+ ---> 1ad8b1e66c62
+Step 20/42 : ARG VITE_SOCKET_URL=
+ ---> Using cache
+ ---> 071ff614fc0d
+Step 21/42 : ENV VITE_API_URL=$VITE_API_URL
+ ---> Using cache
+ ---> 8e4a612777dd
+Step 22/42 : ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ ---> Using cache
+ ---> e855bda39751
+Step 23/42 : RUN pnpm --filter @eow/contracts build       && pnpm --filter @eow/web build       && pnpm --filter @eow/api build       && pnpm --filter @eow/worker build       && pnpm --filter @eow/scheduler build
+ ---> Using cache
+ ---> 94da074755d0
+Step 24/42 : FROM node:22.22.0-alpine AS api
+ ---> 463254b4a812
+Step 25/42 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 26/42 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 27/42 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 28/42 : COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
+ ---> Using cache
+ ---> 4ba61a062262
+Step 29/42 : COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+ ---> Using cache
+ ---> c497e1d67144
+Step 30/42 : COPY --from=build /workspace/apps/api/dist ./apps/api/dist
+ ---> Using cache
+ ---> 80f5f2cca973
+Step 31/42 : USER node
+ ---> Using cache
+ ---> 1b47f49b8e33
+Step 32/42 : EXPOSE 3000
+ ---> Using cache
+ ---> 920da2a289f7
+Step 33/42 : CMD ["node", "apps/api/dist/main.js"]
+ ---> Using cache
+ ---> bdc5c562a5bf
+Step 34/42 : FROM node:22.22.0-alpine AS worker
+ ---> 463254b4a812
+Step 35/42 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 36/42 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 37/42 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 38/42 : COPY --from=build /workspace/apps/worker/node_modules ./apps/worker/node_modules
+ ---> Using cache
+ ---> 70231e424415
+Step 39/42 : COPY --from=build /workspace/apps/worker/package.json ./apps/worker/package.json
+ ---> Using cache
+ ---> 86eddc34793c
+Step 40/42 : COPY --from=build /workspace/apps/worker/dist ./apps/worker/dist
+ ---> Using cache
+ ---> d368d3d5ee3a
+Step 41/42 : USER node
+ ---> Using cache
+ ---> 590c3eed77fd
+Step 42/42 : CMD ["node", "apps/worker/dist/main.js"]
+ ---> Using cache
+ ---> 6e7644448bc2
+Successfully built 6e7644448bc2
+Successfully tagged eow-m7s4_worker:latest
+Building scheduler
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  295.6MB
+Step 1/51 : FROM node:22.22.0-alpine AS dependencies
+ ---> 463254b4a812
+Step 2/51 : WORKDIR /workspace
+ ---> Using cache
+ ---> e949cc3667a1
+Step 3/51 : RUN corepack enable && corepack install --global pnpm@11.21.0
+ ---> Using cache
+ ---> a03b4d5cc91d
+Step 4/51 : COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ ---> Using cache
+ ---> 76a92c4e63e4
+Step 5/51 : COPY apps/web/package.json apps/web/package.json
+ ---> Using cache
+ ---> f1ca33fabb4c
+Step 6/51 : COPY apps/api/package.json apps/api/package.json
+ ---> Using cache
+ ---> 4affb4021ac2
+Step 7/51 : COPY apps/worker/package.json apps/worker/package.json
+ ---> Using cache
+ ---> 539722f3be7c
+Step 8/51 : COPY apps/scheduler/package.json apps/scheduler/package.json
+ ---> Using cache
+ ---> 1423f0e1310e
+Step 9/51 : COPY packages/contracts/package.json packages/contracts/package.json
+ ---> Using cache
+ ---> 5efc1adb11db
+Step 10/51 : COPY packages/architecture-tests/package.json packages/architecture-tests/package.json
+ ---> Using cache
+ ---> 2b6a5896b3ce
+Step 11/51 : COPY packages/api-schematics/package.json packages/api-schematics/package.json
+ ---> Using cache
+ ---> 72b7ce9e0db7
+Step 12/51 : COPY packages/runtime-orchestration/package.json packages/runtime-orchestration/package.json
+ ---> Using cache
+ ---> 2ffba8a901c9
+Step 13/51 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> df9497dba60f
+Step 14/51 : FROM dependencies AS build
+ ---> df9497dba60f
+Step 15/51 : COPY apps ./apps
+ ---> Using cache
+ ---> e763f8402240
+Step 16/51 : COPY packages ./packages
+ ---> Using cache
+ ---> 88cfb4b5d1ba
+Step 17/51 : COPY contracts ./contracts
+ ---> Using cache
+ ---> 3d90efd59be9
+Step 18/51 : COPY vitest.shared.ts ./vitest.shared.ts
+ ---> Using cache
+ ---> d18fe9768a00
+Step 19/51 : ARG VITE_API_URL=/api/v1
+ ---> Using cache
+ ---> 1ad8b1e66c62
+Step 20/51 : ARG VITE_SOCKET_URL=
+ ---> Using cache
+ ---> 071ff614fc0d
+Step 21/51 : ENV VITE_API_URL=$VITE_API_URL
+ ---> Using cache
+ ---> 8e4a612777dd
+Step 22/51 : ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ ---> Using cache
+ ---> e855bda39751
+Step 23/51 : RUN pnpm --filter @eow/contracts build       && pnpm --filter @eow/web build       && pnpm --filter @eow/api build       && pnpm --filter @eow/worker build       && pnpm --filter @eow/scheduler build
+ ---> Using cache
+ ---> 94da074755d0
+Step 24/51 : FROM node:22.22.0-alpine AS api
+ ---> 463254b4a812
+Step 25/51 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 26/51 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 27/51 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 28/51 : COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
+ ---> Using cache
+ ---> 4ba61a062262
+Step 29/51 : COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+ ---> Using cache
+ ---> c497e1d67144
+Step 30/51 : COPY --from=build /workspace/apps/api/dist ./apps/api/dist
+ ---> Using cache
+ ---> 80f5f2cca973
+Step 31/51 : USER node
+ ---> Using cache
+ ---> 1b47f49b8e33
+Step 32/51 : EXPOSE 3000
+ ---> Using cache
+ ---> 920da2a289f7
+Step 33/51 : CMD ["node", "apps/api/dist/main.js"]
+ ---> Using cache
+ ---> bdc5c562a5bf
+Step 34/51 : FROM node:22.22.0-alpine AS worker
+ ---> 463254b4a812
+Step 35/51 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 36/51 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 37/51 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 38/51 : COPY --from=build /workspace/apps/worker/node_modules ./apps/worker/node_modules
+ ---> Using cache
+ ---> 70231e424415
+Step 39/51 : COPY --from=build /workspace/apps/worker/package.json ./apps/worker/package.json
+ ---> Using cache
+ ---> 86eddc34793c
+Step 40/51 : COPY --from=build /workspace/apps/worker/dist ./apps/worker/dist
+ ---> Using cache
+ ---> d368d3d5ee3a
+Step 41/51 : USER node
+ ---> Using cache
+ ---> 590c3eed77fd
+Step 42/51 : CMD ["node", "apps/worker/dist/main.js"]
+ ---> Using cache
+ ---> 6e7644448bc2
+Step 43/51 : FROM node:22.22.0-alpine AS scheduler
+ ---> 463254b4a812
+Step 44/51 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 45/51 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 46/51 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 47/51 : COPY --from=build /workspace/apps/scheduler/node_modules ./apps/scheduler/node_modules
+ ---> Using cache
+ ---> 19b82028c4a9
+Step 48/51 : COPY --from=build /workspace/apps/scheduler/package.json ./apps/scheduler/package.json
+ ---> Using cache
+ ---> 87452d2e46dc
+Step 49/51 : COPY --from=build /workspace/apps/scheduler/dist ./apps/scheduler/dist
+ ---> Using cache
+ ---> e4b48eef32c4
+Step 50/51 : USER node
+ ---> Using cache
+ ---> 2b8f4c400111
+Step 51/51 : CMD ["node", "apps/scheduler/dist/main.js"]
+ ---> Using cache
+ ---> 2debe7707cff
+Successfully built 2debe7707cff
+Successfully tagged eow-m7s4_scheduler:latest
+Building web
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  295.6MB
+Step 1/55 : FROM node:22.22.0-alpine AS dependencies
+ ---> 463254b4a812
+Step 2/55 : WORKDIR /workspace
+ ---> Using cache
+ ---> e949cc3667a1
+Step 3/55 : RUN corepack enable && corepack install --global pnpm@11.21.0
+ ---> Using cache
+ ---> a03b4d5cc91d
+Step 4/55 : COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+ ---> Using cache
+ ---> 76a92c4e63e4
+Step 5/55 : COPY apps/web/package.json apps/web/package.json
+ ---> Using cache
+ ---> f1ca33fabb4c
+Step 6/55 : COPY apps/api/package.json apps/api/package.json
+ ---> Using cache
+ ---> 4affb4021ac2
+Step 7/55 : COPY apps/worker/package.json apps/worker/package.json
+ ---> Using cache
+ ---> 539722f3be7c
+Step 8/55 : COPY apps/scheduler/package.json apps/scheduler/package.json
+ ---> Using cache
+ ---> 1423f0e1310e
+Step 9/55 : COPY packages/contracts/package.json packages/contracts/package.json
+ ---> Using cache
+ ---> 5efc1adb11db
+Step 10/55 : COPY packages/architecture-tests/package.json packages/architecture-tests/package.json
+ ---> Using cache
+ ---> 2b6a5896b3ce
+Step 11/55 : COPY packages/api-schematics/package.json packages/api-schematics/package.json
+ ---> Using cache
+ ---> 72b7ce9e0db7
+Step 12/55 : COPY packages/runtime-orchestration/package.json packages/runtime-orchestration/package.json
+ ---> Using cache
+ ---> 2ffba8a901c9
+Step 13/55 : RUN pnpm install --frozen-lockfile
+ ---> Using cache
+ ---> df9497dba60f
+Step 14/55 : FROM dependencies AS build
+ ---> df9497dba60f
+Step 15/55 : COPY apps ./apps
+ ---> Using cache
+ ---> e763f8402240
+Step 16/55 : COPY packages ./packages
+ ---> Using cache
+ ---> 88cfb4b5d1ba
+Step 17/55 : COPY contracts ./contracts
+ ---> Using cache
+ ---> 3d90efd59be9
+Step 18/55 : COPY vitest.shared.ts ./vitest.shared.ts
+ ---> Using cache
+ ---> d18fe9768a00
+Step 19/55 : ARG VITE_API_URL=/api/v1
+ ---> Using cache
+ ---> 1ad8b1e66c62
+Step 20/55 : ARG VITE_SOCKET_URL=
+ ---> Using cache
+ ---> 071ff614fc0d
+Step 21/55 : ENV VITE_API_URL=$VITE_API_URL
+ ---> Using cache
+ ---> 8e4a612777dd
+Step 22/55 : ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+ ---> Using cache
+ ---> e855bda39751
+Step 23/55 : RUN pnpm --filter @eow/contracts build       && pnpm --filter @eow/web build       && pnpm --filter @eow/api build       && pnpm --filter @eow/worker build       && pnpm --filter @eow/scheduler build
+ ---> Using cache
+ ---> 94da074755d0
+Step 24/55 : FROM node:22.22.0-alpine AS api
+ ---> 463254b4a812
+Step 25/55 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 26/55 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 27/55 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 28/55 : COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
+ ---> Using cache
+ ---> 4ba61a062262
+Step 29/55 : COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+ ---> Using cache
+ ---> c497e1d67144
+Step 30/55 : COPY --from=build /workspace/apps/api/dist ./apps/api/dist
+ ---> Using cache
+ ---> 80f5f2cca973
+Step 31/55 : USER node
+ ---> Using cache
+ ---> 1b47f49b8e33
+Step 32/55 : EXPOSE 3000
+ ---> Using cache
+ ---> 920da2a289f7
+Step 33/55 : CMD ["node", "apps/api/dist/main.js"]
+ ---> Using cache
+ ---> bdc5c562a5bf
+Step 34/55 : FROM node:22.22.0-alpine AS worker
+ ---> 463254b4a812
+Step 35/55 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 36/55 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 37/55 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 38/55 : COPY --from=build /workspace/apps/worker/node_modules ./apps/worker/node_modules
+ ---> Using cache
+ ---> 70231e424415
+Step 39/55 : COPY --from=build /workspace/apps/worker/package.json ./apps/worker/package.json
+ ---> Using cache
+ ---> 86eddc34793c
+Step 40/55 : COPY --from=build /workspace/apps/worker/dist ./apps/worker/dist
+ ---> Using cache
+ ---> d368d3d5ee3a
+Step 41/55 : USER node
+ ---> Using cache
+ ---> 590c3eed77fd
+Step 42/55 : CMD ["node", "apps/worker/dist/main.js"]
+ ---> Using cache
+ ---> 6e7644448bc2
+Step 43/55 : FROM node:22.22.0-alpine AS scheduler
+ ---> 463254b4a812
+Step 44/55 : WORKDIR /app
+ ---> Using cache
+ ---> 1b4e28443a80
+Step 45/55 : ENV NODE_ENV=production
+ ---> Using cache
+ ---> a6d746241421
+Step 46/55 : COPY --from=build /workspace/node_modules ./node_modules
+ ---> Using cache
+ ---> 3a33129c2687
+Step 47/55 : COPY --from=build /workspace/apps/scheduler/node_modules ./apps/scheduler/node_modules
+ ---> Using cache
+ ---> 19b82028c4a9
+Step 48/55 : COPY --from=build /workspace/apps/scheduler/package.json ./apps/scheduler/package.json
+ ---> Using cache
+ ---> 87452d2e46dc
+Step 49/55 : COPY --from=build /workspace/apps/scheduler/dist ./apps/scheduler/dist
+ ---> Using cache
+ ---> e4b48eef32c4
+Step 50/55 : USER node
+ ---> Using cache
+ ---> 2b8f4c400111
+Step 51/55 : CMD ["node", "apps/scheduler/dist/main.js"]
+ ---> Using cache
+ ---> 2debe7707cff
+Step 52/55 : FROM nginx:1.29-alpine AS web
+ ---> 812d47f806db
+Step 53/55 : COPY deploy/nginx/default.conf /etc/nginx/conf.d/default.conf
+ ---> Using cache
+ ---> b2cca83c2fc4
+Step 54/55 : COPY --from=build /workspace/apps/web/dist /usr/share/nginx/html
+ ---> Using cache
+ ---> 837f307832ea
+Step 55/55 : EXPOSE 8080
+ ---> Using cache
+ ---> 1eb05bce51e2
+Successfully built 1eb05bce51e2
+Successfully tagged eow-m7s4_web:latest
+Creating eow-m7s4_postgres_1 ... 
+Creating eow-m7s4_redis_1    ... 
+Creating eow-m7s4_mailpit_1  ... 
+Creating eow-m7s4_postgres_1 ... done
+Creating eow-m7s4_redis_1    ... done
+Creating eow-m7s4_mailpit_1  ... done
+Creating eow-m7s4_migrate_1  ... 
+Creating eow-m7s4_migrate_1  ... done
+Creating eow-m7s4_scheduler_1 ... 
+Creating eow-m7s4_api_1       ... 
+Creating eow-m7s4_worker_1    ... 
+Creating eow-m7s4_api_1       ... done
+Creating eow-m7s4_scheduler_1 ... done
+Creating eow-m7s4_worker_1    ... done
+Creating eow-m7s4_web_1       ... 
+Creating eow-m7s4_web_1       ... done
+exit=0

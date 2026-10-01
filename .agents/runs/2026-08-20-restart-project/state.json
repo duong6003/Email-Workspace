@@ -1,0 +1,99 @@
+{
+    "runId":  "2026-08-20-restart-project",
+    "goal":  "Rebuild and restart the complete local Email Operations Workspace stack from current source, then verify the new frontend and backend images",
+    "approval":  {
+                     "evidence":  "User explicitly requested restarting the project, then clarified on 2026-08-20 that changed code must be rebuilt into the running application",
+                     "scope":  [
+                                   "inspect local deployment and source state",
+                                   "build current source into Docker images",
+                                   "recreate the existing Docker Compose application without deleting volumes",
+                                   "run health, asset, and log verification",
+                                   "record local execution evidence"
+                               ],
+                     "exclusions":  [
+                                        "production deployment",
+                                        "destructive data or volume removal",
+                                        "dependency or application code changes"
+                                    ]
+                 },
+    "mode":  "loop",
+    "status":  "completed",
+    "currentNode":  null,
+    "nodes":  [
+                  {
+                      "id":  "intake",
+                      "dependsOn":  [
+
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  1,
+                      "successConditions":  [
+                                                "Deployment contract, environment, and current Compose status inspected"
+                                            ],
+                      "evidence":  [
+                                       "Read project manifest, start-here, agent policies, deployment docs, package scripts, Compose config; Docker Compose stack was already running and healthy"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "restart-stack",
+                      "dependsOn":  [
+                                        "intake"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "All existing Compose services restart without deleting named volumes"
+                                            ],
+                      "evidence":  [
+                                       "docker compose --env-file .env restart completed",
+                                       "docker compose --env-file .env up -d --wait completed without deleting named volumes",
+                                       "Migration rerun completed with exit code 0 and reported every migration already applied",
+                                       "Initial restart reused old application images, so it did not include newer source changes"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "verify-stack",
+                      "dependsOn":  [
+                                        "restart-stack"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "Long-running services are healthy, migrate remains exited 0, and HTTP smoke checks pass"
+                                            ],
+                      "evidence":  [
+                                       "postgres, redis, mailpit, api, worker, scheduler, and web all reported healthy after restart",
+                                       "migrate reported Exited (0)",
+                                       "GET http://localhost:8080/healthz returned 200 with body ok",
+                                       "GET http://localhost:8080/api/v1/health returned 200 with status ready",
+                                       "GET http://localhost:8080/api/v1/health/ready returned 200 with database and Redis checks ok",
+                                       "GET http://localhost:8025 returned 200",
+                                       "docker compose --env-file .env up -d --build --force-recreate --wait completed successfully",
+                                       "New image IDs: web 3cc963785e4f, api 7c19a971396b, worker f48e71d75904, scheduler a010994b1a5b",
+                                       "Served HTML references newly built assets /assets/index-BGHlhj4p.js and /assets/index-1mdxquVr.css",
+                                       "Post-build logs contained no application error, fatal, or unhandled exception patterns"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  }
+              ],
+    "schedule":  null,
+    "evidence":  [
+                     "The first action only restarted containers and reused images created about 28-29 hours earlier",
+                     "A full source build and forced container recreation was subsequently completed",
+                     "New web, API, worker, and scheduler images were created on 2026-08-20",
+                     "All seven long-running services are healthy and migration exited 0",
+                     "The running web server serves the newly generated production asset hashes",
+                     "Application, API readiness, and post-build log checks passed",
+                     "No volumes were removed and no destructive data action was performed"
+                 ],
+    "blocker":  null,
+    "updatedAt":  "2026-08-20T19:20:30Z"
+}

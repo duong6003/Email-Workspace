@@ -1,0 +1,55 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "mailcraft": {
+    "color": {
+      "brand": {
+        "primary": {"$type": "color", "$value": "#173F33"},
+        "ink": {"$type": "color", "$value": "#18342C"},
+        "backgroundWarm": {"$type": "color", "$value": "#F3F1ED"}
+      },
+      "surface": {
+        "default": {"$type": "color", "$value": "#FFFFFF"},
+        "subtle": {"$type": "color", "$value": "#F8F7F4"},
+        "canvas": {"$type": "color", "$value": "#E9E7E2"},
+        "selected": {"$type": "color", "$value": "#E7F0EC"}
+      },
+      "border": {
+        "default": {"$type": "color", "$value": "#D9DDD9"},
+        "strong": {"$type": "color", "$value": "#AAB6B0"},
+        "focus": {"$type": "color", "$value": "#2A6A57"}
+      },
+      "text": {
+        "primary": {"$type": "color", "$value": "#18342C"},
+        "secondary": {"$type": "color", "$value": "#53645E"},
+        "muted": {"$type": "color", "$value": "#78857F"},
+        "inverse": {"$type": "color", "$value": "#FFFFFF"}
+      },
+      "semantic": {
+        "success": {"$type": "color", "$value": "#247A52"},
+        "warning": {"$type": "color", "$value": "#A66512"},
+        "danger": {"$type": "color", "$value": "#B13A3A"},
+        "info": {"$type": "color", "$value": "#356D91"}
+      }
+    },
+    "space": {
+      "1": {"$type": "dimension", "$value": {"value": 4, "unit": "px"}},
+      "2": {"$type": "dimension", "$value": {"value": 8, "unit": "px"}},
+      "3": {"$type": "dimension", "$value": {"value": 12, "unit": "px"}},
+      "4": {"$type": "dimension", "$value": {"value": 16, "unit": "px"}},
+      "6": {"$type": "dimension", "$value": {"value": 24, "unit": "px"}},
+      "8": {"$type": "dimension", "$value": {"value": 32, "unit": "px"}}
+    },
+    "radius": {
+      "sm": {"$type": "dimension", "$value": {"value": 6, "unit": "px"}},
+      "md": {"$type": "dimension", "$value": {"value": 10, "unit": "px"}},
+      "lg": {"$type": "dimension", "$value": {"value": 16, "unit": "px"}}
+    },
+    "layout": {
+      "headerHeight": {"$type": "dimension", "$value": {"value": 56, "unit": "px"}},
+      "toolRailWidth": {"$type": "dimension", "$value": {"value": 56, "unit": "px"}},
+      "workspacePanelWidth": {"$type": "dimension", "$value": {"value": 320, "unit": "px"}},
+      "workspacePanelExpandedWidth": {"$type": "dimension", "$value": {"value": 480, "unit": "px"}},
+      "inspectorWidth": {"$type": "dimension", "$value": {"value": 336, "unit": "px"}}
+    }
+  }
+}

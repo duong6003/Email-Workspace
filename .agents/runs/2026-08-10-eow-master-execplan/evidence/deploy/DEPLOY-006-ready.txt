@@ -1,0 +1,4 @@
+direct_api_ready_http=503
+{"status":"unready","checks":{"database":{"ok":false,"latencyMs":2002},"redis":{"ok":true,"latencyMs":0}}}
+public_ready_http=503
+{"status":"unready","checks":{"database":{"ok":false,"latencyMs":2002},"redis":{"ok":true,"latencyMs":0}}}api_recovered=healthy

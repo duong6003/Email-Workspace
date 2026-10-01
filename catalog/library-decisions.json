@@ -1,0 +1,258 @@
+[
+  {
+    "id": "FE-001",
+    "concern": "Application core",
+    "selection": "React 19 + TypeScript strict + Vite",
+    "status": "Selected",
+    "rationale": "Keep the current web stack and fast local build; exact versions locked after compatibility spike.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-002",
+    "concern": "Enterprise data framework",
+    "selection": "@refinedev/core v5",
+    "status": "Selected",
+    "rationale": "Headless resources, auth, access control, notification and live-provider contracts.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-003",
+    "concern": "Routing",
+    "selection": "React Router",
+    "status": "Selected",
+    "rationale": "Browser routes, protected layouts and deep links from notifications.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-004",
+    "concern": "Server state",
+    "selection": "TanStack Query v5 via Refine",
+    "status": "Selected",
+    "rationale": "Caching, mutation, invalidation and background refetch; do not add a second query client.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-005",
+    "concern": "Forms",
+    "selection": "React Hook Form v7",
+    "status": "Selected",
+    "rationale": "Large recipient/template/schedule forms with controlled rerenders.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-006",
+    "concern": "Validation",
+    "selection": "Zod",
+    "status": "Selected",
+    "rationale": "Client-side UX validation and event-envelope parsing; backend remains authoritative.",
+    "location": "apps/web + contracts"
+  },
+  {
+    "id": "FE-007",
+    "concern": "Accessible primitives",
+    "selection": "Radix UI Primitives",
+    "status": "Selected",
+    "rationale": "Dialog, popover, select, tooltip, tabs and focus management without imposing visual styling.",
+    "location": "packages/ui"
+  },
+  {
+    "id": "FE-008",
+    "concern": "Tables",
+    "selection": "TanStack Table",
+    "status": "Selected",
+    "rationale": "Server-side pagination/sort/filter and row selection for recipient/history modules.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-009",
+    "concern": "Realtime client",
+    "selection": "socket.io-client 4.x",
+    "status": "Selected",
+    "rationale": "Reconnect, rooms and event acknowledgements compatible with NestJS gateway.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-010",
+    "concern": "Toast feedback",
+    "selection": "Custom Refine NotificationProvider + Radix Toast",
+    "status": "Selected",
+    "rationale": "Transient mutation feedback is separate from durable notification center.",
+    "location": "packages/ui"
+  },
+  {
+    "id": "FE-011",
+    "concern": "Dates/timezone",
+    "selection": "date-fns + date-fns-tz",
+    "status": "Selected",
+    "rationale": "IANA timezone display and schedule validation.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-012",
+    "concern": "I18n",
+    "selection": "i18next + react-i18next",
+    "status": "Selected",
+    "rationale": "Vietnamese-first with stable message keys and future locale support.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-013",
+    "concern": "Email visual editor",
+    "selection": "None - the builder owns its document model and emitter",
+    "status": "Rejected",
+    "rationale": "The spike ran (docs/superpowers/specs/2026-09-01-grapesjs-spike-findings.md). GrapesJS was never load-bearing in the reference implementation: it is mounted 1x1 off-screen with no panels, fed setComponents on change and never read back, and its only observable effect is a status badge. The document model, the emitter, undo/redo, the canvas and the inspector are all the prototype's own code. Adopting the library would have bought nothing and would have voided the measured output evidence, since GrapesJS getHtml() was never tested and emits id and data-gjs-* attributes this pipeline strips. See ADR-039.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-014",
+    "concern": "Unit/component test",
+    "selection": "Vitest + Testing Library + MSW",
+    "status": "Selected",
+    "rationale": "Fast component/hook testing with deterministic REST mocks.",
+    "location": "apps/web"
+  },
+  {
+    "id": "FE-015",
+    "concern": "E2E",
+    "selection": "Playwright",
+    "status": "Selected",
+    "rationale": "Cross-browser core flows, scheduling, reconnect and notification tests.",
+    "location": "workspace"
+  },
+  {
+    "id": "BE-001",
+    "concern": "API framework",
+    "selection": "NestJS 11",
+    "status": "Selected",
+    "rationale": "Modular, testable TypeScript backend with official OpenAPI/WebSocket/queue integrations.",
+    "location": "apps/api + apps/worker"
+  },
+  {
+    "id": "BE-002",
+    "concern": "HTTP adapter",
+    "selection": "Fastify adapter",
+    "status": "Selected",
+    "rationale": "Lower overhead; verify middleware compatibility from boilerplate during spike.",
+    "location": "apps/api"
+  },
+  {
+    "id": "BE-003",
+    "concern": "Database",
+    "selection": "PostgreSQL",
+    "status": "Selected",
+    "rationale": "Strong relational constraints, JSONB custom data, indexes and transactional outbox.",
+    "location": "platform"
+  },
+  {
+    "id": "BE-004",
+    "concern": "ORM/migrations",
+    "selection": "TypeORM 0.3 line",
+    "status": "Selected",
+    "rationale": "Matches chosen boilerplate; migrations mandatory, synchronize=false outside local scratch.",
+    "location": "apps/api + worker"
+  },
+  {
+    "id": "BE-005",
+    "concern": "Validation",
+    "selection": "class-validator + class-transformer",
+    "status": "Selected",
+    "rationale": "Matches NestJS boilerplate DTO conventions; OpenAPI is the cross-boundary contract.",
+    "location": "apps/api"
+  },
+  {
+    "id": "BE-006",
+    "concern": "API contract",
+    "selection": "@nestjs/swagger + openapi-typescript",
+    "status": "Selected",
+    "rationale": "Generate typed FE contract in CI; breaking-change check required.",
+    "location": "packages/contracts"
+  },
+  {
+    "id": "BE-007",
+    "concern": "Jobs",
+    "selection": "BullMQ + @nestjs/bullmq",
+    "status": "Selected",
+    "rationale": "Send, import, export, bulk custom data and reconciliation jobs.",
+    "location": "apps/worker"
+  },
+  {
+    "id": "BE-008",
+    "concern": "Queue/cache",
+    "selection": "Redis",
+    "status": "Selected",
+    "rationale": "BullMQ, rate limit, short-lived locks and Socket.IO fanout; never source of truth for campaign counts.",
+    "location": "platform"
+  },
+  {
+    "id": "BE-009",
+    "concern": "Realtime server",
+    "selection": "Socket.IO 4.x + Nest gateway + Redis adapter",
+    "status": "Selected",
+    "rationale": "Per-user/org rooms, reconnect, acknowledgements and horizontal scaling.",
+    "location": "apps/api"
+  },
+  {
+    "id": "BE-010",
+    "concern": "Template merge",
+    "selection": "Handlebars strict mode",
+    "status": "Selected with restrictions",
+    "rationale": "Existing {{variable}} syntax; disable arbitrary helpers and prototype access.",
+    "location": "apps/worker"
+  },
+  {
+    "id": "BE-011",
+    "concern": "Email HTML",
+    "selection": "sanitize-html + juice + html-to-text",
+    "status": "Selected",
+    "rationale": "Sanitize, inline CSS and produce text alternative before provider submission.",
+    "location": "apps/worker"
+  },
+  {
+    "id": "BE-012",
+    "concern": "Mail transport",
+    "selection": "Provider adapter; Nodemailer for SMTP",
+    "status": "Selected",
+    "rationale": "Adapter boundary supports SMTP/SES/SendGrid without leaking provider details into campaign domain.",
+    "location": "apps/worker"
+  },
+  {
+    "id": "BE-013",
+    "concern": "Object storage",
+    "selection": "AWS SDK S3 client / compatible storage",
+    "status": "Selected",
+    "rationale": "Imports, exports, assets and error reports; signed URLs and retention policies.",
+    "location": "apps/api + worker"
+  },
+  {
+    "id": "BE-014",
+    "concern": "Logging",
+    "selection": "Pino",
+    "status": "Selected",
+    "rationale": "Structured logs with correlation, tenant, campaign and job IDs; PII redaction.",
+    "location": "all services"
+  },
+  {
+    "id": "BE-015",
+    "concern": "Telemetry",
+    "selection": "OpenTelemetry",
+    "status": "Selected",
+    "rationale": "Trace REST -> outbox -> queue -> provider/webhook path and collect queue lag.",
+    "location": "all services"
+  },
+  {
+    "id": "WS-001",
+    "concern": "Monorepo",
+    "selection": "pnpm workspaces + Turborepo",
+    "status": "Selected",
+    "rationale": "Atomic FE/BE/contract changes, shared tooling and filtered builds.",
+    "location": "workspace"
+  },
+  {
+    "id": "WS-002",
+    "concern": "Dependency governance",
+    "selection": "Renovate + lockfile + SBOM",
+    "status": "Selected",
+    "rationale": "Scheduled updates, controlled majors, license/security review and reproducible builds.",
+    "location": "workspace"
+  }
+]

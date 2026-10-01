@@ -1,0 +1,24 @@
+task:
+  run_id: ''
+  goal: ''
+  role: ''
+  approval:
+    evidence: ''
+    approved_scope: []
+    exclusions: []
+  rule_ids: []
+  affected_modules: []
+  contracts: []
+  execution:
+    mode: graph
+    rationale: ''
+    graph_nodes: []
+    loop_bounds: {}
+    schedule: null
+  risks: []
+  tests:
+    unit: []
+    integration: []
+    e2e: []
+  done_evidence: []
+  open_decisions: []

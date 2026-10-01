@@ -1,0 +1,1182 @@
+[
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-001",
+    "title": "Tên sản phẩm",
+    "statement": "Tên hiển thị của ứng dụng là 'Email Operations Workspace'. Khu vực thương hiệu trong header chỉ hiển thị logo Altasoftware, không lặp lại tên sản phẩm.",
+    "acceptance": "Tên mới xuất hiện ở title, login và shell; header chỉ còn logo, không có chuỗi 'Email Content Sender by Altasoftware'.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-002",
+    "title": "Phạm vi tenant",
+    "statement": "Mọi dữ liệu nghiệp vụ phải thuộc một organization/tenant và không được đọc chéo tenant.",
+    "acceptance": "Mọi truy vấn và lệnh ghi bắt buộc có organization_id lấy từ token; test chéo tenant trả 404 hoặc 403.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-003",
+    "title": "Múi giờ",
+    "statement": "Tất cả timestamp lưu UTC; thời gian hiển thị và lịch gửi sử dụng timezone IANA của người dùng hoặc chiến dịch.",
+    "acceptance": "API trả timestamp ISO-8601 UTC và timezone_name; UI render đúng timezone đã chọn.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-004",
+    "title": "Trạng thái tương tác",
+    "statement": "Control có hover, focus-visible, pressed, disabled và loading; vùng được chọn phải highlight toàn bộ khung.",
+    "acceptance": "Keyboard focus nhìn thấy rõ; click vào mọi vùng của control chọn đúng; selected state phủ đủ border, nền và nội dung.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-005",
+    "title": "Idempotency",
+    "statement": "Các lệnh có thể tạo tác vụ gửi/import/bulk update phải hỗ trợ Idempotency-Key.",
+    "acceptance": "Gửi lại cùng key và payload không tạo bản ghi/job thứ hai; khác payload với cùng key trả 409.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Nền tảng",
+    "id": "BR-GEN-006",
+    "title": "Xóa mềm",
+    "statement": "Recipient, list, tag, template và campaign sử dụng soft delete khi đã có tham chiếu lịch sử.",
+    "acceptance": "Bản ghi biến mất khỏi danh sách hoạt động nhưng lịch sử và audit vẫn truy xuất được; ID không bị tái sử dụng.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-001",
+    "title": "Đăng nhập",
+    "statement": "Người dùng đăng nhập bằng email và mật khẩu; thông tin không hợp lệ trả lỗi chung, không tiết lộ tài khoản có tồn tại.",
+    "acceptance": "Email/password hợp lệ tạo access và refresh token; lỗi trả 401 với thông báo chung.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-002",
+    "title": "Phiên đăng nhập",
+    "statement": "Access token ngắn hạn; refresh token xoay vòng và bị thu hồi khi logout hoặc đổi mật khẩu.",
+    "acceptance": "Refresh token cũ không dùng lại được sau rotation; logout làm phiên hiện tại mất hiệu lực.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-003",
+    "title": "Vai trò",
+    "statement": "Hệ thống có tối thiểu Admin, Operator và Viewer.",
+    "acceptance": "Admin quản trị cấu hình; Operator quản lý nội dung và gửi; Viewer chỉ xem lịch sử/báo cáo.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-004",
+    "title": "Kiểm soát chức năng",
+    "statement": "API kiểm quyền phía server, không dựa vào việc ẩn nút trên UI.",
+    "acceptance": "Viewer gọi API tạo/sửa/xóa nhận 403; log ghi actor và endpoint.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-005",
+    "title": "Khóa tạm",
+    "statement": "Sau số lần đăng nhập sai cấu hình được, tài khoản/IP bị rate limit hoặc khóa tạm.",
+    "acceptance": "Mặc định 5 lần/15 phút; phản hồi 429 và có Retry-After.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Xác thực & phân quyền",
+    "id": "BR-AUTH-006",
+    "title": "Quên mật khẩu",
+    "statement": "Link đặt lại mật khẩu dùng một lần và hết hạn.",
+    "acceptance": "Token hết hạn sau 30 phút, dùng lại trả lỗi; thay mật khẩu thu hồi các phiên cũ.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-001",
+    "title": "Email duy nhất",
+    "statement": "Email người nhận là bắt buộc và duy nhất trong một tenant sau khi chuẩn hóa chữ thường và khoảng trắng.",
+    "acceptance": "Tạo email trùng trả 409 và trả recipient_id hiện hữu; tenant khác có thể dùng cùng email.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-002",
+    "title": "Dữ liệu cơ bản",
+    "statement": "Recipient hỗ trợ họ, tên, điện thoại, phòng ban, chức danh, địa điểm và trạng thái nhận email.",
+    "acceptance": "API validate độ dài/định dạng; trường không bắt buộc có thể để trống.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-003",
+    "title": "Trạng thái nhận email",
+    "statement": "Trạng thái gồm active, paused, unsubscribed và bounced; chỉ active đủ điều kiện gửi.",
+    "acceptance": "Audience preview phân loại và loại các trạng thái không đủ điều kiện; lý do được hiển thị.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-004",
+    "title": "Hủy đăng ký",
+    "statement": "unsubscribed không thể được bật lại bằng import hoặc bulk update thông thường.",
+    "acceptance": "Chỉ Admin qua luồng xác nhận/re-consent mới được chuyển về active; mọi thay đổi có audit.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-005",
+    "title": "Nhiều danh sách",
+    "statement": "Một recipient có thể thuộc nhiều list; thao tác là 'Quản lý danh sách', không phải chuyển độc quyền.",
+    "acceptance": "Thêm vào list B không xóa membership list A; membership trùng không tạo bản ghi mới.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-006",
+    "title": "Nhiều tag",
+    "statement": "Một recipient có thể có nhiều tag; bảng hiển thị tối đa 2 tag và +n.",
+    "acceptance": "API trả toàn bộ tag; UI hiển thị đúng +n và popover đầy đủ.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-007",
+    "title": "Tìm kiếm",
+    "statement": "Tìm theo email, họ tên, phòng ban và giá trị custom field được đánh index.",
+    "acceptance": "Kết quả đúng tenant, không phân biệt hoa thường cho email/tên; phân trang ổn định.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-008",
+    "title": "Lọc",
+    "statement": "Bộ lọc list/tag hỗ trợ nhiều giá trị và toán tử match any/match all.",
+    "acceptance": "match any trả hợp; match all trả giao; bộ đếm dùng cùng query với dữ liệu.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-009",
+    "title": "Thao tác hàng loạt",
+    "statement": "Các dòng đã chọn có thanh thao tác gắn tag, quản lý list, cập nhật custom data, xuất và xóa.",
+    "acceptance": "Toàn bộ hàng được highlight; job trả số thành công/thất bại và file lỗi.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Người nhận",
+    "id": "BR-REC-010",
+    "title": "Xóa có lịch sử",
+    "statement": "Xóa recipient không được làm mất campaign history.",
+    "acceptance": "Campaign recipient snapshot vẫn giữ email/tên/merge data ở thời điểm gửi; PII retention tuân chính sách.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-001",
+    "title": "Khác biệt List và Tag",
+    "statement": "List là tập người nhận được quản lý có chủ đích; Tag là nhãn phân loại dùng linh hoạt.",
+    "acceptance": "UI có tab Tất cả/Danh sách/Tag/Import và mô tả rõ ngữ nghĩa.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-002",
+    "title": "Tên duy nhất",
+    "statement": "Tên list và tag không trùng trong cùng loại và tenant sau khi trim, so sánh không phân biệt hoa thường.",
+    "acceptance": "Tạo trùng trả 409; đổi tên kiểm tra cùng quy tắc.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-003",
+    "title": "Màu tag",
+    "statement": "Tag có màu từ palette chuẩn; màu không ảnh hưởng ngữ nghĩa lọc.",
+    "acceptance": "Mã màu được validate; light/dark mode đạt tương phản tối thiểu theo token.",
+    "priority": "P2",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-004",
+    "title": "Đếm thành viên",
+    "statement": "Số thành viên của list/tag phản ánh recipient chưa bị xóa mềm, không đếm membership trùng.",
+    "acceptance": "Count được cập nhật cuối cùng nhất quán hoặc eventual consistency dưới 5 giây.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-005",
+    "title": "Xóa list",
+    "statement": "Xóa list chỉ xóa membership, không xóa recipient.",
+    "acceptance": "Recipient vẫn tồn tại và giữ tag/list khác; campaign snapshot không đổi.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-006",
+    "title": "Xóa tag",
+    "statement": "Xóa tag gỡ tag khỏi recipient nhưng không xóa recipient hoặc custom data.",
+    "acceptance": "Tag biến mất khỏi bộ lọc sau khi job hoàn tất; audit ghi số membership bị gỡ.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-007",
+    "title": "Nguồn dữ liệu thống nhất",
+    "statement": "Tag/list trong bảng, filter, form recipient và popup audience dùng chung API/master data.",
+    "acceptance": "ID, tên, màu và số lượng nhất quán ở mọi màn hình.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-008",
+    "title": "Audience theo segment",
+    "statement": "Chiến dịch có thể chọn nhiều list/tag; hệ thống hợp nhất và khử trùng theo recipient_id.",
+    "acceptance": "Một recipient thuộc nhiều nguồn chỉ nhận một message trong campaign.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-009",
+    "title": "Loại trừ",
+    "statement": "Audience builder hỗ trợ exclude list/tag/recipient.",
+    "acceptance": "Recipient nằm ở include và exclude bị loại; preview nêu lý do excluded.",
+    "priority": "P1",
+    "release": "P1",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Danh sách & Tag",
+    "id": "BR-SEG-010",
+    "title": "Phân trang",
+    "statement": "Danh sách list/tag có phân trang, sort và search phía server.",
+    "acceptance": "Sort ổn định theo tên/id; page size giới hạn cấu hình.",
+    "priority": "P2",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-001",
+    "title": "Định nghĩa trường",
+    "statement": "Custom field có key duy nhất, label, type, required flag, default value và validation.",
+    "acceptance": "Key chỉ a-z, 0-9, underscore, bắt đầu bằng chữ; đổi label không đổi key.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-002",
+    "title": "Kiểu dữ liệu",
+    "statement": "Hỗ trợ text, number, date, boolean và enum; giá trị được lưu theo kiểu, không chỉ chuỗi.",
+    "acceptance": "API từ chối sai kiểu; filter/sort dùng semantics đúng kiểu.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-003",
+    "title": "Trường hệ thống",
+    "statement": "Email, first_name, last_name và unsubscribe_url là biến hệ thống, không được tạo custom field trùng key.",
+    "acceptance": "Tạo key bị bảo lưu trả 422 với danh sách key hợp lệ.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-004",
+    "title": "Cập nhật hàng loạt",
+    "statement": "Bulk update custom data chọn phạm vi theo recipient đã chọn, list, tag hoặc bộ lọc hiện tại.",
+    "acceptance": "Trước chạy hiển thị scope, estimated_count, field/value và dry-run validation.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-005",
+    "title": "Không mở rộng phạm vi",
+    "statement": "Backend phải resolve scope tại lúc xác nhận job và không cập nhật người mới gia nhập segment sau đó.",
+    "acceptance": "Job lưu recipient snapshot/selection token; count processed không vượt resolved_count.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-006",
+    "title": "Kết quả bulk",
+    "statement": "Bulk job trả processed, succeeded, failed, skipped và file lỗi theo từng dòng.",
+    "acceptance": "UI theo dõi trạng thái queued/running/completed/failed; lỗi không làm mất kết quả thành công.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-007",
+    "title": "Idempotent bulk",
+    "statement": "Retry cùng job/idempotency key không áp dụng lặp lại ngoài ý muốn.",
+    "acceptance": "Mỗi recipient-field chỉ có một kết quả cho cùng job; retry tiếp tục phần chưa hoàn tất.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-008",
+    "title": "Ảnh hưởng chiến dịch",
+    "statement": "Bulk update sau khi campaign đã snapshot không tự thay đổi merge data của campaign đã lên lịch.",
+    "acceptance": "UI cảnh báo; campaign phải được hủy/refresh audience để lấy dữ liệu mới.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Dữ liệu tùy chỉnh",
+    "id": "BR-CF-009",
+    "title": "Audit giá trị",
+    "statement": "Thay đổi custom data ghi field key, actor, source job và before/after theo chính sách che PII.",
+    "acceptance": "Audit tra được theo recipient/job; secret hoặc nội dung nhạy cảm được mask.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-001",
+    "title": "Định dạng file",
+    "statement": "Import hỗ trợ CSV/XLSX, giới hạn kích thước và số dòng cấu hình.",
+    "acceptance": "File sai loại/quá giới hạn bị từ chối trước khi tạo job; mặc định 50 MB/100.000 dòng.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-002",
+    "title": "Mapping",
+    "statement": "Người dùng map cột sang trường hệ thống, custom field, list và tag; email bắt buộc.",
+    "acceptance": "Không cho tiếp tục nếu email chưa map hoặc hai cột map vào cùng trường đơn trị.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-003",
+    "title": "Preview",
+    "statement": "Hiển thị preview tối thiểu 20 dòng và lỗi mapping/kiểu dữ liệu trước khi chạy.",
+    "acceptance": "Lỗi theo cell có row/column/reason; người dùng có thể quay lại sửa mapping.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-004",
+    "title": "Upsert",
+    "statement": "Import cho chọn create only, update existing hoặc create and update; khóa đối sánh là normalized email.",
+    "acceptance": "Kết quả phân biệt created/updated/skipped/failed; không tạo duplicate.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-005",
+    "title": "Consent",
+    "statement": "Import không được chuyển recipient unsubscribed/bounced về active nếu không qua quyền và luồng consent.",
+    "acceptance": "Giá trị active trong file bị ignore/failed theo policy; audit ghi lý do.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-006",
+    "title": "Xử lý bất đồng bộ",
+    "statement": "Import lớn chạy background, có progress và có thể xem lại lịch sử.",
+    "acceptance": "API trả 202 + job_id; tiến độ cập nhật dưới 5 giây; có file kết quả.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Import",
+    "id": "BR-IMP-007",
+    "title": "Tính nguyên tử theo dòng",
+    "statement": "Lỗi một dòng không rollback các dòng hợp lệ khác.",
+    "acceptance": "Job hoàn thành partial_success; tổng count khớp tổng dòng dữ liệu.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-001",
+    "title": "Vòng đời template",
+    "statement": "Template có draft, published và archived; campaign chỉ gửi từ version đã publish hoặc snapshot content hợp lệ.",
+    "acceptance": "Sửa draft không thay đổi campaign đã dùng version cũ.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-002",
+    "title": "Version",
+    "statement": "Mỗi lần publish tạo template_version bất biến gồm subject, HTML, text và variable schema.",
+    "acceptance": "Version cũ đọc được; update trực tiếp version trả 409/405.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-003",
+    "title": "Cú pháp biến",
+    "statement": "Biến sử dụng cú pháp {{variable_key}}; key phải tồn tại trong schema hệ thống/custom field.",
+    "acceptance": "Parser phát hiện biến không hợp lệ, lặp và cú pháp hỏng trước publish.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-004",
+    "title": "Required và optional",
+    "statement": "Mỗi biến được đánh required/optional; optional có thể có default.",
+    "acceptance": "Publish lưu schema; render required thiếu trả lỗi, optional thiếu dùng default hoặc rỗng theo cấu hình.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-005",
+    "title": "Preview",
+    "statement": "Preview cho chọn recipient thật hoặc dữ liệu mẫu và hiển thị subject/HTML/text sau merge.",
+    "acceptance": "Preview không tạo send job; dữ liệu thiếu được liệt kê theo variable_key.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-006",
+    "title": "Sanitize HTML",
+    "statement": "HTML template được sanitize và giới hạn nội dung nguy hiểm; link được validate.",
+    "acceptance": "Script/event handler bị loại; URL scheme nguy hiểm bị chặn; kết quả có warning.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-007",
+    "title": "Text fallback",
+    "statement": "Template gửi production phải có text part hoặc backend tự sinh text part có thể đọc.",
+    "acceptance": "MIME message có HTML và text; không chứa raw HTML trong text part.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-008",
+    "title": "Unsubscribe",
+    "statement": "Email marketing/bulk bắt buộc có unsubscribe_url và header List-Unsubscribe khi policy yêu cầu.",
+    "acceptance": "Validation chặn schedule/send nếu thiếu; transactional campaign có policy riêng.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-009",
+    "title": "Tài nguyên",
+    "statement": "Ảnh dùng URL HTTPS hoặc asset storage được phép; không nhúng base64 quá giới hạn.",
+    "acceptance": "Validator trả warning/error theo kích thước; asset không public trái phép.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-010",
+    "title": "Tên template",
+    "statement": "Tên template duy nhất trong tenant sau khi trim, không phân biệt hoa thường.",
+    "acceptance": "Tạo/đổi tên trùng trả 409.",
+    "priority": "P2",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-011",
+    "title": "Test email",
+    "statement": "Test email chỉ gửi tới địa chỉ xác nhận, có nhãn test và không tính vào campaign statistics.",
+    "acceptance": "Audit có actor/recipient; message tagged test; history tách riêng.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Template & biến",
+    "id": "BR-TPL-012",
+    "title": "Khả năng tái lập",
+    "statement": "Campaign snapshot template version và merge schema tại lúc xác nhận gửi/lên lịch.",
+    "acceptance": "Thay đổi template sau đó không làm đổi nội dung campaign đã snapshot.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-001",
+    "title": "Campaign draft",
+    "statement": "Email soạn dở được lưu draft, có subject, template/version, sender, audience definition và settings.",
+    "acceptance": "Autosave không làm mất dữ liệu; optimistic concurrency ngăn ghi đè phiên mới hơn.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-002",
+    "title": "Khử trùng audience",
+    "statement": "Audience hợp từ list/tag/import/manual được khử trùng theo recipient_id/normalized email.",
+    "acceptance": "Preview total_unique đúng; một recipient chỉ có một campaign_recipient.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-003",
+    "title": "Kiểm tra đủ điều kiện",
+    "statement": "Trước gửi, backend loại unsubscribed, paused, hard-bounced, deleted và suppressed.",
+    "acceptance": "Preview trả actionable/skipped theo reason; skipped không vào sending queue.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-004",
+    "title": "Kiểm tra biến",
+    "statement": "Backend kiểm required variables trên toàn audience trước send/schedule.",
+    "acceptance": "Trả complete_count, missing_count, breakdown theo variable và sample recipient.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-005",
+    "title": "Xử lý thiếu biến",
+    "statement": "Không được âm thầm gửi required variable rỗng. Người dùng chỉ có thể sửa dữ liệu, dùng default hợp lệ hoặc xác nhận loại người thiếu biến.",
+    "acceptance": "Mặc định block; exclude tạo snapshot skipped_reason=MISSING_VARIABLE; quyết định được audit.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-006",
+    "title": "Optional variable",
+    "statement": "Optional variable thiếu dùng default của template; nếu không có default mới render rỗng.",
+    "acceptance": "Preview và message thực tế dùng cùng render engine và kết quả.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-007",
+    "title": "Audience snapshot",
+    "statement": "Khi xác nhận send/schedule, hệ thống đóng băng danh sách recipient và merge data dùng cho lần gửi đó.",
+    "acceptance": "Recipient/list/tag/custom data thay đổi sau snapshot không thay đổi campaign; refresh yêu cầu hủy và tạo snapshot mới.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-008",
+    "title": "Review trước gửi",
+    "statement": "Màn review hiển thị sender, subject, audience counts, exclusions, variable issues, thời gian và timezone.",
+    "acceptance": "Chỉ enable CTA khi validation P0 pass; user phải xác nhận cảnh báo có thể bỏ qua.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-009",
+    "title": "Giới hạn audience",
+    "statement": "Campaign vượt quota hoặc giới hạn tenant không được schedule/send.",
+    "acceptance": "API trả 422/429 với limit/current/requested và hướng xử lý.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-010",
+    "title": "Chống gửi trùng",
+    "statement": "Double-click hoặc retry network không tạo hai campaign execution.",
+    "acceptance": "Idempotency key trả cùng campaign/job; UI CTA loading và disabled.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-011",
+    "title": "Chỉnh sửa sau gửi",
+    "statement": "Campaign đã sending/completed không chỉnh nội dung/audience; có thể duplicate thành draft mới.",
+    "acceptance": "PUT trả 409; duplicate tạo ID mới và không sao chép progress.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Soạn & Audience",
+    "id": "BR-CMP-012",
+    "title": "Tên campaign",
+    "statement": "Campaign có tên nội bộ bắt buộc, không gửi tới người nhận.",
+    "acceptance": "Tên xuất hiện trong history/audit; không được chèn tự động vào subject/body.",
+    "priority": "P2",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-001",
+    "title": "Thời gian hợp lệ",
+    "statement": "scheduled_at phải ở tương lai ít nhất 2 phút và không quá 12 tháng, các ngưỡng là cấu hình.",
+    "acceptance": "Ngoài khoảng trả 422 với min/max timestamp.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-002",
+    "title": "Timezone IANA",
+    "statement": "Người dùng chọn timezone IANA; backend lưu scheduled_at UTC và timezone_name gốc.",
+    "acceptance": "Round-trip hiển thị đúng local time kể cả DST.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-003",
+    "title": "DST không tồn tại",
+    "statement": "Giờ local không tồn tại do DST bị từ chối; giờ lặp phải yêu cầu chọn offset.",
+    "acceptance": "API trả lỗi có candidate offsets; không tự đoán.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-004",
+    "title": "Validation trước schedule",
+    "statement": "Schedule chỉ thành công khi sender, template, audience, consent, variable và quota validation pass.",
+    "acceptance": "API trả validation_report; không tạo scheduled job nếu có blocking error.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-005",
+    "title": "Khóa chỉnh sửa",
+    "statement": "Campaign scheduled được chỉnh/hủy trước lock window 2 phút; chỉnh sửa tạo lại snapshot và validation.",
+    "acceptance": "Trong lock window update trả 409; cancel trước lock chuyển cancelled.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-006",
+    "title": "Thực thi một lần",
+    "statement": "Scheduler dùng distributed lock/idempotency để enqueue campaign đúng một lần.",
+    "acceptance": "Nhiều scheduler replica không tạo duplicate sending job.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-007",
+    "title": "Trễ lịch",
+    "statement": "Nếu worker trễ, campaign vẫn chạy và ghi actual_started_at/delay_seconds; vượt threshold thì cảnh báo.",
+    "acceptance": "History hiển thị thời gian dự kiến và thực tế; alert khi delay > 60 giây.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-008",
+    "title": "Hủy lịch",
+    "statement": "Hủy campaign chưa bắt đầu không gửi message nào và giải phóng quota reservation nếu có.",
+    "acceptance": "Status cancelled, pending recipients=0 queued; audit ghi actor/reason.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-009",
+    "title": "Thay đổi cấu hình sender",
+    "statement": "Sender account bị disable trước giờ chạy làm campaign blocked, không tự chuyển sender khác.",
+    "acceptance": "Campaign status blocked; owner nhận cảnh báo và có thể chọn sender mới rồi revalidate.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Hẹn giờ",
+    "id": "BR-SCH-010",
+    "title": "Thông báo",
+    "statement": "Tạo, sửa, hủy và lỗi schedule tạo notification cho owner theo cấu hình.",
+    "acceptance": "Notification chứa campaign, time/timezone, trạng thái và link; không lộ secret.",
+    "priority": "P2",
+    "release": "P1",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-001",
+    "title": "State machine",
+    "statement": "Campaign execution đi qua queued, validating, sending, paused, completed, partial_failed, failed hoặc cancelled.",
+    "acceptance": "Transition ngoài state machine trả 409; mọi transition có timestamp và actor/system reason.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-002",
+    "title": "Message state",
+    "statement": "Mỗi campaign recipient có pending, queued, submitted, delivered, bounced, failed, skipped hoặc cancelled.",
+    "acceptance": "Counts theo trạng thái cộng lại bằng total_snapshot; không đếm trùng event.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-003",
+    "title": "Công thức tiến độ",
+    "statement": "Progress gửi = số recipient ở terminal send state / số actionable recipient; delivered được hiển thị riêng khỏi sent/submitted.",
+    "acceptance": "0..100%, không giảm; completed chỉ khi mọi actionable terminal.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-004",
+    "title": "Realtime",
+    "statement": "History detail cập nhật progress gần thời gian thực qua SSE/WebSocket, có polling fallback.",
+    "acceptance": "Độ trễ UI p95 dưới 5 giây; mất kết nối tự reconnect từ last_event_id.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-005",
+    "title": "ETA",
+    "statement": "ETA tính từ rolling throughput của các message gần nhất; chưa đủ dữ liệu hiển thị đang ước tính.",
+    "acceptance": "ETA không âm; biến mất khi complete; không dùng failed/skipped để thổi phồng throughput.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-006",
+    "title": "Retry",
+    "statement": "Lỗi tạm thời retry exponential backoff có jitter; lỗi vĩnh viễn không retry.",
+    "acceptance": "Tối đa 5 lần mặc định; mỗi attempt có provider response và next_retry_at.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-007",
+    "title": "Rate limit",
+    "statement": "Worker tuân rate limit tenant/sender/provider và quota ngày.",
+    "acceptance": "Không vượt cấu hình; message chờ không bị mất; 429 provider được retry theo Retry-After.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-008",
+    "title": "Provider webhook",
+    "statement": "Webhook delivered/bounced/complaint được xác thực chữ ký, idempotent và map về message.",
+    "acceptance": "Webhook trùng không tăng count; chữ ký sai trả 401/400 và không ghi state.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-009",
+    "title": "Pause/Resume",
+    "statement": "Operator có thể pause campaign đang sending; message đã submitted không thu hồi, message chưa queued dừng lại.",
+    "acceptance": "Pause đạt hiệu lực trong 10 giây; resume tiếp tục phần còn lại, không gửi trùng.",
+    "priority": "P1",
+    "release": "P1",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-010",
+    "title": "Cancel khi đang gửi",
+    "statement": "Cancel dừng phần chưa gửi và đánh cancelled; message đã submitted tiếp tục nhận delivery event.",
+    "acceptance": "Counts cuối cùng phân biệt sent và cancelled; cảnh báo không thể thu hồi email đã gửi.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-011",
+    "title": "Suppression cập nhật",
+    "statement": "Hard bounce/complaint cập nhật recipient suppression để các campaign sau không gửi.",
+    "acceptance": "Event tạo suppression atomically; campaign hiện tại không retry lỗi vĩnh viễn.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-012",
+    "title": "Render deterministic",
+    "statement": "Message render từ snapshot template và merge data, không đọc dữ liệu recipient live trong worker.",
+    "acceptance": "Retry cùng recipient tạo nội dung logic giống nhau; content_hash được lưu.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Gửi & tiến độ",
+    "id": "BR-SEND-013",
+    "title": "Observability",
+    "statement": "Mỗi campaign/job/message có correlation_id; log, metric và trace không chứa secret hoặc body đầy đủ.",
+    "acceptance": "Có dashboard queue lag, throughput, error rate, webhook lag; tìm log theo campaign_id.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-001",
+    "title": "Danh sách lịch sử",
+    "statement": "History hiển thị campaign name, subject, sender, created/scheduled/started/completed, status và progress.",
+    "acceptance": "Sort mặc định mới nhất; filter theo status/date/sender/creator; server pagination.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-002",
+    "title": "Chi tiết tiến độ",
+    "statement": "Chi tiết hiển thị tổng, chờ, đang xử lý, submitted/sent, delivered, failed, bounced, skipped, ETA.",
+    "acceptance": "Counts cùng nguồn backend và cập nhật realtime; tooltip giải thích sent khác delivered.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-003",
+    "title": "Drill-down",
+    "statement": "Người dùng có thể lọc recipient theo message status và tải danh sách lỗi theo quyền.",
+    "acceptance": "Export chạy background nếu lớn; dữ liệu PII theo RBAC.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-004",
+    "title": "Scheduled row",
+    "statement": "Campaign đã lên lịch xuất hiện trong history với scheduled time/timezone và action sửa/hủy khi được phép.",
+    "acceptance": "Không hiển thị progress gửi trước khi bắt đầu; countdown dùng server time.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-005",
+    "title": "Partial failure",
+    "statement": "Campaign có cả thành công và lỗi kết thúc partial_failed, không gộp thành failed toàn bộ.",
+    "acceptance": "Summary và export nêu rõ counts/reasons; retry tạo execution mới có liên kết parent.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-006",
+    "title": "Retention",
+    "statement": "Campaign summary giữ tối thiểu 24 tháng; message event chi tiết theo chính sách tenant, mặc định 12 tháng.",
+    "acceptance": "Job purge có audit và không phá aggregate report; chính sách cấu hình được.",
+    "priority": "P2",
+    "release": "P1",
+    "source": "Backend"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-007",
+    "title": "Export",
+    "statement": "Export history/audience không bao gồm secret và tôn trọng field-level permission.",
+    "acceptance": "Viewer không được export nếu thiếu quyền; file có expiry và audit download.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Lịch sử",
+    "id": "BR-HIS-008",
+    "title": "Tính nhất quán",
+    "statement": "Progress summary được reconcile định kỳ từ message state để sửa sai lệch counter/event.",
+    "acceptance": "Reconciliation idempotent; chênh lệch được metric/audit và UI tự cập nhật.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-001",
+    "title": "Sender account",
+    "statement": "Admin cấu hình sender identity/account; secret được lưu trong secret manager, không trả lại qua API.",
+    "acceptance": "GET chỉ trả masked metadata; log/audit không chứa credential.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-002",
+    "title": "Verify sender",
+    "statement": "Sender phải verified và active trước khi dùng.",
+    "acceptance": "Campaign validation chặn sender pending/failed/disabled.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-003",
+    "title": "Test connection",
+    "statement": "Admin có thể test connection mà không lưu secret lỗi; kết quả trả mã lỗi an toàn.",
+    "acceptance": "Timeout hữu hạn; không echo password/token; audit có outcome.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-004",
+    "title": "From/Reply-To",
+    "statement": "From address phải thuộc sender identity đã verify; Reply-To được validate và có thể khác.",
+    "acceptance": "Địa chỉ giả mạo bị từ chối; message headers đúng cấu hình.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-005",
+    "title": "Provider adapter",
+    "statement": "Backend dùng interface provider chung để đổi SMTP/API provider mà không đổi campaign domain.",
+    "acceptance": "Adapter chuẩn hóa send result, error classification và webhook event.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-006",
+    "title": "Quota",
+    "statement": "Mỗi sender/tenant có quota và rate limit cấu hình; quota được kiểm khi review và thực thi.",
+    "acceptance": "Không oversubscribe khi nhiều campaign song song; reservation được release khi cancel.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Cấu hình gửi",
+    "id": "BR-CFG-007",
+    "title": "Disable sender",
+    "statement": "Disable sender không xóa lịch sử; campaign scheduled liên quan chuyển blocked.",
+    "acceptance": "History vẫn hiển thị sender snapshot; notification gửi owner.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "UI + BA"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-001",
+    "title": "Mã hóa",
+    "statement": "Traffic dùng TLS; database, object storage, backup và secret được mã hóa at rest.",
+    "acceptance": "Security scan xác nhận không có plaintext secret; TLS policy đạt chuẩn tổ chức.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-002",
+    "title": "Audit",
+    "statement": "Ghi immutable audit cho login, config, recipient bulk/import, template publish, send/schedule/pause/cancel/export.",
+    "acceptance": "Audit có actor, tenant, action, target, timestamp, correlation_id và diff đã mask.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-003",
+    "title": "PII",
+    "statement": "PII chỉ hiện theo quyền; log, metric và error payload không chứa recipient list/body email đầy đủ.",
+    "acceptance": "DLP/log scan không phát hiện secret hoặc body; export có expiry.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-004",
+    "title": "Backup/DR",
+    "statement": "PostgreSQL backup PITR; mục tiêu đề xuất RPO 15 phút, RTO 4 giờ.",
+    "acceptance": "Diễn tập restore định kỳ đạt mục tiêu hoặc có biên bản chênh lệch.",
+    "priority": "P1",
+    "release": "P1",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-005",
+    "title": "Availability",
+    "statement": "API nghiệp vụ mục tiêu 99,9% tháng; gửi bất đồng bộ chịu được restart worker.",
+    "acceptance": "Job không mất/không trùng sau restart; SLO dashboard và alert tồn tại.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-006",
+    "title": "Hiệu năng",
+    "statement": "Đề xuất MVP: 100.000 recipient/campaign, 100 message/giây/tenant có thể cấu hình; list API p95 dưới 500 ms.",
+    "acceptance": "Load test với dữ liệu mục tiêu đạt ngưỡng, không vi phạm rate limit/provider quota.",
+    "priority": "P1",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-007",
+    "title": "Event delivery",
+    "statement": "Internal event và webhook dùng at-least-once; consumer phải idempotent và có dead-letter queue.",
+    "acceptance": "Replay event không đổi count sai; DLQ có alert, inspect và replay có kiểm soát.",
+    "priority": "P0",
+    "release": "MVP",
+    "source": "Backend"
+  },
+  {
+    "group": "Bảo mật & vận hành",
+    "id": "BR-SEC-008",
+    "title": "API versioning",
+    "statement": "Public/internal REST API có prefix /api/v1 và quy tắc backward compatibility.",
+    "acceptance": "Breaking change tạo version mới; OpenAPI và error schema được publish cùng release.",
+    "priority": "P2",
+    "release": "MVP",
+    "source": "Backend"
+  }
+]

@@ -1,0 +1,163 @@
+asyncapi: 3.0.0
+info:
+  title: Email Operations Workspace Realtime API
+  version: 1.0.0
+servers:
+  production:
+    host: '{host}'
+    protocol: wss
+    pathname: /realtime
+channels:
+
+  rt_connection_ready:
+    address: rt.connection.ready
+    messages:
+      rt_connection_ready:
+        $ref: '#/components/messages/EventEnvelope'
+
+  rt_resync_required:
+    address: rt.resync_required
+    messages:
+      rt_resync_required:
+        $ref: '#/components/messages/EventEnvelope'
+
+  notification_created:
+    address: notification.created
+    messages:
+      notification_created:
+        $ref: '#/components/messages/EventEnvelope'
+
+  notification_updated:
+    address: notification.updated
+    messages:
+      notification_updated:
+        $ref: '#/components/messages/EventEnvelope'
+
+  notification_read:
+    address: notification.read
+    messages:
+      notification_read:
+        $ref: '#/components/messages/EventEnvelope'
+
+  campaign_state_changed:
+    address: campaign.state_changed
+    messages:
+      campaign_state_changed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  campaign_progress:
+    # M6-S1 (D-116/DEC-122): this message's `version` field carries
+    # campaign_execution.progress_seq, not campaign.version -- campaign.version
+    # only bumps on status transitions, so it stays constant for the entire
+    # duration of a send pass and would collide as catalog/realtime-events.json's
+    # own "campaign_id+version" dedupe key across every progress event in the run.
+    address: campaign.progress
+    messages:
+      campaign_progress:
+        $ref: '#/components/messages/EventEnvelope'
+
+  campaign_issue_detected:
+    address: campaign.issue_detected
+    messages:
+      campaign_issue_detected:
+        $ref: '#/components/messages/EventEnvelope'
+
+  schedule_state_changed:
+    address: schedule.state_changed
+    messages:
+      schedule_state_changed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  campaign_execution_state_changed:
+    # M5-S3 CP6/CP7. Written by aggregate.ts's terminal transition
+    # (sending->{completed,partial_failed,failed}) as an outbox row -- the
+    # durable record M6-S1 will relay, same deliberately-visible-before-its-
+    # consumer-exists boundary as campaign.snapshot_frozen (M4-S4) and
+    # schedule.state_changed (M5-S2) both already established. No code
+    # subscribes to or publishes this channel yet.
+    address: campaign.execution_state_changed
+    messages:
+      campaign_execution_state_changed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  audience_validation_progress:
+    address: audience.validation_progress
+    messages:
+      audience_validation_progress:
+        $ref: '#/components/messages/EventEnvelope'
+
+  audience_validation_completed:
+    address: audience.validation_completed
+    messages:
+      audience_validation_completed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  import_progress:
+    address: import.progress
+    messages:
+      import_progress:
+        $ref: '#/components/messages/EventEnvelope'
+
+  import_completed:
+    address: import.completed
+    messages:
+      import_completed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  bulk_update_progress:
+    address: bulk_update.progress
+    messages:
+      bulk_update_progress:
+        $ref: '#/components/messages/EventEnvelope'
+
+  bulk_update_completed:
+    address: bulk_update.completed
+    messages:
+      bulk_update_completed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  export_completed:
+    address: export.completed
+    messages:
+      export_completed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  sender_state_changed:
+    address: sender.state_changed
+    messages:
+      sender_state_changed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  quota_threshold_reached:
+    address: quota.threshold_reached
+    messages:
+      quota_threshold_reached:
+        $ref: '#/components/messages/EventEnvelope'
+
+  recipient_segment_changed:
+    address: recipient.segment_changed
+    messages:
+      recipient_segment_changed:
+        $ref: '#/components/messages/EventEnvelope'
+
+  template_published:
+    address: template.published
+    messages:
+      template_published:
+        $ref: '#/components/messages/EventEnvelope'
+
+components:
+  messages:
+    EventEnvelope:
+      payload:
+        type: object
+        required: [event_id, event_type, occurred_at, tenant_id, version, data]
+        properties:
+          event_id: {type: string, format: uuid}
+          event_type: {type: string}
+          occurred_at: {type: string, format: date-time}
+          tenant_id: {type: string, format: uuid}
+          aggregate_id: {type: [string, 'null']}
+          version: {type: integer, minimum: 0}
+          trace_id: {type: string}
+          data: {type: object, additionalProperties: true}

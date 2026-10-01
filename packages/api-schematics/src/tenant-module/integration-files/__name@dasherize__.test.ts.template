@@ -1,0 +1,7 @@
+import { describe, expect, it } from 'vitest';
+
+describe('<%= classify(name) %> integration', () => {
+  it('has an integration-test placeholder for the tenant boundary', () => {
+    expect(true).toBe(true);
+  });
+});

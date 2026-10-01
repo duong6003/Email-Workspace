@@ -1,0 +1,98 @@
+[
+  {
+    "id": "BR-NOT-001",
+    "title": "Durable vs transient",
+    "rule": "A toast confirms the current action; notification center stores durable business events. A toast alone must not represent a failure requiring later action.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-002",
+    "title": "Recipient scope",
+    "rule": "Every notification resolves explicit user recipients within one tenant based on role, ownership, subscription and preferences.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-003",
+    "title": "Authorization",
+    "rule": "Opening a notification deep link rechecks current permission; payload must not reveal data the user can no longer access.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-004",
+    "title": "Read state",
+    "rule": "Unread/read is stored per user and synchronized across devices; marking one item or all items is idempotent.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-005",
+    "title": "Action state",
+    "rule": "Actionable notifications may be open, resolved or expired independently of read state.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-006",
+    "title": "Deduplication",
+    "rule": "The same source event and recipient creates at most one notification; repeated provider webhooks cannot inflate unread count.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-007",
+    "title": "Severity",
+    "rule": "Severity is info, success, warning or critical and controls icon/color only; it does not replace event type.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-008",
+    "title": "Preferences",
+    "rule": "Users may mute optional event categories; security, permission and critical delivery failures cannot be muted unless policy allows.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-009",
+    "title": "Channels",
+    "rule": "MVP supports in-app; email channel is opt-in per event policy. Channel failure does not roll back the underlying business transaction.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-010",
+    "title": "Deep link",
+    "rule": "Each actionable notification has a stable route and resource ID; invalid/deleted targets show a safe explanatory state.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-011",
+    "title": "Batching",
+    "rule": "High-volume similar events are grouped into one summary notification within a configured window.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-012",
+    "title": "Offline recovery",
+    "rule": "After reconnect/login, the unread API is authoritative and fills events missed by the socket connection.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-013",
+    "title": "Retention",
+    "rule": "Notification retention and PII minimization are configurable; deletion of notification does not delete audit events.",
+    "priority": "P1"
+  },
+  {
+    "id": "BR-NOT-014",
+    "title": "Trigger catalog",
+    "rule": "Campaign completion/failure, schedule dispatch/miss, import/bulk completion, sender failure and quota thresholds have explicit trigger definitions.",
+    "priority": "P0"
+  },
+  {
+    "id": "BR-NOT-015",
+    "title": "Localization",
+    "rule": "Store message key and structured parameters, not only rendered text, so UI can render the user's locale.",
+    "priority": "P2"
+  },
+  {
+    "id": "BR-NOT-016",
+    "title": "Observability",
+    "rule": "Notification creation, socket delivery, channel attempt and read action emit metrics with notification/event IDs but no unmasked PII.",
+    "priority": "P1"
+  }
+]

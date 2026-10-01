@@ -1,0 +1,38 @@
+version: 1
+name: email-operations-workspace-ui-handoff-v2
+packaged_state: pending_user_copy
+runtime_state: determined_by_verification_command
+source_path: design-reference/ui-handoff-v2/source
+production_target: apps/web
+verification_command: python scripts/ui_handoff.py status
+precedence:
+  business_behavior: catalog/ba-rules.json
+  presentation_and_interaction: design-reference/ui-handoff-v2/source
+  http_contract: contracts/openapi.yaml
+  realtime_contract: contracts/asyncapi.yaml
+rules:
+  - preserve_approved_layout_color_typography_copy_assets_and_interactions
+  - inventory_routes_screens_components_modals_states_mocks_and_dependencies_first
+  - migrate_incrementally_into_apps_web
+  - replace_mock_data_and_actions_with_accepted_integrations
+  - do_not_redesign_without_explicit_approval
+  - record_irreducible_rule_ui_conflict_as_stop_gate
+  - verify_visual_equivalence_before_screen_completion
+required_states:
+  - loading
+  - empty
+  - error
+  - success
+  - permission_denied
+  - reconnecting_when_realtime_applies
+responsive_viewports:
+  - {name: desktop, width: 1440, height: 900}
+  - {name: tablet, width: 768, height: 1024}
+  - {name: mobile, width: 390, height: 844}
+mock_replacements:
+  data: api_query
+  mutation: backend_command
+  progress: realtime_event_plus_reconciliation
+  notification: notification_api_plus_realtime
+  scheduling: backend_scheduler
+  permission: server_enforced_rbac

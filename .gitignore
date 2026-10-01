@@ -1,0 +1,24 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.deploy.local
+*.dump
+*.log
+.DS_Store
+playwright-report/
+test-results/
+deploy-backups/
+.pnpm-store/
+*.tsbuildinfo
+*.stackdump
+
+# Accidental artifacts, not deliverables. `nul.yaml` is a stale 836-line copy of
+# contracts/openapi.yaml (892 lines) created by a `> nul` redirect run under Git
+# Bash, where `nul` is an ordinary filename rather than the Windows null device;
+# scratchpad_out.txt is a dump of handoff JSX. Both are safe to delete.
+nul.yaml
+scratchpad_out.txt
+
+# Visual brainstorming companion mockups (superpowers:brainstorming skill)
+.superpowers/

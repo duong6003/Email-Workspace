@@ -1,0 +1,32 @@
+version: 1
+scope: deferred_or_recurring_coding_agent_work
+use_when:
+  - continuation_requires_future_timestamp
+  - continuation_requires_external_condition
+  - approved_recurring_quality_or_operations_check
+not_for:
+  - email_campaign_business_schedule
+  - background_job_runtime_design
+  - replacing_available_work_with_delay
+required:
+  - run_id
+  - graph_node_id
+  - next_action
+  - trigger_type
+  - trigger_value
+  - iana_timezone
+  - deadline
+  - idempotency_key
+  - backoff_or_recurrence
+  - misfire_policy
+  - cancel_policy
+  - approval_scope_reference
+  - resume_payload
+resume_protocol:
+  - validate_approval_still_applies
+  - reload_run_state
+  - verify_external_condition_or_time
+  - recheck_workspace_and_dependencies
+  - execute_exact_saved_node
+  - checkpoint_and_continue_graph
+forbidden: [busy_wait, sleep_loop, in_memory_only_schedule, duplicate_resume]

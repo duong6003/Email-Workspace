@@ -1,0 +1,473 @@
+# Implementation inventory — verified current state, not catalogue presence
+# Produced by run 2026-08-10-eow-master-execplan, node `discovery`.
+#
+# CLASSIFICATION LEGEND
+#   implemented    working production behaviour backed by tests
+#   starter        real code, wired, but demo behaviour only
+#   mock           returns literals / in-memory data
+#   contract_only  declared in a contract or catalogue, no code
+#   absent         nothing exists
+#
+# WARNING: 118 business rules and 159 test cases exist in catalog/. Verified
+# executable coverage is 3 unit tests in packages/runtime-orchestration. No BA
+# rule has an automated test today. Catalogue presence is NOT implementation.
+
+version: 1
+run_id: 2026-08-10-eow-master-execplan
+assessed_at: '2026-08-10T00:00:00Z'
+
+baseline_evidence:
+  toolchain:
+    node: v22.20.0
+    pnpm: 11.21.0 (via corepack; not on PATH by default on this host)
+    python: 3.12.10
+    docker: 29.4.2
+  commands_run:
+    - command: python scripts/ui_handoff.py status
+      exit: 0
+      result: '{"status":"ready","registered":false,"file_count":29763,"sha256":"4cd6c1a8..."}'
+    - command: pnpm install --frozen-lockfile
+      exit: 0
+      result: '213 packages, 6 workspace projects, lockfile passed supply-chain policy (267 entries)'
+    - command: pnpm check   # = pnpm typecheck && pnpm test && pnpm build
+      exit: 0
+      result: |
+        typecheck: 5/5 projects pass
+        test: 4 apps report "No test files found" (--passWithNoTests);
+              packages/runtime-orchestration 1 file / 3 tests pass
+        build: all 5 pass; apps/web dist 369.36 kB (gzip 113.13 kB)
+    - command: docker compose --env-file .env config --quiet
+      exit: not_run
+      result: '.env absent — out of the approved planning scope to create it'
+    - command: docker compose --env-file .env.deploy.example config --quiet
+      exit: 1
+      result: >-
+        'required variable EOW_POSTGRES_PASSWORD is missing a value'.
+        This is the expected DEPLOY-001 behaviour (fail before container start,
+        name the variable) and therefore counts as passing evidence for DEPLOY-001.
+    - command: docker compose config --quiet   # dummy secrets in process env
+      exit: 0
+      result: compose.yaml interpolates and validates cleanly
+  git: 'not a git repository — no working tree to preserve; ADR-018 lockfile governance
+        and AGENTS.md §5 (never edit a published migration) still apply'
+
+blockers:
+  - id: BLK-01
+    severity: low
+    what: '`pnpm` is not on PATH; nested `pnpm typecheck` inside the `check` script fails'
+    evidence: "first baseline run: \"'pnpm' is not recognized as an internal or external command\""
+    resolution: 'resolved in-run via `corepack enable --install-directory %LOCALAPPDATA%\corepack-shims`
+                 and prepending it to PATH; document in the run README, do not modify user shell config'
+  - id: BLK-02
+    severity: medium
+    what: 'UI handoff is `ready` but `registered: false` (no installed.json fingerprint record)'
+    evidence: 'ui_handoff.py status output'
+    resolution: 'run `python scripts/ui_handoff.py register` in node `ui_intake_register` before M1 frontend work'
+  - id: BLK-03
+    severity: medium
+    what: 'no `.env`, so the real one-command deployment path cannot be validated'
+    evidence: 'Test-Path .env → False'
+    resolution: 'node M7-S4 creates `.env` from `.env.deploy.example` with locally generated secrets;
+                 secrets never enter the repository or the plan'
+  - id: BLK-04
+    severity: high
+    what: 'apps/api has no database layer at all — no TypeORM, no pg driver, no entities, no DATABASE_URL use'
+    evidence: 'apps/api/package.json dependencies list contains no persistence package;
+               no src file imports a database client'
+    resolution: 'node M1-S0 (arch_contracts) introduces the persistence foundation before any slice'
+  - id: BLK-05
+    severity: high
+    what: 'contracts/openapi.yaml declares 13 paths with no request bodies and almost no schemas,
+           while catalog/api-baseline.json describes 30 endpoint groups'
+    evidence: 'openapi.yaml is 4117 bytes; api-baseline.json lists auth/refresh, logout, recipients/{id},
+               bulk-jobs, imports, lists, tags, custom-fields, templates/publish, preview,
+               audience-preview, pause, resume, history, sender-accounts, webhooks, audit-logs — none present'
+    resolution: 'arch_contracts expands OpenAPI additively per milestone; openapi.yaml stays the HTTP
+                 source of truth and api-baseline.json is treated as the reviewed intent'
+
+# ---------------------------------------------------------------------------
+# Current-state matrix (all 30 areas required by the approval scope)
+# ---------------------------------------------------------------------------
+
+matrix:
+
+  - area: tenant
+    status: contract_only
+    data: '`tenant` table exists (001_initial.sql L3-6); every tenant-owned table carries tenant_id'
+    api: none
+    ui: none
+    gaps: [no tenant resolution middleware, no row-level enforcement, no tenant context in logs]
+    needs: [migration, integration, security_hardening, test, observability]
+    rules: [BR-GEN-002]
+    milestone: M1
+
+  - area: authentication
+    status: mock
+    data: '`app_user` table exists; NO session/refresh-token/password-hash column, NO login-attempt table'
+    api: 'openapi declares POST /auth/login (204) only; apps/api has NO auth controller'
+    ui: 'handoff LoginScreen simulates login with setTimeout + localStorage `ecs-auth`'
+    gaps: [password_hash column, session store, refresh rotation, CSRF, lockout, forgot-password]
+    needs: [migration, implementation, integration, security_hardening, test, docs]
+    rules: [BR-AUTH-001, BR-AUTH-002, BR-AUTH-005, BR-AUTH-006, BR-SEC-001]
+    milestone: M1
+
+  - area: rbac
+    status: absent
+    data: '`app_user.role` text column only; no roles/permissions tables (entities.json expects users/roles/user_roles)'
+    api: none
+    ui: 'profile hardcoded to "Administrator"; no gating'
+    gaps: [role model, server guards, per-route + per-action client gating, permission_denied UI state]
+    needs: [migration, implementation, integration, security_hardening, test]
+    rules: [BR-AUTH-003, BR-AUTH-004]
+    milestone: M1
+
+  - area: audit_log
+    status: contract_only
+    data: '`audit_log` table exists with trace_id and masked metadata'
+    api: 'no /audit-logs endpoint (api-baseline.json expects one)'
+    ui: none
+    gaps: [no writer, no interceptor, no query API, no retention]
+    needs: [implementation, integration, test, observability, docs]
+    rules: [BR-SEC-002, BR-CF-009]
+    milestone: M1 (writer) / M7 (query + retention)
+
+  - area: configuration
+    status: starter
+    data: n/a
+    api: '@nestjs/config ConfigModule.forRoot({isGlobal:true}); no schema validation'
+    ui: n/a
+    gaps: [no env schema validation at boot, no typed config, no fail-fast on missing secret]
+    needs: [implementation, test, docs]
+    rules: [BR-GEN-003, BR-SEC-001]
+    milestone: M1
+
+  - area: error_model
+    status: contract_only
+    data: n/a
+    api: 'openapi defines an RFC 9457 Problem schema; apps/api has NO exception filter — Nest defaults are returned'
+    ui: 'no error surfaces beyond the login form'
+    gaps: [global exception filter, traceId propagation, typed problem types, client error mapping]
+    needs: [implementation, integration, test, observability]
+    rules: [BR-GEN-004, BR-SEC-008]
+    milestone: M1
+
+  - area: recipients
+    status: contract_only
+    data: '`recipient` table with UNIQUE (tenant_id, email) and version column'
+    api: 'openapi declares GET/POST /recipients with no schema; no controller in apps/api'
+    ui: 'handoff table + overlays fully designed, 100% mock (`people` 4 literals)'
+    gaps: [normalized_email, deleted_at soft delete, unsubscribe workflow, search/filter, pagination]
+    needs: [migration, implementation, integration, test, docs]
+    rules: [BR-REC-001..010, BR-GEN-006, BR-SEG-010]
+    milestone: M2
+
+  - area: lists
+    status: contract_only
+    data: '`recipient_list`, `recipient_list_member` exist'
+    api: none
+    ui: 'handoff grid, 100% mock'
+    gaps: [CRUD, member counts, delete-with-dependency rules, membership source tracking]
+    needs: [implementation, integration, test]
+    rules: [BR-SEG-001, BR-SEG-002, BR-SEG-004, BR-SEG-005, BR-SEG-007, BR-REC-005]
+    milestone: M2
+
+  - area: tags
+    status: contract_only
+    data: '`tag`, `recipient_tag` exist'
+    api: none
+    ui: 'handoff directory, 100% mock'
+    gaps: [CRUD, counts, delete semantics]
+    needs: [implementation, integration, test]
+    rules: [BR-SEG-001, BR-SEG-002, BR-SEG-003, BR-SEG-004, BR-SEG-006, BR-REC-006]
+    milestone: M2
+
+  - area: custom_fields
+    status: contract_only
+    data: '`custom_field_definition`, `recipient_custom_value` (jsonb value)'
+    api: none
+    ui: 'customVariableBuilder + bulkCustomData overlays, 100% mock'
+    gaps: [typed values/indexes per entities.json, validation_json, system-field protection, defaults]
+    needs: [migration, implementation, integration, test]
+    rules: [BR-CF-001..009]
+    milestone: M2
+
+  - area: import_and_bulk_update
+    status: absent
+    data: 'NO async_jobs / job_items / idempotency_keys tables'
+    api: 'openapi declares POST /bulk-jobs (202) with no schema; no import endpoint'
+    ui: 'importExcel + bulkCustomData overlays and an import-history table, 100% mock'
+    gaps: [job model, file upload/storage, XLSX/CSV parsing, mapping, preview, upsert,
+           per-row atomicity, error file, progress events, idempotency]
+    needs: [migration, implementation, integration, test, observability, docs]
+    rules: [BR-IMP-001..007, BR-CF-004, BR-CF-006, BR-CF-007, BR-REC-009]
+    milestone: M2
+
+  - area: template_version_editor
+    status: contract_only
+    data: '`email_template`, `email_template_version` with required_variables text[]'
+    api: 'no template endpoints in openapi (api-baseline expects publish + preview)'
+    ui: 'templates grid + templateDetail/importHtml overlays + compose editor, 100% mock'
+    gaps: [CRUD, publish immutability, content_hash, variable_schema_json, sanitizer, CSS inliner,
+           text fallback, editor implementation (ADR-019 is Proposed)]
+    needs: [migration, implementation, integration, security_hardening, test]
+    rules: [BR-TPL-001..012]
+    milestone: M3
+
+  - area: variable_extraction_and_validation
+    status: contract_only
+    data: '`required_variables` column exists but is never written'
+    api: 'POST /templates/{id}/validate-audience declared with a 200 description and no schema'
+    ui: 'mapping-status "12 / 12 biến đã map" is a literal'
+    gaps: [Handlebars strict parse, required vs optional classification, missing-variable matrix,
+           per-recipient resolution, blocking policy]
+    needs: [implementation, integration, test]
+    rules: [BR-TPL-003, BR-TPL-004, BR-CMP-004, BR-CMP-005, BR-CMP-006]
+    milestone: M3 (extraction) / M4 (audience matrix)
+
+  - area: preview
+    status: mock
+    data: n/a
+    api: none
+    ui: 'mini-preview + composePreview overlay with fixed sample data'
+    gaps: [server render with real merge data, sanitized output, desktop/mobile parity, determinism]
+    needs: [implementation, integration, security_hardening, test]
+    rules: [BR-TPL-005, BR-TPL-007, BR-TPL-012, BR-SEND-012]
+    milestone: M3
+
+  - area: campaign_draft
+    status: mock
+    data: '`campaign` table exists'
+    api: 'POST /campaigns (201, no schema); no PATCH, no list'
+    ui: 'composer + drafts list, 100% mock; `complete` percentage is fabricated'
+    gaps: [draft CRUD, optimistic concurrency (If-Match), ownership, autosave]
+    needs: [implementation, integration, test]
+    rules: [BR-CMP-001, BR-CMP-011, BR-CMP-012, BR-GEN-005]
+    milestone: M4
+
+  - area: audience_query
+    status: absent
+    data: 'NO campaign_audience_rules table (entities.json expects one)'
+    api: 'no audience-preview endpoint in openapi'
+    ui: 'recipientPicker overlay with lists/tags/excel modes, 100% mock'
+    gaps: [include/exclude rule model, resolution, dedupe, eligibility, suppression, size limits]
+    needs: [migration, implementation, integration, test]
+    rules: [BR-SEG-008, BR-SEG-009, BR-CMP-002, BR-CMP-003, BR-CMP-009]
+    milestone: M4
+
+  - area: immutable_snapshot
+    status: contract_only
+    data: '`campaign_snapshot` (1:1 with campaign) and `campaign_recipient` (merge_data_json) exist'
+    api: 'send/schedule responses claim "Snapshot frozen" but no code freezes anything'
+    ui: 'sendConfirm overlay is presentation only'
+    gaps: [freeze transaction, email_snapshot column, skipped_reason, immutability enforcement,
+           reproducible re-render]
+    needs: [migration, implementation, integration, test]
+    rules: [BR-CMP-007, BR-CMP-010, BR-TPL-012, BR-SEND-012]
+    milestone: M4
+    adr: ADR-013
+
+  - area: scheduling
+    status: starter
+    data: '`campaign.scheduled_at_utc` + `scheduled_timezone` columns exist'
+    api: 'POST /campaigns/{id}/schedule returns a hardcoded object from an in-memory Map'
+    ui: 'scheduleSend overlay is presentation only'
+    gaps: [BullMQ delayed job, UTC+IANA storage, DST handling, edit lock, exactly-once dispatch,
+           misfire policy (runbook: send_if_late_within_15_minutes), cancel, reschedule]
+    needs: [implementation, integration, test, observability, docs]
+    rules: [BR-SCH-001..010]
+    milestone: M5
+
+  - area: sending
+    status: mock
+    data: '`campaign_recipient.status` exists; NO campaign_executions / message_attempts tables'
+    api: 'POST /campaigns/{id}/send returns `{status:"queued"}` from an in-memory Map'
+    ui: 'send buttons open confirm overlays only'
+    gaps: [state machine, execution/attempt model, batching, rate limiting, suppression,
+           deterministic render, duplicate-send protection]
+    needs: [migration, implementation, integration, security_hardening, test, observability]
+    rules: [BR-SEND-001, BR-SEND-002, BR-SEND-006, BR-SEND-007, BR-SEND-010, BR-SEND-011, BR-SEND-012, BR-CMP-010]
+    milestone: M5
+
+  - area: provider_adapter
+    status: absent
+    data: 'NO sender_accounts table (001_initial has none); NO delivery_events table'
+    api: 'no /sender-accounts, no /webhooks/providers/{provider}'
+    ui: 'settings master-detail fully designed, 100% mock; SMTP host/port/security are literals'
+    gaps: [adapter interface, SMTP transport, secret_ref storage, verification, test connection,
+           canonical state mapping, webhook signature verification, event dedupe]
+    needs: [migration, implementation, integration, security_hardening, test, docs]
+    rules: [BR-CFG-001..007, BR-SEND-008, BR-SEC-001]
+    milestone: M5
+    adr: ADR-014
+    open_decision: 'OD-05 — first provider not chosen; MVP uses the SMTP adapter against Mailpit'
+
+  - area: worker_and_retry
+    status: starter
+    data: n/a
+    api: n/a
+    worker: 'apps/worker/src/main.ts is one BullMQ Worker over 8 job names; every handler returns a
+             literal. Three explicitly carry the note "Implement … in the vertical slice".'
+    gaps: [real handlers, BullMQ flows for the campaign DAG, backoff policy, DLQ,
+           concurrency vs provider quota, graceful drain, crash recovery]
+    needs: [implementation, integration, test, observability]
+    rules: [BR-SEND-006, BR-SEND-001, BR-GEN-005]
+    milestone: M5
+    adr: ADR-008
+
+  - area: webhook_reconciliation
+    status: absent
+    data: 'NO delivery_events table'
+    api: none
+    ui: n/a
+    gaps: [signed webhook endpoint, provider_event_id dedupe, out-of-order handling,
+           reconciliation to canonical facts, drift alarm]
+    needs: [migration, implementation, integration, security_hardening, test, observability]
+    rules: [BR-SEND-008, BR-HIS-008, BR-SEC-007]
+    milestone: M5
+
+  - area: realtime_progress
+    status: starter
+    data: 'no progress counters table; campaign_recipient status is the only fact source'
+    api: 'RealtimeGateway emits rt.connection.ready on connect and exposes an unused publish();
+          GET /campaigns/{id}/progress returns hardcoded numbers'
+    ui: 'apps/web/src/App.tsx subscribes to `campaign.progress.updated` — an event name that
+         exists in NEITHER contracts/asyncapi.yaml NOR catalog/realtime-events.json
+         (both use `campaign.progress`). Confirmed contract drift.'
+    gaps: [Redis adapter, room authorization, tenant scoping, throttling (<=1/s or 250 recipients),
+           monotonic counters, resume cursor, rt.resync_required, outbox relay]
+    needs: [implementation, integration, security_hardening, test, observability]
+    rules: [BR-SEND-003, BR-SEND-004, BR-SEND-005, BR-HIS-002, BR-HIS-008, BR-SEC-007]
+    milestone: M6
+    adr: [ADR-009, ADR-010, ADR-016]
+
+  - area: notification_center
+    status: mock
+    data: '`notification`, `user_notification` tables exist with an unread partial index'
+    api: 'NotificationsService holds ONE hardcoded item in a private array; list() and read()
+          mutate process memory and are lost on restart'
+    ui: 'notifications popover with 3 literals and component-local read state'
+    gaps: [persistence, recipient resolution, dedupe, severity, preferences, batching,
+           deep links, offline recovery, retention, localization keys]
+    needs: [implementation, integration, test, observability, docs]
+    rules: [BR-NOT-001..016 (catalog/notification-rules.json)]
+    milestone: M6
+    adr: [ADR-011, ADR-020]
+
+  - area: history_and_recovery
+    status: mock
+    data: 'campaign + campaign_recipient can support it; no execution history model'
+    api: 'no /history endpoints'
+    ui: 'history table + historyDetail drawer + resendConfirm, 100% mock'
+    gaps: [list/filter, drill-down by status, partial-failure view, resend of failed only,
+           export, retention, consistency with canonical facts]
+    needs: [implementation, integration, test]
+    rules: [BR-HIS-001..008]
+    milestone: M6
+
+  - area: quota
+    status: absent
+    data: 'no quota/limits table; entities.json expects organizations.limits_json'
+    api: none
+    ui: 'default-policy panel inputs are unbound defaultValues'
+    gaps: [tenant limits, per-sender rate limit, quota accounting, 80/90/100% thresholds, 429 handling]
+    needs: [migration, implementation, integration, test, observability]
+    rules: [BR-CFG-006, BR-SEND-007]
+    milestone: M7
+
+  - area: observability
+    status: absent
+    api: 'no logger configured (Nest default console); no OpenTelemetry; no metrics endpoint;
+          no correlation-ID propagation'
+    gaps: [Pino structured logs, OTel traces/metrics, trace_id through outbox and jobs,
+           the alert set named in docs/operations/runbook.md, PII redaction]
+    needs: [implementation, integration, test, docs]
+    rules: [BR-SEND-013, BR-SEC-003, BR-SEC-005]
+    milestone: M7
+    adr: ADR-017
+
+  - area: security
+    status: absent
+    api: 'CORS is configured. Nothing else: no helmet, no CSRF, no rate limiting, no input
+          validation pipe, no tenant guard, no authn/authz at all'
+    gaps: [everything in docs/operations/security-baseline.md]
+    needs: [implementation, integration, security_hardening, test, docs]
+    rules: [BR-SEC-001..008, BR-AUTH-003, BR-AUTH-004, BR-GEN-002]
+    milestone: M1 (foundations) / M7 (hardening + tests)
+
+  - area: backup_restore
+    status: contract_only
+    docs: 'docs/deployment/operations.md documents a pg_dump command and states restore is
+           deliberately not automated'
+    gaps: [no rehearsal evidence, no RPO/RTO record, no restore runbook validation]
+    needs: [docs, test]
+    rules: [BR-SEC-004]
+    milestone: M7
+
+  - area: one_command_deployment
+    status: starter
+    artifacts: 'compose.yaml (7 services, health-gated), Dockerfile (api/worker/scheduler/web targets),
+                database/migrate.sh (checksum-guarded), .env.deploy.example, scripts/smoke_deploy.py'
+    verified: 'compose.yaml YAML + interpolation valid (exit 0 with secrets set);
+               DEPLOY-001 negative behaviour confirmed'
+    gaps: [no .env, never booted, DEPLOY-002/003/004/006/007/009 unverified,
+           smoke_deploy.py never executed, no TLS/secret-management story]
+    needs: [test, docs]
+    rules: [BR-SEC-004, BR-SEC-005]
+    milestone: M7
+    adr: ADR-024
+
+# ---------------------------------------------------------------------------
+# Contract drift found during discovery
+# ---------------------------------------------------------------------------
+
+contract_drift:
+  - id: DRIFT-01
+    severity: high
+    what: 'apps/web listens for `campaign.progress.updated`; the contract event is `campaign.progress`'
+    where: [apps/web/src/App.tsx, contracts/asyncapi.yaml, catalog/realtime-events.json]
+    resolution: 'asyncapi.yaml is the realtime source of truth → rename the client listener. Fixed in M6-S1.'
+  - id: DRIFT-02
+    severity: high
+    what: 'openapi.yaml covers 13 paths; catalog/api-baseline.json describes 30 endpoint groups'
+    resolution: 'expand openapi.yaml additively per milestone in each `*-contracts` node; never break existing shapes'
+  - id: DRIFT-03
+    severity: medium
+    what: 'catalog/entities.json names `organizations`, `sender_accounts`, `campaign_executions`,
+           `message_attempts`, `delivery_events`, `async_jobs`, `idempotency_keys`;
+           001_initial.sql names `tenant` and has none of the latter six'
+    resolution: 'database migrations are the data baseline (approval scope). Keep `tenant`;
+                 add the six missing aggregates as forward migrations 002-00N. Never edit 001_initial.sql.'
+  - id: DRIFT-04
+    severity: medium
+    what: 'catalog/open-decisions.json OD-08 prefers SSE + polling; api-baseline.json lists
+           GET /campaigns/{id}/events (SSE). ADR-009 (Accepted) selects Socket.IO and
+           contracts/asyncapi.yaml specifies a wss /realtime channel set.'
+    resolution: 'Accepted ADR + asyncapi.yaml win. OD-08 is superseded, not violated. Recorded as DEC-004.'
+  - id: DRIFT-05
+    severity: low
+    what: 'ADR-007 selects TypeORM migrations; the repository ships raw SQL under database/migrations
+           with a checksum-guarded database/migrate.sh, and ADR-024 makes that shell job the
+           deployment contract'
+    resolution: 'keep raw SQL as the deployment-critical migration path (ADR-024 is newer and
+                 operationally binding); use TypeORM for entity mapping only. Recorded as DEC-002.'
+  - id: DRIFT-06
+    severity: low
+    what: 'ADR-002/docs/source-selection.md select Refine CORE; apps/web declares @refinedev/core
+           5.0.12 but no source file imports it'
+    resolution: 'adopt Refine data/auth/access providers during M1-M2, or supersede ADR-002 with a
+                 new ADR if it is not carrying weight. Not a planning-time STOP gate.'
+
+# ---------------------------------------------------------------------------
+# Test coverage reality
+# ---------------------------------------------------------------------------
+
+test_coverage:
+  catalogued_cases: 159
+  automated_today: 3
+  automated_files: [packages/runtime-orchestration/src/decision.test.ts]
+  ba_rules_with_a_test: 0
+  apps_with_a_test: 0
+  note: '`vitest run --passWithNoTests` in apps/{web,api,worker,scheduler} makes `pnpm check`
+         green with zero coverage. Each milestone gate must therefore assert a test COUNT,
+         not merely a zero exit code.'
+  missing_layers: [integration, contract, e2e, security, recovery, accessibility, visual]

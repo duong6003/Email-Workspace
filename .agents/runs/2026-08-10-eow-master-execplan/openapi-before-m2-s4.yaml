@@ -1,0 +1,946 @@
+openapi: 3.1.0
+info:
+  title: Email Operations Workspace API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+paths:
+  /health:
+    get:
+      security: []
+      operationId: health
+      responses: {'200': {description: Ready}}
+  /auth/login:
+    post:
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '204': {description: Authenticated; session cookie set}
+        '401': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      responses:
+        '204': {description: Session rotated; new cookie set}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/logout:
+    post:
+      operationId: logout
+      responses:
+        '204': {description: Session revoked}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Me'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/forgot-password:
+    post:
+      security: []
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ForgotPasswordRequest'}
+      responses:
+        '202': {description: 'Recovery email sent if the address is registered (response is identical either way to avoid account enumeration)'}
+  /auth/reset-password:
+    post:
+      security: []
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ResetPasswordRequest'}
+      responses:
+        '204': {description: 'Password changed; all existing sessions for the user are revoked'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /recipients:
+    get:
+      operationId: listRecipients
+      description: 'BR-REC-007/008 and BR-SEG-007: search plus status/list/tag filters, server-side cursor pagination, tenant-scoped.'
+      parameters:
+        - {name: search, in: query, required: false, schema: {type: string}}
+        - {name: status, in: query, required: false, schema: {type: array, items: {$ref: '#/components/schemas/RecipientStatus'}}, style: form, explode: true}
+        - {name: listIds, in: query, required: false, schema: {type: array, items: {type: string, format: uuid}}, style: form, explode: true}
+        - {name: tagIds, in: query, required: false, schema: {type: array, items: {type: string, format: uuid}}, style: form, explode: true}
+        - {name: cursor, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses:
+        '200':
+          description: Page of recipients
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientListResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createRecipient
+      description: 'BR-REC-001: duplicate email (case/whitespace-insensitive) within the tenant returns 409 with the existing recipient''s id.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientCreateRequest'}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipients/{recipientId}:
+    get:
+      operationId: getRecipient
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      responses:
+        '200':
+          description: Recipient
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateRecipient
+      description: 'BR-REC-004: an unsubscribed -> active transition is refused (403) unless the caller holds settings:manage and confirms confirmReconsent.'
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientUpdateRequest'}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteRecipient
+      description: 'BR-GEN-006: soft delete only, never a hard DELETE. Row remains queryable for history/audit.'
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      responses:
+        '204': {description: Soft-deleted}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /recipient-lists:
+    get:
+      operationId: listRecipientLists
+      description: 'BR-SEG-001/004/007/010: tenant-scoped reusable recipient lists with server-computed active-recipient counts.'
+      parameters:
+        - {$ref: '#/components/parameters/SegmentSearch'}
+        - {$ref: '#/components/parameters/SegmentCursor'}
+        - {$ref: '#/components/parameters/SegmentLimit'}
+      responses:
+        '200':
+          description: Stable name/id ordered page of recipient lists
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientListCatalogResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createRecipientList
+      description: 'BR-SEG-002: name is trimmed and case-insensitively unique among active lists in the current tenant.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientListCreateRequest'}
+      responses:
+        '201':
+          description: Recipient list created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipient-lists/{recipientListId}:
+    get:
+      operationId: getRecipientList
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      responses:
+        '200':
+          description: Recipient list
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateRecipientList
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientListUpdateRequest'}
+      responses:
+        '200':
+          description: Recipient list updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteRecipientList
+      description: 'BR-SEG-005: soft-deletes a list and removes only its memberships. Refuses a list referenced by a scheduled campaign snapshot.'
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      responses:
+        '204': {description: List soft-deleted; recipients and campaign snapshots are unchanged}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipient-lists/{recipientListId}/members:
+    post:
+      operationId: addRecipientListMembers
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'201': {description: Memberships added idempotently}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: removeRecipientListMembers
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'204': {description: Memberships removed}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /recipients/{recipientId}/segments:
+    get:
+      operationId: getRecipientSegments
+      description: 'BR-SEG-007 / BR-REC-005/006: canonical list/tag membership for a recipient, consumed by the recipient table and form.'
+      parameters: [{$ref: '#/components/parameters/RecipientId'}]
+      responses:
+        '200':
+          description: Recipient segment memberships
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientSegments'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /tags:
+    get:
+      operationId: listTags
+      description: 'BR-SEG-001/003/004/007/010: tenant-scoped flexible tags with server-computed active-recipient counts.'
+      parameters:
+        - {$ref: '#/components/parameters/SegmentSearch'}
+        - {$ref: '#/components/parameters/SegmentCursor'}
+        - {$ref: '#/components/parameters/SegmentLimit'}
+      responses:
+        '200':
+          description: Stable name/id ordered page of tags
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TagCatalogResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TagCreateRequest'}
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /tags/{tagId}:
+    get:
+      operationId: getTag
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      responses:
+        '200':
+          description: Tag
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateTag
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TagUpdateRequest'}
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteTag
+      description: 'BR-SEG-006: soft-deletes the tag and removes only tag memberships; recipients and custom data remain unchanged.'
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      responses: {'204': {description: Tag soft-deleted}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /tags/{tagId}/members:
+    post:
+      operationId: addTagMembers
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'201': {description: Memberships added idempotently}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: removeTagMembers
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'204': {description: Memberships removed}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /custom-fields:
+    get:
+      operationId: listCustomFields
+      description: 'BR-CF-001/002: admin-defined typed custom-field schema for the tenant. Consumed by the recipient add/edit form and, from M4 onward, the compose variable panel.'
+      responses:
+        '200':
+          description: Custom field schema
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomFieldListResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createCustomField
+      description: 'BR-CF-001: key is a-z/0-9/underscore starting with a letter, unique per tenant, immutable after creation. BR-CF-003: a reserved system key (email, first_name, last_name, unsubscribe_url) is rejected with 422 and the reserved-key list.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CustomFieldCreateRequest'}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/CustomFieldReservedKeyProblem'}
+  /custom-fields/{customFieldId}:
+    get:
+      operationId: getCustomField
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      responses:
+        '200':
+          description: Custom field
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateCustomField
+      description: 'BR-CF-001: "đổi label không đổi key" -- the request body never accepts key; a body that includes it is rejected with 400.'
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CustomFieldUpdateRequest'}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteCustomField
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      responses:
+        '204': {description: Deleted}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /import-jobs:
+    get:
+      operationId: listImportJobs
+      description: "Lists the current tenant's most recent import jobs. The response is the authoritative history backing the recipient import view."
+      responses:
+        '200':
+          description: Tenant-scoped import history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ImportJob'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createImportJob
+      description: 'M2-S4 / BR-GEN-005, BR-IMP-002/004/006/007: persists a validated, bounded import preview as a durable job. Idempotency-Key replays the original accepted job for an identical request and returns 409 for a changed payload.'
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ImportJobCreateRequest'}
+      responses:
+        '202':
+          description: Import job accepted; `idempotencyReplayed` distinguishes a new job from a same-key replay.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportJob'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /import-jobs/{importJobId}:
+    get:
+      operationId: getImportJob
+      description: 'Reads the tenant-scoped canonical job state; realtime events are hints and this endpoint remains authoritative.'
+      parameters:
+        - {$ref: '#/components/parameters/ImportJobId'}
+      responses:
+        '200':
+          description: Import job
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportJob'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /import-jobs/{importJobId}/error-file:
+    get:
+      operationId: downloadImportErrorFile
+      description: 'Downloads failed import rows with row number, machine-readable reason, and original source payload. The job remains tenant-scoped.'
+      parameters:
+        - {$ref: '#/components/parameters/ImportJobId'}
+      responses:
+        '200':
+          description: CSV file of failed rows; header-only when the job has no failures.
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /templates/{templateId}/validate-audience:
+    post:
+      operationId: validateTemplateAudience
+      parameters:
+        - {$ref: '#/components/parameters/TemplateId'}
+      responses: {'200': {description: Missing-variable matrix}, '403': {$ref: '#/components/responses/Problem'}}
+  /campaigns:
+    post:
+      operationId: createCampaignDraft
+      responses: {'201': {description: Draft created}, '403': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/schedule:
+    post:
+      operationId: scheduleCampaign
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'202': {description: Snapshot frozen and delayed job accepted}, '403': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/send:
+    post:
+      operationId: sendCampaign
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'202': {description: Snapshot frozen and graph accepted}, '403': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/progress:
+    get:
+      operationId: getCampaignProgress
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses:
+        '200':
+          description: Canonical progress
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CampaignProgress'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/cancel:
+    post:
+      operationId: cancelCampaign
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'202': {description: Cancellation requested}, '403': {$ref: '#/components/responses/Problem'}}
+  /notifications:
+    get:
+      operationId: listNotifications
+      responses: {'200': {description: Durable notification page}, '403': {$ref: '#/components/responses/Problem'}}
+  /notifications/{notificationId}/read:
+    put:
+      operationId: markNotificationRead
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses: {'204': {description: Read state persisted}, '403': {$ref: '#/components/responses/Problem'}}
+  /bulk-jobs:
+    get:
+      operationId: listBulkJobs
+      description: "Lists the current tenant's recent bulk-update jobs. This canonical history backs the recipient result UI; realtime only prompts a refetch."
+      responses:
+        '200':
+          description: Tenant-scoped bulk job history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/BulkJob'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createBulkJob
+      description: 'M2-S4 / BR-GEN-005, BR-CF-004/005/006/007, BR-REC-009: resolves and freezes an explicit recipient selection before queuing the bulk operation.'
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkJobCreateRequest'}
+      responses:
+        '202':
+          description: Bulk job accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJob'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/preview:
+    post:
+      operationId: previewBulkJob
+      description: 'BR-CF-004 authoritative dry-run: validates the action and returns the resolved selected-recipient scope without creating a job or checkpoint.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkJobCreateRequest'}
+      responses:
+        '200':
+          description: Validated bulk scope estimate
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJobPreview'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/{bulkJobId}:
+    get:
+      operationId: getBulkJob
+      parameters:
+        - {$ref: '#/components/parameters/BulkJobId'}
+      responses:
+        '200':
+          description: Bulk job
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJob'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/{bulkJobId}/error-file:
+    get:
+      operationId: downloadBulkErrorFile
+      description: 'Downloads failed bulk-update recipient checkpoints with a machine-readable error reason. The job remains tenant-scoped.'
+      parameters:
+        - {$ref: '#/components/parameters/BulkJobId'}
+      responses:
+        '200':
+          description: CSV file of failed recipient checkpoints; header-only when the job has no failures.
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+components:
+  securitySchemes:
+    sessionCookie: {type: apiKey, in: cookie, name: eow_session}
+  parameters:
+    CampaignId: {name: campaignId, in: path, required: true, schema: {type: string, format: uuid}}
+    TemplateId: {name: templateId, in: path, required: true, schema: {type: string, format: uuid}}
+    RecipientId: {name: recipientId, in: path, required: true, schema: {type: string, format: uuid}}
+    RecipientListId: {name: recipientListId, in: path, required: true, schema: {type: string, format: uuid}}
+    TagId: {name: tagId, in: path, required: true, schema: {type: string, format: uuid}}
+    CustomFieldId: {name: customFieldId, in: path, required: true, schema: {type: string, format: uuid}}
+    ImportJobId: {name: importJobId, in: path, required: true, schema: {type: string, format: uuid}}
+    BulkJobId: {name: bulkJobId, in: path, required: true, schema: {type: string, format: uuid}}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 255}
+      description: 'Required by BR-GEN-005 so every import/bulk job creation is retry-safe.'
+    SegmentSearch: {name: search, in: query, required: false, schema: {type: string, maxLength: 200}}
+    SegmentCursor: {name: cursor, in: query, required: false, schema: {type: string}}
+    SegmentLimit: {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, minLength: 1}
+        remember: {type: boolean, default: false}
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email}
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string, minLength: 1}
+        password: {type: string, minLength: 8}
+    Me:
+      type: object
+      required: [id, tenantId, email, displayName, role, permissions]
+      properties:
+        id: {type: string, format: uuid}
+        tenantId: {type: string, format: uuid}
+        email: {type: string, format: email}
+        displayName: {type: string}
+        role: {type: string}
+        permissions:
+          type: array
+          items: {type: string}
+          description: 'Effective permission keys resolved server-side from user_role -> role_permission (BR-AUTH-003/004); the frontend uses this to gate nav/routes, but every operation is independently enforced server-side regardless of what this list says.'
+    CampaignProgress:
+      type: object
+      required: [campaignId, version, status, total, queued, sent, delivered, failed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        version: {type: integer, minimum: 0}
+        status: {enum: [scheduled, queued, sending, completed, partially_failed, failed, cancelled, missed]}
+        total: {type: integer, minimum: 0}
+        queued: {type: integer, minimum: 0}
+        sent: {type: integer, minimum: 0}
+        delivered: {type: integer, minimum: 0}
+        failed: {type: integer, minimum: 0}
+        eta: {type: [string, 'null'], format: date-time}
+    RecipientStatus:
+      type: string
+      enum: [active, paused, unsubscribed, bounced]
+      description: 'BR-REC-003: only active is eligible to receive email.'
+    Recipient:
+      type: object
+      required: [id, email, subscriptionStatus, customData, unsubscribedAt, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        firstName: {type: [string, 'null']}
+        lastName: {type: [string, 'null']}
+        phone: {type: [string, 'null']}
+        department: {type: [string, 'null']}
+        title: {type: [string, 'null']}
+        location: {type: [string, 'null']}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+        unsubscribedAt: {type: [string, 'null'], format: date-time}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    RecipientListResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Recipient'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    RecipientList:
+      type: object
+      required: [id, name, description, memberCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: [string, 'null']}
+        memberCount: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    RecipientListCatalogResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/RecipientList'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    RecipientListCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: [string, 'null'], maxLength: 1000}
+    RecipientListUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: [string, 'null'], maxLength: 1000}
+    Tag:
+      type: object
+      required: [id, name, color, memberCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        color: {$ref: '#/components/schemas/TagColor'}
+        memberCount: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    TagCatalogResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Tag'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    TagColor:
+      type: string
+      enum: ['#ef6f45', '#7356c8', '#278b6e', '#d79022', '#3a78c2', '#9a5eb0', '#31806b', '#b85b73']
+    TagCreateRequest:
+      type: object
+      required: [name, color]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        color: {$ref: '#/components/schemas/TagColor'}
+    TagUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        color: {$ref: '#/components/schemas/TagColor'}
+    SegmentMembersRequest:
+      type: object
+      required: [recipientIds]
+      properties:
+        recipientIds: {type: array, minItems: 1, maxItems: 10000, items: {type: string, format: uuid}}
+    RecipientSegments:
+      type: object
+      required: [lists, tags]
+      properties:
+        lists: {type: array, items: {$ref: '#/components/schemas/RecipientList'}}
+        tags: {type: array, items: {$ref: '#/components/schemas/Tag'}}
+    RecipientCreateRequest:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        firstName: {type: string, maxLength: 120}
+        lastName: {type: string, maxLength: 120}
+        phone: {type: string, maxLength: 40}
+        department: {type: string, maxLength: 120}
+        title: {type: string, maxLength: 120}
+        location: {type: string, maxLength: 120}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+    RecipientUpdateRequest:
+      type: object
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        firstName: {type: string, maxLength: 120}
+        lastName: {type: string, maxLength: 120}
+        phone: {type: string, maxLength: 40}
+        department: {type: string, maxLength: 120}
+        title: {type: string, maxLength: 120}
+        location: {type: string, maxLength: 120}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+        confirmReconsent:
+          type: boolean
+          description: 'BR-REC-004: must be true, and the caller must hold settings:manage, to move subscriptionStatus from unsubscribed back to active.'
+    Problem:
+      type: object
+      required: [type, title, status, traceId]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        traceId: {type: string}
+    CustomFieldType:
+      type: string
+      enum: [text, number, date, boolean, enum]
+      description: 'BR-CF-002: recipient custom-data values are stored and validated according to this declared type, never as an opaque string.'
+    CustomField:
+      type: object
+      required: [id, key, label, type, required, sensitive, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        key: {type: string, description: 'BR-CF-001: a-z/0-9/underscore, starting with a letter. Immutable after creation.'}
+        label: {type: string}
+        type: {$ref: '#/components/schemas/CustomFieldType'}
+        required: {type: boolean}
+        defaultValue: {}
+        enumOptions: {type: [array, 'null'], items: {type: string}}
+        sensitive: {type: boolean, description: 'BR-CF-009: when true, this field''s recipient-level value is masked in audit_log rows.'}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CustomFieldListResponse:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/CustomField'}}
+    CustomFieldCreateRequest:
+      type: object
+      required: [key, label, type]
+      properties:
+        key: {type: string, maxLength: 64}
+        label: {type: string, maxLength: 120}
+        type: {$ref: '#/components/schemas/CustomFieldType'}
+        required: {type: boolean, default: false}
+        defaultValue: {}
+        enumOptions: {type: array, items: {type: string}, description: 'Required and non-empty when type is "enum"; invalid otherwise.'}
+        sensitive: {type: boolean, default: false}
+    CustomFieldUpdateRequest:
+      type: object
+      description: 'BR-CF-001: key is deliberately absent -- "đổi label không đổi key". A body that includes key is rejected with 400.'
+      properties:
+        label: {type: string, maxLength: 120}
+        required: {type: boolean}
+        defaultValue: {}
+        enumOptions: {type: array, items: {type: string}}
+        sensitive: {type: boolean}
+    ImportMode:
+      type: string
+      enum: [create_only, update_existing, upsert]
+    ImportMapping:
+      type: object
+      minProperties: 1
+      additionalProperties: {type: string, minLength: 1, maxLength: 120}
+      description: 'Destination field -> unique source-column name. `email` is required; a source column cannot be mapped to two destinations.'
+    ImportSourceRow:
+      type: object
+      required: [rowNumber, rawData]
+      properties:
+        rowNumber: {type: integer, minimum: 2}
+        rawData: {type: object, additionalProperties: true}
+    ImportJobCreateRequest:
+      type: object
+      required: [fileName, fileSizeBytes, mapping, rows]
+      properties:
+        fileName: {type: string, minLength: 1, maxLength: 255, pattern: '^.*\\.(csv|xlsx)$'}
+        fileSizeBytes: {type: integer, minimum: 0, maximum: 52428800}
+        mode: {$ref: '#/components/schemas/ImportMode'}
+        mapping: {$ref: '#/components/schemas/ImportMapping'}
+        rows:
+          type: array
+          maxItems: 100000
+          items: {$ref: '#/components/schemas/ImportSourceRow'}
+    ImportJob:
+      type: object
+      required: [jobId, kind, fileName, status, totalRows, processedRows, succeededRows, failedRows, skippedRows, idempotencyReplayed, createdAt]
+      properties:
+        jobId: {type: string, format: uuid}
+        kind: {type: string, enum: [import]}
+        fileName: {type: string}
+        status: {type: string, enum: [queued, running, completed, partial_success, failed]}
+        totalRows: {type: integer, minimum: 0}
+        processedRows: {type: integer, minimum: 0}
+        succeededRows: {type: integer, minimum: 0}
+        failedRows: {type: integer, minimum: 0}
+        skippedRows: {type: integer, minimum: 0}
+        idempotencyReplayed: {type: boolean}
+        createdAt: {type: string, format: date-time}
+    BulkJobAction:
+      type: string
+      enum: [add_tag, remove_tag, add_list, remove_list, set_custom_data]
+    BulkJobCreateRequest:
+      type: object
+      required: [action, actionPayload, recipientIds]
+      properties:
+        action: {$ref: '#/components/schemas/BulkJobAction'}
+        actionPayload:
+          type: object
+          additionalProperties: true
+          description: 'set_custom_data requires key + value; tag actions require tagId; list actions require listId.'
+        recipientIds:
+          type: array
+          maxItems: 100000
+          items: {type: string, format: uuid}
+    BulkJob:
+      type: object
+      required: [jobId, kind, status, selectionSnapshot, resolvedCount, processedRows, succeededRows, failedRows, skippedRows, idempotencyReplayed, createdAt]
+      properties:
+        jobId: {type: string, format: uuid}
+        kind: {type: string, enum: [bulk_update]}
+        status: {type: string, enum: [queued, running, completed, partial_success, failed]}
+        selectionSnapshot:
+          type: array
+          items: {type: string, format: uuid}
+        resolvedCount: {type: integer, minimum: 0}
+        processedRows: {type: integer, minimum: 0}
+        succeededRows: {type: integer, minimum: 0}
+        failedRows: {type: integer, minimum: 0}
+        skippedRows: {type: integer, minimum: 0}
+        idempotencyReplayed: {type: boolean}
+        createdAt: {type: string, format: date-time}
+    BulkJobPreview:
+      type: object
+      required: [scope, estimatedCount, action, actionPayload]
+      properties:
+        scope: {type: string, enum: [selected_recipients]}
+        estimatedCount: {type: integer, minimum: 0}
+        action: {$ref: '#/components/schemas/BulkJobAction'}
+        actionPayload: {type: object, additionalProperties: true}
+  responses:
+    Problem:
+      description: RFC 9457 problem
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    CustomFieldReservedKeyProblem:
+      description: 'BR-CF-003: the submitted key is a reserved system variable; reservedKeys lists every key that may not be used.'
+      content:
+        application/problem+json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Problem'}
+              - type: object
+                required: [reservedKeys]
+                properties:
+                  reservedKeys: {type: array, items: {type: string}}

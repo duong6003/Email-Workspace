@@ -1,0 +1,649 @@
+# UI inventory — approved handoff `email-operations-workspace-ui-handoff-v2`
+# Source of truth for presentation and interaction.
+# Produced by run 2026-08-10-eow-master-execplan, node `ui_intake`.
+# Behaviour authority remains catalog/ba-rules.json. HTTP authority: contracts/openapi.yaml.
+# Realtime authority: contracts/asyncapi.yaml. Data baseline: database/migrations/.
+
+version: 1
+run_id: 2026-08-10-eow-master-execplan
+generated_at: '2026-08-10T00:00:00Z'
+
+handoff_status:
+  command: python scripts/ui_handoff.py status
+  status: ready
+  registered: false
+  registration_gap: >-
+    `installed.json` is absent because the handoff was copied manually.
+    Node `ui_intake_register` must run `python scripts/ui_handoff.py register`
+    so the fingerprint is pinned before any apps/web migration begins.
+  path: design-reference/ui-handoff-v2/source
+  file_count: 29763
+  total_bytes: 720335586
+  sha256: 4cd6c1a8fae26d1caf94a0f9d617711443494022cdee51a08cab3c21aa3adbf3
+  note: >-
+    file_count/total_bytes include the vendored node_modules/ tree
+    (687 MB). Material authored UI source is 13 files.
+
+# ---------------------------------------------------------------------------
+# 1. Source topology
+# ---------------------------------------------------------------------------
+
+source_files:
+  authored:
+    - path: design-reference/ui-handoff-v2/source/app/page.tsx
+      bytes: 45997
+      role: root screen component, view router, shell, login gate, 5 view modules
+    - path: design-reference/ui-handoff-v2/source/app/action-overlays.tsx
+      bytes: 57501
+      role: all 39 modal/drawer/popover/command overlays
+    - path: design-reference/ui-handoff-v2/source/app/globals.css
+      bytes: 187896
+      role: complete design system; `@import "tailwindcss"` + semantic class CSS
+    - path: design-reference/ui-handoff-v2/source/app/ui-icons.tsx
+      bytes: 3165
+      role: inline SVG icon set (UiIcon)
+    - path: design-reference/ui-handoff-v2/source/app/recipient-data.ts
+      bytes: 1441
+      role: mock lists, tags, import history
+    - path: design-reference/ui-handoff-v2/source/app/layout.tsx
+      bytes: 858
+      role: html/body shell, metadata, Geist font wiring
+  not_to_migrate:
+    - path: design-reference/ui-handoff-v2/source/app/chatgpt-auth.ts
+      reason: unreferenced by page.tsx/action-overlays.tsx; ChatGPT-host header auth, out of scope
+    - path: design-reference/ui-handoff-v2/source/worker/index.ts
+      reason: Cloudflare Worker entry for the vinext starter; production target is Vite + Nginx
+    - path: design-reference/ui-handoff-v2/source/db/schema.ts
+      reason: Drizzle/D1 starter stub; PostgreSQL + database/migrations is the data baseline (ADR-007)
+    - path: design-reference/ui-handoff-v2/source/db/index.ts
+      reason: as above
+    - path: design-reference/ui-handoff-v2/source/build/sites-vite-plugin.ts
+      reason: vinext starter tooling
+    - path: design-reference/ui-handoff-v2/source/tests/rendered-html.test.mjs
+      reason: asserts vinext build output; replaced by apps/web test suite
+    - paths: ['.openai/', '.vinext/', '.wrangler/', 'node_modules/', 'build/']
+      reason: generated or host-specific
+
+# ---------------------------------------------------------------------------
+# 2. Routes
+# ---------------------------------------------------------------------------
+
+routing:
+  handoff_model: >-
+    Single Next.js App Router page. Navigation is React state
+    (`view`, `emailTab`, `recipientView`, `settingsTab`, `overlay`).
+    No URL is addressable; reload always returns to `compose`.
+  production_model: >-
+    react-router-dom 7 (already a dependency of apps/web). Addressable routes
+    are REQUIRED, not a redesign: BR-NOT-010 (stable deep link per actionable
+    notification), BR-HIS-003 (drill-down) and BR-AUTH-004 (per-route permission
+    control) cannot be satisfied by in-memory view state.
+    See Decision Log DEC-003 in EXECPLAN.md.
+  routes:
+    - route: /login
+      screen: UI-AUTH-001
+      auth: public
+    - route: /email/compose
+      screen: UI-EMAIL-001
+      auth: authenticated
+      default_after_login: true
+    - route: /email/drafts
+      screen: UI-EMAIL-002
+      auth: authenticated
+    - route: /recipients
+      screen: UI-REC-001
+      auth: authenticated
+    - route: /recipients/lists
+      screen: UI-REC-002
+      auth: authenticated
+    - route: /recipients/tags
+      screen: UI-REC-003
+      auth: authenticated
+    - route: /recipients/imports
+      screen: UI-REC-004
+      auth: authenticated
+    - route: /templates
+      screen: UI-TPL-001
+      auth: authenticated
+    - route: /settings/senders
+      screen: UI-CFG-001
+      auth: admin
+    - route: /settings/policy
+      screen: UI-CFG-002
+      auth: admin
+    - route: /history
+      screen: UI-HIS-001
+      auth: authenticated
+    - route: /history/:campaignId
+      screen: UI-HIS-002
+      auth: authenticated
+      note: handoff renders this as the `historyDetail` drawer; route makes it deep-linkable
+
+# ---------------------------------------------------------------------------
+# 3. Screens
+# ---------------------------------------------------------------------------
+
+screens:
+
+  - id: UI-AUTH-001
+    name: Login
+    route: /login
+    source: 'app/page.tsx :: LoginScreen (L80-109)'
+    layout: 'login-shell → login-topbar / login-layout (login-story + login-panel) / login-footer'
+    components: [login-brand, login-theme switch, login-product-preview, login-trust,
+                 login-card form, login-input, login-error, login-notice, login-options,
+                 login-submit, login-spinner, login-footer]
+    business_rules: [BR-AUTH-001, BR-AUTH-002, BR-AUTH-005, BR-AUTH-006, BR-GEN-001, BR-GEN-004]
+    api_operations: [POST /auth/login, POST /auth/logout, POST /auth/refresh]
+    realtime_events: []
+    permissions: public
+    mocks_to_replace:
+      - id: MOCK-AUTH-01
+        what: '`window.setTimeout(() => onLogin(remember), 650)` fake submit'
+        replace_with: POST /api/v1/auth/login with Secure HttpOnly SameSite cookie (ADR-006)
+      - id: MOCK-AUTH-02
+        what: '`localStorage.setItem("ecs-auth","true")` as the session'
+        replace_with: server session cookie; client holds no auth token
+      - id: MOCK-AUTH-03
+        what: '"Quên mật khẩu?" sets a local notice string only'
+        replace_with: POST /api/v1/auth/forgot-password (BR-AUTH-006)
+    states_present: [error, submitting, notice]
+    states_missing: [rate-limited/locked (BR-AUTH-005), server-error, expired-session return]
+    accessibility_present: [role=alert on error, role=status on notice, aria-label on theme buttons, autoFocus]
+    milestone: M1
+
+  - id: UI-SHELL-001
+    name: Application shell
+    route: all authenticated routes
+    source: 'app/page.tsx :: Home (L233-309)'
+    layout: 'CSS grid `app-shell`: 260px sidebar + 60px utility-bar + workspace; `.collapsed` variant'
+    components: [sidebar, brand logo-only, nav-group (3 groups / 5 items), nav-item,
+                 sidebar-footer, sidebar-edge-handle, utility-bar, global-search (⌘K),
+                 save-state indicator, help button, notification-trigger + unread dot,
+                 profile button, page-header, page-actions, content-stage, app-footer, toast]
+    business_rules: [BR-GEN-001, BR-GEN-004, BR-AUTH-003, BR-AUTH-004, BR-NOT-001, BR-NOT-004]
+    api_operations: [GET /auth/me, 'GET /notifications?unread=true']
+    realtime_events: [rt.connection.ready, rt.resync_required, notification.created, notification.read]
+    permissions: nav items filtered by role; /settings/* is Admin (BR-AUTH-004)
+    mocks_to_replace:
+      - id: MOCK-SHELL-01
+        what: hardcoded profile `DC / Developer C / Administrator`
+        replace_with: GET /api/v1/auth/me
+      - id: MOCK-SHELL-02
+        what: hardcoded unread notification dot (`aria-label` says "có 3 thông báo chưa đọc")
+        replace_with: durable unread count from GET /notifications + notification.created/read
+      - id: MOCK-SHELL-03
+        what: '`save-state` text is static ("Đã tự động lưu"/"Đã đồng bộ")'
+        replace_with: real draft autosave / query sync state
+      - id: MOCK-SHELL-04
+        what: 'toast via `window.setTimeout(..., 2800)` with no durable record'
+        replace_with: 'toast stays transient (BR-NOT-001); durable events go to notification center'
+    states_present: [collapsed/expanded sidebar (persisted to localStorage `ecs-sidebar`),
+                     theme light/dark/system (persisted to `ecs-theme`), toast]
+    states_missing: [reconnecting banner (required by ui-source-contract when realtime applies),
+                     permission_denied nav filtering, global error boundary]
+    milestone: M1
+
+  - id: UI-EMAIL-001
+    name: Compose
+    route: /email/compose
+    source: 'app/page.tsx :: Composer (L111-145)'
+    layout: 'compose-grid = compose-card (min 680px) + context-panel (310px); stacks < 1100px'
+    components: [select-field sender, select-field recipient, Field CC, Field BCC, Field subject,
+                 template-row, editor-shell, view-switch (Trình soạn thảo / HTML), editor-toolbar,
+                 email-canvas, code-editor, context-panel, panel-switch (Biến dữ liệu / Xem trước),
+                 panel-search, variable-group ×2, custom-variable button, mapping-status, mini-preview]
+    business_rules: [BR-CMP-001, BR-CMP-004, BR-CMP-006, BR-CMP-008, BR-TPL-003, BR-TPL-004,
+                     BR-TPL-005, BR-TPL-006, BR-CFG-004, BR-SEG-008]
+    api_operations: [POST /campaigns, 'PATCH /campaigns/{id}', 'POST /campaigns/{id}/audience-preview',
+                     'POST /template-versions/{id}/preview', GET /templates, GET /sender-accounts,
+                     GET /custom-fields]
+    realtime_events: [audience.validation_progress, audience.validation_completed]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-CMP-01
+        what: hardcoded sender "Acme People Team / people@acme.vn"
+        replace_with: GET /sender-accounts + selected sender on the draft
+      - id: MOCK-CMP-02
+        what: hardcoded audience "Danh sách nhân viên · 128 địa chỉ hợp lệ"
+        replace_with: audience-preview resolved counts (BR-CMP-002 dedupe, BR-CMP-003 eligibility)
+      - id: MOCK-CMP-03
+        what: hardcoded template "Welcome onboarding.html · 42 KB · Đã map 12 biến"
+        replace_with: selected template version + extracted required variables (BR-TPL-004)
+      - id: MOCK-CMP-04
+        what: '`mapping-status` literal "12 / 12 biến đã map"'
+        replace_with: validate-audience missing-variable matrix (BR-CMP-004/005)
+      - id: MOCK-CMP-05
+        what: static variable catalogue (5 recipient + 3 common entries)
+        replace_with: system fields + GET /custom-fields (BR-CF-001, BR-CF-003)
+      - id: MOCK-CMP-06
+        what: editor toolbar buttons are inert; email-canvas and code-editor are fixed literals
+        replace_with: 'real editor bound to template version HTML (ADR-015; ADR-019 is Proposed → see DEC-005)'
+      - id: MOCK-CMP-07
+        what: mini-preview hardcoded to "Nguyễn Minh An"
+        replace_with: POST /template-versions/{id}/preview with a real sample recipient
+      - id: MOCK-CMP-08
+        what: '"Tự động lưu · vừa xong" is static text'
+        replace_with: debounced PATCH /campaigns/{id} with If-Match (BR-GEN-005, BR-CMP-011)
+    states_present: [visual/html editor toggle, variables/preview panel toggle]
+    states_missing: [loading, empty (no template / no audience), error, permission_denied,
+                     missing-variable blocking state (BR-CMP-005), audience-limit warning (BR-CMP-009)]
+    milestone: M4
+
+  - id: UI-EMAIL-002
+    name: Drafts
+    route: /email/drafts
+    source: 'app/page.tsx :: Drafts (L147-150)'
+    components: [module-toolbar + SearchBox, draft-summary, draft-list, draft-icon, draft-main,
+                 draft-progress bar, row-menu → draftActions overlay]
+    business_rules: [BR-CMP-001, BR-CMP-011, BR-CMP-012, BR-GEN-006]
+    api_operations: ['GET /campaigns?status=draft', 'DELETE /campaigns/{id}', 'PATCH /campaigns/{id}']
+    realtime_events: []
+    permissions: Operator; owner-scoped listing
+    mocks_to_replace:
+      - id: MOCK-DRF-01
+        what: '`drafts` array of 3 literals with a fabricated `complete` percentage'
+        replace_with: GET /campaigns?status=draft; completeness derived from real draft validation
+    states_present: [list]
+    states_missing: [loading, empty, error, permission_denied]
+    milestone: M4
+
+  - id: UI-REC-001
+    name: Recipients — all
+    route: /recipients
+    source: 'app/page.tsx :: Recipients (L152-167), recipientView === ''all'''
+    components: [recipient-section-nav (role=tablist, 4 tabs), module-frame-toolbar, SearchBox,
+                 FilterButton, ActiveFilters, data-summary, recipient-bulk-bar, table-wrap,
+                 person-avatar, recipient-tags-cell, status pill, row-menu, pagination]
+    business_rules: [BR-REC-001, BR-REC-002, BR-REC-003, BR-REC-004, BR-REC-007, BR-REC-008,
+                     BR-REC-009, BR-REC-010, BR-GEN-002, BR-GEN-006, BR-SEG-010]
+    api_operations: [GET /recipients, POST /recipients, 'PATCH /recipients/{id}',
+                     'DELETE /recipients/{id}', POST /recipients/bulk-jobs]
+    realtime_events: [bulk_update.progress, bulk_update.completed, export.completed,
+                      recipient.segment_changed]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-REC-01
+        what: '`people` array of 4 literals; every row hardcoded to status "Hợp lệ"'
+        replace_with: GET /recipients with real subscription_status (BR-REC-003)
+      - id: MOCK-REC-02
+        what: 'data-summary literals "1.248 / 1.236 hợp lệ / 12 cần kiểm tra"'
+        replace_with: server aggregate counts
+      - id: MOCK-REC-03
+        what: 'pagination literal "Hiển thị 1–25 trong 1.248" with inert page buttons'
+        replace_with: real cursor/offset pagination (BR-SEG-010)
+      - id: MOCK-REC-04
+        what: bulk bar actions call `toast()` or open an overlay without mutating
+        replace_with: POST /recipients/bulk-jobs (async job + realtime progress; BR-REC-009, BR-CF-004/007)
+      - id: MOCK-REC-05
+        what: '`ActiveFilters` shows a fixed "Trạng thái: Hợp lệ" chip; onClear only toasts'
+        replace_with: real filter state bound to query params (BR-REC-008)
+    states_present: [row selection, select-all, bulk bar, active-filter row]
+    states_missing: [loading, empty, error, permission_denied, bulk job in-progress, partial-failure result]
+    milestone: M2
+
+  - id: UI-REC-002
+    name: Recipients — lists
+    route: /recipients/lists
+    source: 'app/page.tsx :: Recipients, recipientView === ''lists'''
+    components: [recipient-list-grid, article card, recipient-list-icon tone-N, row-menu, footer link]
+    business_rules: [BR-SEG-001, BR-SEG-002, BR-SEG-004, BR-SEG-005, BR-SEG-007, BR-REC-005]
+    api_operations: [GET /lists, POST /lists, 'PATCH /lists/{id}', 'DELETE /lists/{id}']
+    realtime_events: [recipient.segment_changed]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-LST-01
+        what: '`recipientLists` — 4 literals in app/recipient-data.ts'
+        replace_with: GET /lists with server-computed member/valid counts (BR-SEG-004)
+    states_missing: [loading, empty, error, permission_denied, delete-with-dependency warning (BR-SEG-005)]
+    milestone: M2
+
+  - id: UI-REC-003
+    name: Recipients — tags
+    route: /recipients/tags
+    source: 'app/page.tsx :: Recipients, recipientView === ''tags'''
+    components: [recipient-tag-directory, tag-directory-summary, tag-directory-grid, row-menu]
+    business_rules: [BR-SEG-001, BR-SEG-002, BR-SEG-003, BR-SEG-004, BR-SEG-006, BR-REC-006]
+    api_operations: [GET /tags, POST /tags, 'PATCH /tags/{id}', 'DELETE /tags/{id}']
+    realtime_events: [recipient.segment_changed]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-TAG-01
+        what: '`recipientTags` — 8 literals with inline hex colours'
+        replace_with: GET /tags (colour persisted per BR-SEG-003)
+    states_missing: [loading, empty, error, permission_denied]
+    milestone: M2
+
+  - id: UI-REC-004
+    name: Recipients — imports
+    route: /recipients/imports
+    source: 'app/page.tsx :: Recipients, recipientView === ''imports'''
+    components: [import-guidance, table-wrap, status pill, row-menu]
+    business_rules: [BR-IMP-001, BR-IMP-002, BR-IMP-003, BR-IMP-004, BR-IMP-005, BR-IMP-006, BR-IMP-007]
+    api_operations: [POST /recipients/imports, 'GET /imports/{jobId}', GET /imports]
+    realtime_events: [import.progress, import.completed]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-IMP-01
+        what: '`recipientImports` — 3 literals'
+        replace_with: GET /imports (async job history; BR-IMP-006)
+      - id: MOCK-IMP-02
+        what: '"Tải file mẫu" opens the importExcel overlay instead of downloading a template'
+        replace_with: real template download endpoint
+    states_missing: [loading, empty, error, permission_denied, import running with live progress,
+                     error-file download for rejected rows (BR-IMP-007)]
+    milestone: M2
+
+  - id: UI-TPL-001
+    name: Templates
+    route: /templates
+    source: 'app/page.tsx :: Templates (L169-171)'
+    components: [module-frame-toolbar, SearchBox, pill-filter quick-filter, FilterButton,
+                 ActiveFilters, template-grid, template-card, template-preview theme-N,
+                 template-hover-layer, template-meta, row-menu, drop-zone]
+    business_rules: [BR-TPL-001, BR-TPL-002, BR-TPL-005, BR-TPL-006, BR-TPL-009, BR-TPL-010, BR-TPL-012]
+    api_operations: [GET /templates, POST /templates, 'POST /templates/{id}/publish',
+                     'POST /template-versions/{id}/preview']
+    realtime_events: [template.published]
+    permissions: Operator
+    mocks_to_replace:
+      - id: MOCK-TPL-01
+        what: 'four literal names mapped over `theme-{i}` preview tiles'
+        replace_with: GET /templates with real thumbnails/metadata
+      - id: MOCK-TPL-02
+        what: 'meta literal "HTML · 8 biến · cập nhật 2 ngày trước"'
+        replace_with: real variable count from extraction + updated_at (BR-TPL-004)
+      - id: MOCK-TPL-03
+        what: drop-zone is a button that opens an overlay; no file handling
+        replace_with: real drag/drop upload + sanitize + variable extraction (BR-TPL-006)
+    states_missing: [loading, empty, error, permission_denied, upload-in-progress, sanitize-rejected]
+    milestone: M3
+
+  - id: UI-CFG-001
+    name: Settings — sender configurations
+    route: /settings/senders
+    source: 'app/page.tsx :: Settings (L173-197), settingsTab === ''configs'''
+    layout: 'config-master-detail = config-master aside + config-detail-panel article'
+    components: [settings-topbar, workspace-tabs, config-master-toolbar, config-master-list,
+                 config-avatar, config-row-meta, config-detail-panel, connection-state,
+                 reauth-banner, detail-section ×3, read-only-grid, compact-switch,
+                 policy-input-grid, inherited-policy, detail-savebar]
+    business_rules: [BR-CFG-001, BR-CFG-002, BR-CFG-003, BR-CFG-004, BR-CFG-005, BR-CFG-007,
+                     BR-SEC-001, BR-SEC-002, BR-AUTH-004]
+    api_operations: [GET /sender-accounts, POST /sender-accounts, 'PATCH /sender-accounts/{id}',
+                     'POST /sender-accounts/{id}/test', 'DELETE /sender-accounts/{id}']
+    realtime_events: [sender.state_changed]
+    permissions: Admin only
+    mocks_to_replace:
+      - id: MOCK-CFG-01
+        what: '`configs` — 3 literals including host/port/security/session'
+        replace_with: GET /sender-accounts; credentials stored as secret_ref only (BR-SEC-001)
+      - id: MOCK-CFG-02
+        what: '`overrides` React state seeded with `{ "support@acme.vn": true }`'
+        replace_with: persisted per-sender policy override
+      - id: MOCK-CFG-03
+        what: '"Kiểm tra kết nối" opens an overlay; no SMTP probe'
+        replace_with: POST /sender-accounts/{id}/test (BR-CFG-003)
+      - id: MOCK-CFG-04
+        what: '`dirty` savebar resolves with a toast, no persistence'
+        replace_with: real PATCH + optimistic-concurrency conflict handling
+      - id: MOCK-CFG-05
+        what: 'footer literal "2 cấu hình hoạt động"'
+        replace_with: server aggregate
+    states_present: [selected, needs-attention, reauth banner, dirty savebar, inherit vs override]
+    states_missing: [loading, empty, error, permission_denied (non-admin), saving, save-conflict]
+    milestone: M5
+
+  - id: UI-CFG-002
+    name: Settings — default sending policy
+    route: /settings/policy
+    source: 'app/page.tsx :: Settings, settingsTab === ''policy'''
+    components: [default-policy-panel, policy-notice, default-policy-grid, policy-scope, footer]
+    business_rules: [BR-CFG-006, BR-SEND-007, BR-SEND-006, BR-AUTH-004, BR-SEC-002]
+    api_operations: [GET /settings/sending-policy, PUT /settings/sending-policy]
+    realtime_events: [quota.threshold_reached]
+    permissions: Admin only
+    mocks_to_replace:
+      - id: MOCK-POL-01
+        what: 'defaultValue "50" / "60" / "2" inputs with no persistence'
+        replace_with: tenant sending policy resource driving worker rate limit + retry
+      - id: MOCK-POL-02
+        what: '"Lưu chính sách mặc định" opens the settingsSaved overlay'
+        replace_with: PUT + audit entry (BR-SEC-002)
+    states_missing: [loading, error, permission_denied, saving, validation-error]
+    milestone: M5
+
+  - id: UI-HIS-001
+    name: Send history
+    route: /history
+    source: 'app/page.tsx :: History (L199-231)'
+    components: [module-frame-toolbar, SearchBox, FilterButton, ActiveFilters,
+                 history-live-summary, history-table, send-progress bar, status pill,
+                 row-resend, row-menu]
+    business_rules: [BR-HIS-001, BR-HIS-004, BR-HIS-005, BR-HIS-007, BR-HIS-008,
+                     BR-SEND-003, BR-SEND-004, BR-SEND-005]
+    api_operations: [GET /history, 'GET /campaigns/{id}/progress', 'POST /campaigns/{id}/resend']
+    realtime_events: [campaign.state_changed, campaign.progress, campaign.issue_detected,
+                      schedule.state_changed]
+    permissions: Viewer (read), Operator (resend)
+    mocks_to_replace:
+      - id: MOCK-HIS-01
+        what: '`histories` — 4 literals with fixed progress/sent/pending/failed/eta'
+        replace_with: GET /history + GET /campaigns/{id}/progress (BR-SEND-003 progress formula)
+      - id: MOCK-HIS-02
+        what: 'history-live-summary literal "1 chiến dịch đang gửi · 87 · 39 · 2"'
+        replace_with: live aggregate reconciled from campaign_recipient facts (ADR-016, BR-HIS-008)
+      - id: MOCK-HIS-03
+        what: sender literal "people@acme.vn" on every row
+        replace_with: snapshot sender per campaign
+      - id: MOCK-HIS-04
+        what: '"Gửi lại" opens resendConfirm; no job is created'
+        replace_with: POST resend creating a new execution over failed recipients (BR-HIS-005)
+    states_present: [status variants success/processing/scheduled/warning, scheduled progress variant]
+    states_missing: [loading, empty, error, permission_denied, reconnecting,
+                     monotonic-counter guard (BR-SEND-003), stale-progress indicator]
+    milestone: M6
+
+  - id: UI-HIS-002
+    name: Campaign detail (live progress)
+    route: /history/:campaignId
+    source: 'app/action-overlays.tsx :: type === ''historyDetail'' (rendered as a right drawer)'
+    business_rules: [BR-HIS-002, BR-HIS-003, BR-HIS-005, BR-HIS-008, BR-SEND-001, BR-SEND-002,
+                     BR-SEND-003, BR-SEND-009, BR-SEND-010]
+    api_operations: ['GET /campaigns/{id}/progress', 'GET /history/{id}/recipients',
+                     'POST /campaigns/{id}/pause', 'POST /campaigns/{id}/resume',
+                     'POST /campaigns/{id}/cancel']
+    realtime_events: [campaign.progress, campaign.state_changed, campaign.issue_detected]
+    permissions: Viewer (read), Operator (pause/resume/cancel)
+    mocks_to_replace:
+      - id: MOCK-HIS-05
+        what: static drawer content; no live subscription
+        replace_with: REST-first load + campaign.progress hints + reconciliation on reconnect (ADR-010)
+    states_missing: [loading, empty, error, permission_denied, reconnecting, cancelled, partially_failed]
+    milestone: M6
+
+# ---------------------------------------------------------------------------
+# 4. Overlays (39 types, single ActionOverlay component)
+#    Count verified against the OverlayType union in action-overlays.tsx L6-12.
+# ---------------------------------------------------------------------------
+
+overlays:
+  component: design-reference/ui-handoff-v2/source/app/action-overlays.tsx
+  presentation_classes:
+    small_modal: [sendSuccess, draftSaved, draftActions, recipientActions, templateActions,
+                  configActions, setDefaultConfirm, deleteConfigConfirm, testConnection,
+                  settingsSaved, resendConfirm, resendSuccess]
+    large_modal: [recipientPicker, customVariableBuilder, composePreview, templateDetail,
+                  mailConfigForm, editMailConfig, addRecipient]
+    drawer: [historyDetail]
+    popover: [notifications]
+    command_palette: [command]
+    standard_modal: [help, profile, sender, importExcel, templatePicker, importHtml, tagPicker,
+                     manageTags, sendTest, sendConfirm, scheduleSend, bulkCustomData,
+                     recipientFilter, createList, templateFilter, configFilter, historyFilter]
+  catalog:
+    - {id: command,               milestone: M1, rules: [BR-AUTH-004],                     notes: '⌘K palette; must respect RBAC when listing targets'}
+    - {id: help,                  milestone: M1, rules: [BR-GEN-001]}
+    - {id: profile,               milestone: M1, rules: [BR-AUTH-002, BR-AUTH-003],        api: [GET /auth/me, POST /auth/logout], notes: 'theme + sidebar prefs; logout clears server session, not localStorage'}
+    - {id: notifications,         milestone: M6, rules: [BR-NOT-001, BR-NOT-004, BR-NOT-006, BR-NOT-010, BR-NOT-012], api: [GET /notifications, 'PUT /notifications/{id}/read'], events: [notification.created, notification.updated, notification.read], notes: 'mock `notificationItems` (3 literals) + local `readNotifications` state must become durable'}
+    - {id: sender,                milestone: M5, rules: [BR-CFG-001, BR-CFG-004],          api: [GET /sender-accounts]}
+    - {id: recipientPicker,       milestone: M4, rules: [BR-SEG-008, BR-SEG-009, BR-CMP-002], api: ['POST /campaigns/{id}/audience-preview'], notes: 'lists/tags/excel modes'}
+    - {id: importExcel,           milestone: M2, rules: [BR-IMP-001, BR-IMP-002, BR-IMP-003, BR-IMP-004], api: [POST /recipients/imports], events: [import.progress, import.completed]}
+    - {id: templatePicker,        milestone: M3, rules: [BR-TPL-001, BR-TPL-002],          api: [GET /templates]}
+    - {id: importHtml,            milestone: M3, rules: [BR-TPL-006, BR-TPL-009],          api: [POST /templates]}
+    - {id: tagPicker,             milestone: M2, rules: [BR-REC-006, BR-SEG-001],          api: [GET /tags]}
+    - {id: manageTags,            milestone: M2, rules: [BR-SEG-002, BR-SEG-003, BR-SEG-006], api: [GET /tags, POST /tags, 'PATCH /tags/{id}', 'DELETE /tags/{id}']}
+    - {id: customVariableBuilder, milestone: M2, rules: [BR-CF-001, BR-CF-002, BR-CF-003, BR-CF-005], api: [GET /custom-fields, POST /custom-fields], notes: 'actions/code dual mode'}
+    - {id: sendTest,              milestone: M3, rules: [BR-TPL-011],                      api: ['POST /template-versions/{id}/test-send']}
+    - {id: sendConfirm,           milestone: M4, rules: [BR-CMP-008, BR-CMP-009, BR-CMP-010, BR-CMP-005, BR-GEN-005], api: ['POST /campaigns/{id}/send'], notes: 'review-before-send; must block on missing required variables'}
+    - {id: scheduleSend,          milestone: M5, rules: [BR-SCH-001, BR-SCH-002, BR-SCH-003, BR-SCH-004, BR-SCH-005, BR-SCH-006, BR-SCH-007, BR-SCH-008, BR-SCH-009, BR-SCH-010, BR-GEN-003], api: ['POST /campaigns/{id}/schedule', 'POST /campaigns/{id}/schedule/cancel'], events: [schedule.state_changed], notes: 'M5-S2: real zone list + local-time/UTC preview; DST/lead-time 422s as human copy with one-click fixes; ComposeDraftScreen gains a scheduled banner with a lock-window countdown'}
+    - {id: sendSuccess,           milestone: M4, rules: [BR-NOT-001],                      notes: 'confirmation only; durable record lives in notification center'}
+    - {id: draftSaved,            milestone: M4, rules: [BR-CMP-001]}
+    - {id: draftActions,          milestone: M4, rules: [BR-CMP-011, BR-GEN-006]}
+    - {id: composePreview,        milestone: M3, rules: [BR-TPL-005, BR-TPL-007, BR-TPL-012], api: ['POST /template-versions/{id}/preview'], notes: 'desktop/mobile device toggle + sample recipient switch'}
+    - {id: addRecipient,          milestone: M2, rules: [BR-REC-001, BR-REC-002, BR-REC-003], api: [POST /recipients]}
+    - {id: bulkCustomData,        milestone: M2, rules: [BR-CF-004, BR-CF-006, BR-CF-007, BR-CF-008, BR-CF-009], api: [POST /recipients/bulk-jobs], events: [bulk_update.progress, bulk_update.completed]}
+    - {id: recipientFilter,       milestone: M2, rules: [BR-REC-008]}
+    - {id: recipientActions,      milestone: M2, rules: [BR-REC-010, BR-GEN-006]}
+    - {id: createList,            milestone: M2, rules: [BR-SEG-002, BR-SEG-005],          api: [POST /lists]}
+    - {id: templateDetail,        milestone: M3, rules: [BR-TPL-002, BR-TPL-005, BR-TPL-012]}
+    - {id: templateActions,       milestone: M3, rules: [BR-TPL-001, BR-TPL-010]}
+    - {id: templateFilter,        milestone: M3, rules: [BR-TPL-001]}
+    - {id: mailConfigForm,        milestone: M5, rules: [BR-CFG-001, BR-CFG-002, BR-SEC-001], notes: 'STOP-gate adjacent: never render or log stored SMTP credentials'}
+    - {id: editMailConfig,        milestone: M5, rules: [BR-CFG-001, BR-CFG-002, BR-CFG-007, BR-SEC-001]}
+    - {id: configActions,         milestone: M5, rules: [BR-CFG-007]}
+    - {id: configFilter,          milestone: M5, rules: [BR-CFG-001]}
+    - {id: setDefaultConfirm,     milestone: M5, rules: [BR-CFG-004]}
+    - {id: deleteConfigConfirm,   milestone: M5, rules: [BR-CFG-007, BR-SCH-009], notes: 'must warn about scheduled campaigns bound to this sender'}
+    - {id: testConnection,        milestone: M5, rules: [BR-CFG-003],                      api: ['POST /sender-accounts/{id}/test']}
+    - {id: settingsSaved,         milestone: M5, rules: [BR-CFG-006]}
+    - {id: historyFilter,         milestone: M6, rules: [BR-HIS-001]}
+    - {id: historyDetail,         milestone: M6, rules: [BR-HIS-002, BR-HIS-003, BR-SEND-009, BR-SEND-010], notes: 'promote to route /history/:campaignId'}
+    - {id: resendConfirm,         milestone: M6, rules: [BR-HIS-005, BR-CMP-010, BR-GEN-005]}
+    - {id: resendSuccess,         milestone: M6, rules: [BR-NOT-001]}
+
+# ---------------------------------------------------------------------------
+# 5. Cross-cutting inventory
+# ---------------------------------------------------------------------------
+
+navigation:
+  groups:
+    - {label: null,        items: [{id: compose, label: Email, icon: compose}]}
+    - {label: 'QUẢN LÝ',   items: [{id: recipients, label: 'Người nhận', icon: recipients},
+                                   {id: templates,  label: 'Email template', icon: templates}]}
+    - {label: 'HỆ THỐNG',  items: [{id: settings, label: 'Cấu hình email', icon: settings},
+                                   {id: history,  label: 'Lịch sử gửi', icon: history}]}
+  sub_navigation:
+    email:      [compose, drafts]
+    recipients: [all, lists, tags, imports]
+    settings:   [configs, policy]
+
+responsive:
+  breakpoints_in_source: ['@media(max-width:1100px)', '@media(max-width:760px)']
+  behavior:
+    - {at: '<=1100px', change: 'compose-grid collapses to one column; context-panel moves below;
+                                template-grid becomes 2 columns; profile text hidden; search 260px'}
+    - {at: '<=760px',  change: 'app-shell drops the grid; sidebar becomes fixed 76px icon rail;
+                                nav labels and sidebar footer hidden; collapse-button hidden'}
+  acceptance_viewports:
+    - {name: desktop, width: 1440, height: 900}
+    - {name: tablet,  width: 768,  height: 1024}
+    - {name: mobile,  width: 390,  height: 844}
+  gap: >-
+    The 768px acceptance viewport falls between the two source breakpoints and
+    therefore renders the desktop grid at 768px. Tablet rendering must be captured
+    as the handoff baseline and reproduced exactly; it must not be "fixed" during
+    migration (that would be a redesign). Flag as a visual-verification observation.
+
+required_states_matrix:
+  contract: 'design-reference/ui-source-contract.yaml :: required_states'
+  states: [loading, empty, error, success, permission_denied, reconnecting_when_realtime_applies]
+  present_in_handoff: [success (toast + *Success overlays), error (login only)]
+  absent_in_handoff: [loading, empty, permission_denied, reconnecting]
+  consequence: >-
+    Missing states are NOT a redesign when added: ui-source-contract requires them.
+    Each must be built with the handoff's existing visual vocabulary
+    (status pills, skeleton of the same card geometry, existing colour tokens).
+
+design_tokens:
+  source: app/globals.css :root
+  colors: {ink: '#262229', muted: '#77717a', line: '#e9e5e7', surface: '#fff', canvas: '#f7f5f6',
+           coral: '#e85b37', coral-dark: '#c94527', coral-soft: '#fff0e8', green: '#158163',
+           green-soft: '#eaf8f3', amber: '#b46b12', amber-soft: '#fff6df'}
+  shadow: '0 12px 34px rgba(58,36,31,.07)'
+  themes: [light, dark, system]
+  theme_mechanism: 'class `theme-light` / `theme-dark` / `theme-system` on the root element,
+                    plus `theme-dark` when system dark is active'
+
+assets:
+  - {path: public/alta-logo.png, use: 'brand mark in login topbar, sidebar brand, sidebar footer'}
+  - {path: public/favicon.svg,   use: favicon}
+  - {path: public/file.svg,      use: unreferenced by page.tsx/action-overlays.tsx}
+  - {path: public/globe.svg,     use: unreferenced}
+  - {path: public/window.svg,    use: unreferenced}
+
+fonts:
+  handoff: 'Geist and Geist_Mono loaded through next/font/google in app/layout.tsx,
+            exposed as --font-geist-sans / --font-geist-mono'
+  migration_requirement: >-
+    apps/web has no Next.js. Self-host Geist/Geist Mono (woff2) under apps/web/public/fonts
+    and declare @font-face with the same CSS variable names so globals.css is unchanged.
+    Do not substitute a different family — typography is part of visual acceptance.
+
+icons:
+  - {source: 'app/ui-icons.tsx :: UiIcon', names: [search, filter, upload, plus, more, check, mail,
+     lock, eye, eyeOff, arrowRight, chevronDown, chevronLeft, chevronRight, refresh, expand, help]}
+  - {source: 'app/page.tsx :: NavIcon',    names: [compose, drafts, recipients, templates, settings, history]}
+
+client_side_persistence:
+  - {key: 'ecs-theme',   values: [light, dark, system], keep: true,  note: 'legitimate UI preference; may stay client-side or move to user prefs'}
+  - {key: 'ecs-sidebar', values: [collapsed, expanded], keep: true,  note: 'legitimate UI preference'}
+  - {key: 'ecs-auth',    values: ['true'],              keep: false, note: 'MUST be removed — auth is a Secure HttpOnly cookie (ADR-006, BR-AUTH-002)'}
+
+simulated_behaviour_to_replace:
+  realtime_progress:
+    - what: 'History rows carry static `progress`/`sent`/`pending`/`failed`/`eta` numbers'
+      replace_with: 'GET /campaigns/{id}/progress as canonical + campaign.progress events as hints (ADR-010, ADR-016)'
+  notifications:
+    - what: '`notificationItems` 3 literals + `readNotifications` component state'
+      replace_with: 'notification + user_notification tables, GET /notifications, PUT /{id}/read, notification.* events (ADR-011)'
+  scheduling:
+    - what: '`scheduleSend` overlay is presentation only'
+      replace_with: 'M5-S2 (done): POST /campaigns/{id}/schedule, UTC + IANA zone (BR-SCH-002). The worker''s periodic due-scheduled-campaigns scan is the sole authority (DEC-092); the BullMQ delayed-job accelerator this note originally named is deferred as a latency-only optimization, not a correctness gap -- no acceptance criterion names it.'
+  permissions:
+    - what: 'profile hardcoded to `Administrator`; no gating anywhere'
+      replace_with: 'server-enforced RBAC + client route/action guards (BR-AUTH-003, BR-AUTH-004)'
+  mutations:
+    - what: '~20 actions resolve with `toast(...)` and no state change'
+      replace_with: 'real commands with idempotency keys (BR-GEN-005) and audit entries (BR-SEC-002)'
+
+dependencies:
+  reusable_as_is:
+    - {name: react, handoff: 19.2.6, target: 19.2.8, action: use target version}
+    - {name: tailwindcss, handoff: 4.2.1, action: 'add to apps/web via @tailwindcss/postcss; required by `@import "tailwindcss"` in globals.css'}
+    - {name: typescript, handoff: 5.9.3, target: 5.9.3, action: unchanged}
+  to_drop:
+    - {name: next, reason: 'apps/web is Vite per ADR-004; ADR-002''s Refine choice is superseded by ADR-025'}
+    - {name: vinext, reason: Next-on-Vite shim, not needed}
+    - {name: wrangler / '@cloudflare/vite-plugin', reason: Cloudflare Workers deployment, not the target}
+    - {name: react-server-dom-webpack, reason: RSC, not used by the target}
+    - {name: drizzle-orm / drizzle-kit, reason: 'PostgreSQL + SQL migrations are the data baseline (ADR-007)'}
+    - {name: eslint-config-next, reason: 'follows removal of next'}
+  to_add_to_apps_web:
+    - {name: '@tailwindcss/postcss + postcss', reason: 'compile `@import "tailwindcss"`'}
+    - {name: '@testing-library/react + jsdom', reason: component tests}
+    - {name: '@playwright/test', reason: 'E2E + visual verification at 3 viewports'}
+    - {name: '@axe-core/playwright', reason: accessibility gate}
+  policy: 'ADR-018 — pin exact versions, review license/security/maintenance/bundle impact before adding'
+
+migration_strategy:
+  approach: >-
+    Port the handoff DOM structure and class names verbatim into apps/web React
+    components under react-router. Because globals.css is keyed entirely on semantic
+    class names (.app-shell, .compose-grid, .config-master-detail, …), copying it
+    unchanged preserves layout, colour, typography and spacing by construction.
+    Split page.tsx and action-overlays.tsx by screen/overlay into
+    apps/web/src/screens/** and apps/web/src/overlays/** as each milestone claims them;
+    never replace apps/web wholesale.
+  order: 'M1 shell + login → M2 recipients → M3 templates → M4 compose → M5 settings → M6 history/notifications'
+  invariant: 'apps/web must build and pass `pnpm check` after every slice'

@@ -1,0 +1,33 @@
+{
+  "runId": "2026-08-20-followup-ui-runtime-remediation",
+  "status": "completed",
+  "scopeDelivered": [
+    "Rebalanced the template preview into a responsive summary-and-message layout with explicit loading, complete-data and missing-data states",
+    "Reworked sender configuration into locked inline fields with consistent edit, confirm and cancel actions and repaired reply-to updates",
+    "Made default sending policy fields usable and froze batch size, retry attempts, rate limits, sender and reply-to into authoritative execution paths",
+    "Added notification resolve/reopen actions that update through REST and reconcile notification.updated realtime hints",
+    "Added a versioned recipient XLSX template with an import-ready first sheet, embedded Vietnamese guidance and complete last-name mapping",
+    "Repaired template publication preflight and returned actionable field-level error messages instead of generic failures"
+  ],
+  "verification": [
+    "Focused tests passed: web 10, API 22 and worker 32; total 64 passed and 0 skipped",
+    "pnpm check passed: API 845, worker 154, API schematics 1, architecture 125, runtime orchestration 3 and web 92; total 1220 passed and 0 skipped",
+    "The full workspace safety net increased by 8 tests from the previous 1212 passed and 0 skipped checkpoint",
+    "OpenAPI compatibility reported no breaking changes",
+    "Plan validation passed with 0 errors; bundle validation, UI handoff status and git diff whitespace checks passed",
+    "Screenshot capture was explicitly excluded by the user and no screenshot-based visual-equivalence claim is made"
+  ],
+  "traceability": [
+    "BR-CFG-001 and BR-CFG-002 cover sender/default-policy behavior and frozen execution defaults",
+    "BR-NOT-004, BR-NOT-012 and BR-NOT-016 cover realtime notification action reconciliation",
+    "BR-IMP-001, BR-IMP-002 and BR-IMP-004 cover the downloadable XLSX sample and import mapping",
+    "BR-TPL-005 and BR-TPL-006 cover preview and actionable publication validation",
+    "The UI shell catalogue declares notification.updated as a consumed realtime event"
+  ],
+  "remainingRisks": [
+    "The web production build retains the pre-existing non-blocking large-chunk warning",
+    "The plan validator retains one pre-existing warning for unrelated closed rules with blank observability evidence",
+    "No production deployment, provider credential validation or screenshot capture was performed"
+  ],
+  "resumeNode": null
+}

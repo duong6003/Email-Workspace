@@ -1,0 +1,111 @@
+{
+  "runId": "2026-08-20-smtp-config-persistence-auth",
+  "goal": "Repair sender configuration value persistence and SMTP authentication so verified sender settings are reused consistently and 553 not-logged-in failures are actionable",
+  "approval": {
+    "evidence": "User explicitly reported broken sender value persistence and SMTP 553 Sender address rejected: not logged in",
+    "scope": [
+      "reproduce sender form hydration and persistence defects",
+      "repair SMTP username/secret storage and worker authentication",
+      "clarify sender versus recipient requirements in UI validation",
+      "add tests, update contracts or ADR only if required, commit and push"
+    ],
+    "exclusions": [
+      "using real provider credentials",
+      "production deployment",
+      "changing recipient snapshot semantics",
+      "screenshot capture"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": "completion_gate",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": ["Approval, repository state and UI handoff readiness recorded"],
+      "evidence": [
+        "User supplied the exact SMTP response 553 5.7.1 Sender address rejected: not logged in",
+        "main was clean and synchronized with origin/main at intake",
+        "UI handoff status was ready and registered with 41 files"
+      ],
+      "nextAction": "Trace form hydration, secret persistence and worker SMTP auth",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": ["intake"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": ["The persistence and authentication failures have executable root causes"],
+      "evidence": [
+        "EnvSecretStore writes UI-entered SMTP secrets to an API-process-only Map while the worker resolves only process.env[secret_ref], so credentials disappear across processes and restarts",
+        "SmtpProviderAdapter.testConnection calls transport.verify() only; an unauthenticated connection can pass before the provider rejects MAIL FROM with 553 5.7.1 not logged in",
+        "Updating host, port or username does not reset a previously verified sender to pending, so stale verification can be reused",
+        "The edit UI intentionally leaves the password blank but exposes no durable-secret availability state, making safe non-hydration look like lost form data"
+      ],
+      "nextAction": "Add an encrypted shared credential store and end-to-end sender probe",
+      "failureClass": null
+    },
+    {
+      "id": "implementation",
+      "dependsOn": ["discovery"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 5,
+      "successConditions": ["Saved sender values hydrate correctly and authenticated SMTP uses the saved credentials"],
+      "evidence": [
+        "Migration 068 adds tenant-RLS encrypted sender credentials; AES-256-GCM binds ciphertext to tenant_id and secret_ref",
+        "API create/update/list/get now persist all visible values and report credentialConfigured without hydrating plaintext",
+        "Worker validation and delivery decrypt the same durable credential with legacy environment-reference fallback",
+        "Connection probing now submits a test message to the sender address, and 553 not-logged-in is classified and explained as authentication"
+      ],
+      "nextAction": "Run full workspace verification and record pass/skip counts",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": ["implementation"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": ["Focused and workspace checks pass with zero skipped tests"],
+      "evidence": [
+        "pnpm check passed: API 852, worker 158, web 102, architecture 125, sender credentials 3, runtime orchestration 3 and API schematics 1; total 1244 passed and 0 skipped",
+        "The previous workspace checkpoint was 1235 passed and 0 skipped, so the safety net increased by 9 tests",
+        "Migration runner Compose tests passed with the new required credential key represented in their isolated harness",
+        "OpenAPI compatibility, Compose interpolation, bundle validation, UI handoff status and plan validation passed"
+      ],
+      "nextAction": "Finalize completion report, commit and push main",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": ["integration_qa"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": ["State, commits, push and handoff evidence agree"],
+      "evidence": [
+        "Implementation, integration QA, state and completion report agree on 1244 passed and 0 skipped",
+        "main was pushed to origin/main through e2b8800 before this terminal evidence commit"
+      ],
+      "nextAction": "Push terminal completion evidence",
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "Previous workspace checkpoint: 1235 tests passed, 0 skipped",
+    "Focused verification: API 9, worker 46, web 9, sender credential package 3 and architecture 5 tests passed; 0 skipped",
+    "Full workspace verification: 1244 tests passed, 0 skipped, 0 failed",
+    "OpenAPI compatibility, compose interpolation, bundle validation, UI handoff status and plan validation passed",
+    "Screenshot capture remains excluded by the user"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-20T23:49:00Z"
+}

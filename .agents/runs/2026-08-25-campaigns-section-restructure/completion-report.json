@@ -1,0 +1,53 @@
+{
+  "runId": "2026-08-25-campaigns-section-restructure",
+  "status": "completed",
+  "scopeDelivered": [
+    "The Email and Lich su gui sidebar entries are replaced by one Chien dich entry at /campaigns",
+    "One campaign list covers every status, including drafts, which were previously unreachable because nothing linked to /email/drafts",
+    "Rows carry checkboxes with a bulk bar offering duplicate, cancel and delete, each enabled only when valid for every selected row",
+    "Bulk results are reported in the list itself: succeeded rows leave, unfinished rows stay selected with a short reason, and reasons for rows that vanished appear in the bar",
+    "Send history moved under /campaigns/:id; a draft opening that route forwards to the composer",
+    "GET /campaigns/history serves drafts behind includeDrafts, gated on content:manage and ownership (ADR-034)",
+    "POST /campaigns/bulk added, synchronous, with per-campaign outcomes",
+    "Legacy /email/* and /history/* URLs redirect, translating their id rather than dropping it",
+    "Two defects the work touched are fixed: the detail screen's back link pointed at the composer, and the filter dialog offered 6 of 12 statuses with no way to clear the choice"
+  ],
+  "changes": [
+    "docs/adr/adr-034-campaign-list-draft-visibility.md: new",
+    "apps/api/src/campaigns/dto/history.dto.ts: all 12 statuses, includeDrafts, scope. includeDrafts deliberately avoids z.coerce.boolean(), which is Boolean(input) and would turn the string 'false' into true on a permission-bearing flag",
+    "apps/api/src/campaigns/history-query.ts: conditional draft predicate mirroring assertDraftAccess; CampaignListViewer type",
+    "apps/api/src/campaigns/campaign-bulk.ts + dto/bulk.dto.ts: new, pure preconditions and request schema",
+    "apps/api/src/campaigns/campaigns.service.ts: bulkAction and runBulkRow; cancel dispatches by status across three existing methods",
+    "apps/api/src/campaigns/campaigns.controller.ts: POST /campaigns/bulk, declared before the parameterised POST routes",
+    "contracts/openapi.yaml: additive parameters plus the /campaigns/bulk path",
+    "apps/web/src/screens/history/* moved to screens/campaigns/*; HistoryScreen renamed to CampaignListScreen, CampaignProgressDrawer to CampaignDetailScreen",
+    "apps/web/src/api/history.ts renamed to api/campaign-list.ts",
+    "apps/web/src/app: nav.ts rewritten, page-meta.ts and LegacyRedirects.tsx new, nav-active.ts matches descendants, AppRoutes and AppShell rewired",
+    "apps/web/src/screens/drafts/DraftsScreen.tsx deleted",
+    "apps/web/src/app/globals.css: .bulk-bar, .active-filter*, .row-reason appended as new rules",
+    "apps/web/e2e: route literals, 17 waitForURL regexes, nav-label assertions and three page.route globs updated"
+  ],
+  "verification": [
+    "pnpm check exit 0: 1359 tests passed, 0 failed, 0 skipped across 7 reporting packages",
+    "architecture-tests 125 tests, matching the pre-work baseline exactly",
+    "campaign-drafts integration suite 7 -> 10 tests, adding cross-tenant isolation for the bulk route, per-row outcomes on a mixed selection, and a 403 for campaign:read alone",
+    "e2e auth + rbac + errors: 12 passed",
+    "openapi-compat-check reports no breaking changes on both contract commits",
+    "Live run against dev servers on ports 3000/5173: nav, drafts in the list, selection rules, bulk duplicate and delete round-trips, the 13-option filter and its chips, row routing by status, and all four legacy redirects"
+  ],
+  "traceability": [
+    "ADR-034 records the permission-semantics change to GET /campaigns/history",
+    "history-query.test.ts pins the list-side draft rule against the same rule assertDraftAccess applies, so changing one without the other fails a test rather than leaking a draft",
+    "ARCH-CROSS-TENANT coverage for POST /campaigns/bulk lives in apps/api/test/integration/campaign-drafts.test.ts",
+    "BR-HIS-001/004 behaviour is unchanged: includeDrafts defaults to false, so no existing caller's results move",
+    "No rule ID moved to closed by this work; it is a navigation and bulk-action change, not a new business rule"
+  ],
+  "remainingRisks": [
+    "The inline bulk reason on a surviving row was never seen in a browser: the dev database holds no non-draft campaign to produce CAMPAIGN_NOT_DRAFT, and forcing one would have meant editing the user's data. Unit and integration tests cover the path",
+    "visual-capture.spec.ts was updated but not run: it captures hundreds of screenshots across three viewports. Its baselines for the campaign list are new and unreviewed",
+    "custom-fields:23 and recipients:22 fail, pre-existing and unrelated, verified against the original build",
+    ".bulk-bar duplicates .recipient-bulk-bar's declarations because ARCH-HANDOFF forbids editing approved handoff rules. The two must be changed together; only a comment enforces that",
+    "The composer is untouched and still has no preview, no editing and no variable insertion. That is the next spec"
+  ],
+  "resumeNode": null
+}

@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+scrape_configs:
+  - job_name: eow-api
+    static_configs: [{targets: ['api:9464']}]
+  - job_name: eow-worker
+    static_configs: [{targets: ['worker:9465']}]

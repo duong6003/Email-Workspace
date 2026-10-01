@@ -1,0 +1,2880 @@
+openapi: 3.1.0
+info:
+  title: Email Operations Workspace API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+paths:
+  /sender-configs:
+    get:
+      operationId: listSenderConfigs
+      parameters:
+        - {name: usable, in: query, required: false, description: 'When true, returns verified active senders suitable for compose. Content users are restricted to this view.', schema: {type: boolean, default: false}}
+      responses: {'200': {description: Sender configurations, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfigListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createSenderConfig
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfigCreateRequest'}}}}
+      responses: {'201': {description: Sender configuration, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfig'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}}
+  /sender-configs/{senderConfigId}:
+    get:
+      operationId: getSenderConfig
+      parameters: [{$ref: '#/components/parameters/SenderConfigId'}]
+      responses: {'200': {description: Sender configuration, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfig'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    patch:
+      operationId: updateSenderConfig
+      parameters: [{$ref: '#/components/parameters/SenderConfigId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfigUpdateRequest'}}}}
+      responses: {'200': {description: Updated sender configuration, content: {application/json: {schema: {$ref: '#/components/schemas/SenderConfig'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: disableSenderConfig
+      parameters: [{$ref: '#/components/parameters/SenderConfigId'}]
+      responses: {'204': {description: Sender disabled; history preserved}, '403': {$ref: '#/components/responses/Problem'}}
+  /sender-configs/{senderConfigId}/test-connection:
+    post:
+      operationId: testSenderConnection
+      parameters: [{$ref: '#/components/parameters/SenderConfigId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody: {required: false, content: {application/json: {schema: {type: object, properties: {secret: {type: string, writeOnly: true}}}}}}
+      responses: {'200': {description: 'Connection, authentication and sender-envelope probe result. A successful probe sends one test message to the configured from address.'}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}}
+  /sending-policy:
+    get:
+      operationId: getSendingPolicy
+      responses: {'200': {description: Sending policy, content: {application/json: {schema: {$ref: '#/components/schemas/SendingPolicy'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    put:
+      operationId: updateSendingPolicy
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SendingPolicyUpdateRequest'}}}}
+      responses: {'200': {description: Updated sending policy, content: {application/json: {schema: {$ref: '#/components/schemas/SendingPolicy'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+  /global-variables:
+    get:
+      operationId: listGlobalVariables
+      responses: {'200': {description: Tenant-global configured variables, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariableListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createGlobalVariable
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/GlobalVariableCreateRequest'}}}}
+      responses: {'201': {description: Global variable created, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariable'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /global-variables/{configuredVariableId}:
+    patch:
+      operationId: updateGlobalVariable
+      parameters: [{$ref: '#/components/parameters/ConfiguredVariableId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/GlobalVariableUpdateRequest'}}}}
+      responses: {'200': {description: Global variable updated, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariable'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: deleteGlobalVariable
+      parameters: [{$ref: '#/components/parameters/ConfiguredVariableId'}]
+      responses: {'204': {description: Global variable deleted when no published version references it}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+  /assets:
+    get:
+      operationId: listAssets
+      description: >-
+        MC-UI-005. The tenant's live asset library, newest first. Archived assets
+        are omitted here and still served by getAssetFile -- archiving hides an
+        image from the library, it does not withdraw it from email already sent
+        (ADR-043 §5).
+      responses: {'200': {description: Live assets in the tenant, content: {application/json: {schema: {$ref: '#/components/schemas/AssetListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: uploadAsset
+      description: >-
+        Multipart, one file per request. The stored content type is decided by
+        magic bytes and the declared Content-Type is not read at all (ADR-043 §4).
+        415 carries the specific refusal in `code`: SVG_REJECTED for an SVG, which
+        can carry script and would be served from our own origin, or
+        UNSUPPORTED_TYPE for anything that is not PNG, JPEG, GIF or WebP. 413 is
+        the 5 MB cap, the same number as the template HTML cap.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: {type: string, format: binary}
+                kind:
+                  enum: [logo, image]
+                  description: >-
+                    Optional. Absent, or present and empty, means image -- an
+                    upload that says nothing about the file is ordinary, and
+                    refusing it would fail over a control nobody touched. A
+                    value that is present and is neither of the two is a 400,
+                    not a silent default: filing an asset somewhere the caller
+                    did not ask for, without telling them, is worse than a
+                    refusal.
+      responses: {'201': {description: Asset stored, content: {application/json: {schema: {$ref: '#/components/schemas/Asset'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '413': {$ref: '#/components/responses/Problem'}, '415': {$ref: '#/components/responses/Problem'}}
+  /assets/{assetId}/replace:
+    post:
+      operationId: replaceAsset
+      description: >-
+        Uploads a new asset and archives the named one, returning the new asset
+        with a new id and a new URL. It never overwrites the stored bytes: the old
+        URL is frozen inside published versions that cannot be edited, so
+        overwriting would change the image inside email already approved
+        (ADR-043 §7). 201, not 200, because the result is a new resource.
+      parameters: [{$ref: '#/components/parameters/AssetId'}]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: {type: object, required: [file], properties: {file: {type: string, format: binary}}}
+      responses: {'201': {description: New asset stored and the previous one archived, content: {application/json: {schema: {$ref: '#/components/schemas/Asset'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '413': {$ref: '#/components/responses/Problem'}, '415': {$ref: '#/components/responses/Problem'}}
+  /assets/{assetId}:
+    patch:
+      operationId: updateAsset
+      description: >-
+        Changes the caller-chosen classification of an existing asset (ADR-044
+        Task SV-4). Separate from replaceAsset, which mints new bytes and a new
+        id: this one changes nothing a published email points at, so it is a
+        plain update rather than the archive-and-recreate dance ADR-043 §7
+        requires of content changes. Nothing else about an asset is mutable.
+      parameters: [{$ref: '#/components/parameters/AssetId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateAssetRequest'}
+      responses: {'200': {description: The updated asset, content: {application/json: {schema: {$ref: '#/components/schemas/Asset'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: archiveAsset
+      description: >-
+        Archives; nothing is ever hard-deleted (ADR-043 §5), and the database does
+        not grant the runtime role DELETE on this table at all. The asset leaves
+        the library and keeps being served, because a published version still
+        points at it and cannot be edited.
+      parameters: [{$ref: '#/components/parameters/AssetId'}]
+      responses: {'204': {description: Asset archived; the object and its public URL are untouched}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /assets/{assetId}/{filename}:
+    get:
+      security: []
+      operationId: getAssetFile
+      description: >-
+        The URL embedded in email HTML, and the first public route in this API to
+        serve user data. No session: the fetch comes from a recipient's mail
+        client and carries none of our cookies (same security: [] declaration
+        /auth/login uses). The asset id is therefore a bearer capability -- anyone
+        holding the link can fetch the image -- which is why the asset store is
+        not a place for sensitive files and the upload UI says so (ADR-043 §2).
+
+        `filename` is never read. It exists so the URL ends in something readable
+        and mail clients infer a sane name. Nothing here accepts a path or a
+        storage key: the key is derived from the row the id resolves to, so there
+        is no traversal surface. A malformed id answers 404 rather than 400 --
+        one fewer signal for a prober.
+      parameters:
+        - {$ref: '#/components/parameters/AssetId'}
+        - {name: filename, in: path, required: true, description: Display name only; never consulted., schema: {type: string}}
+      responses:
+        '200':
+          description: The stored image bytes, with the sniffed content type and a long immutable Cache-Control. Archived assets are served too.
+          content:
+            image/png: {schema: {type: string, format: binary}}
+            image/jpeg: {schema: {type: string, format: binary}}
+            image/gif: {schema: {type: string, format: binary}}
+            image/webp: {schema: {type: string, format: binary}}
+        '404': {description: No such asset, no stored object, or an id that is not a UUID.}
+  /reusable-blocks:
+    get:
+      operationId: listReusableBlocks
+      description: >-
+        MC-UI-004. Blocks belong to the tenant, not to whoever saved them, so this is
+        one list for everyone with content:read -- there is no per-user partition.
+        `node` is omitted here and returned only by getReusableBlock, the same
+        projection the template library uses (ADR-035).
+      responses: {'200': {description: Reusable blocks in the tenant, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlockListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createReusableBlock
+      description: Saves the selected node subtree. Name is unique per tenant; a normalized duplicate is 409 REUSABLE_BLOCK_NAME_CONFLICT.
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlockCreateRequest'}}}}
+      responses: {'201': {description: Reusable block saved, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlock'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+  /reusable-blocks/{reusableBlockId}:
+    get:
+      operationId: getReusableBlock
+      description: The block with its `node` subtree, fetched at the moment it is inserted rather than for every row of the list.
+      parameters: [{$ref: '#/components/parameters/ReusableBlockId'}]
+      responses: {'200': {description: Reusable block, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlock'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    patch:
+      operationId: renameReusableBlock
+      description: >-
+        Rename only; the saved tree is immutable. Any caller with content:manage may
+        rename any block in the tenant, including one they did not save -- that is
+        what tenant ownership means. `createdBy` is never reassigned.
+      parameters: [{$ref: '#/components/parameters/ReusableBlockId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlockRenameRequest'}}}}
+      responses: {'200': {description: Reusable block renamed, content: {application/json: {schema: {$ref: '#/components/schemas/ReusableBlock'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: deleteReusableBlock
+      description: >-
+        Hard delete, and safe: inserting a block copies its subtree into the document,
+        so every template that used it owns its own copy and nothing is left dangling
+        -- unlike an asset, which a published version still points at.
+      parameters: [{$ref: '#/components/parameters/ReusableBlockId'}]
+      responses: {'204': {description: Reusable block deleted}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /sending-quota:
+    get:
+      operationId: getSendingQuota
+      responses: {'200': {description: Sending quota configuration, content: {application/json: {schema: {$ref: '#/components/schemas/SendingQuota'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    put:
+      operationId: putSendingQuota
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SendingQuotaUpdateRequest'}}}}
+      responses: {'200': {description: Updated sending quota configuration, content: {application/json: {schema: {$ref: '#/components/schemas/SendingQuota'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}}
+  /sending-quota/usage:
+    get:
+      operationId: getSendingQuotaUsage
+      responses: {'200': {description: Current sending quota usage, content: {application/json: {schema: {$ref: '#/components/schemas/SendingQuotaUsage'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+  /retention-policy:
+    get:
+      operationId: getRetentionPolicy
+      responses: {'200': {description: Retention policy, content: {application/json: {schema: {$ref: '#/components/schemas/RetentionPolicy'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    put:
+      operationId: updateRetentionPolicy
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RetentionPolicyUpdateRequest'}}}}
+      responses: {'200': {description: Updated retention policy, content: {application/json: {schema: {$ref: '#/components/schemas/RetentionPolicy'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}}
+  /health:
+    get:
+      security: []
+      operationId: health
+      responses: {'200': {description: Ready}}
+  /health/ready:
+    get:
+      security: []
+      operationId: getReadiness
+      responses:
+        '200': {description: PostgreSQL and Redis are reachable, content: {application/json: {schema: {$ref: '#/components/schemas/ReadinessResponse'}}}}
+        '503': {description: At least one required dependency is unavailable, content: {application/json: {schema: {$ref: '#/components/schemas/ReadinessResponse'}}}}
+  /templates:
+    get:
+      operationId: listTemplates
+      parameters:
+        - {name: search, in: query, schema: {type: string, maxLength: 160}}
+        - {name: status, in: query, schema: {type: string, enum: [draft, published]}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses: {'200': {description: Template library, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createTemplate
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateCreateRequest'}}}}
+      responses: {'201': {description: Draft created, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Template'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /templates/analyze:
+    post:
+      operationId: analyzeTemplateDraft
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateAnalyzeRequest'}}}}
+      responses: {'201': {description: Side-effect-free sanitize and variable preflight, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateAnalysis'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}:
+    get:
+      operationId: getTemplate
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: Template draft, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Template'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    patch:
+      operationId: updateTemplate
+      parameters:
+        - {$ref: '#/components/parameters/TemplateId'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateUpdateRequest'}}}}
+      responses: {'200': {description: Draft updated, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Template'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '412': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}, '428': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: archiveTemplate
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'204': {description: Soft archived; versions remain readable}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}/publish:
+    post:
+      operationId: publishTemplate
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'201': {description: Immutable version published, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateVersion'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}/versions:
+    get:
+      operationId: listTemplateVersions
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: Published versions newest first, metadata only, content: {application/json: {schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '#/components/schemas/TemplateVersionSummary'}}}}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}/versions/{templateVersionId}/restore:
+    post:
+      operationId: restoreTemplateVersion
+      parameters: [{$ref: '#/components/parameters/TemplateId'}, {$ref: '#/components/parameters/TemplateVersionId'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses: {'200': {description: Version content copied into the draft; the version itself is unchanged, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Template'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '412': {$ref: '#/components/responses/Problem'}, '428': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}/preview:
+    post:
+      operationId: previewTemplateDraft
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateMergeRequest'}}}}
+      responses: {'201': {description: Lenient render of current sanitized draft content, content: {application/json: {schema: {$ref: '#/components/schemas/TemplatePreview'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /templates/{templateId}/variables:
+    get:
+      operationId: listTemplateVariables
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      responses: {'200': {description: Template-owned draft variable definitions, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariableListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createTemplateVariable
+      parameters: [{$ref: '#/components/parameters/TemplateId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateVariableCreateRequest'}}}}
+      responses: {'201': {description: Template variable created, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariable'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /template-variables/{configuredVariableId}:
+    patch:
+      operationId: updateTemplateVariable
+      parameters: [{$ref: '#/components/parameters/ConfiguredVariableId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateVariableUpdateRequest'}}}}
+      responses: {'200': {description: Template variable updated, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguredVariable'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: deleteTemplateVariable
+      parameters: [{$ref: '#/components/parameters/ConfiguredVariableId'}]
+      responses: {'204': {description: Template variable deleted when no published version references it}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+  /template-versions/{templateVersionId}:
+    get:
+      operationId: getTemplateVersion
+      parameters: [{$ref: '#/components/parameters/TemplateVersionId'}]
+      responses: {'200': {description: Immutable published version, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateVersion'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    patch:
+      operationId: rejectTemplateVersionPatch
+      parameters: [{$ref: '#/components/parameters/TemplateVersionId'}]
+      responses: {'405': {description: Published versions are immutable}, '403': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: rejectTemplateVersionDelete
+      parameters: [{$ref: '#/components/parameters/TemplateVersionId'}]
+      responses: {'405': {description: Published versions are immutable}, '403': {$ref: '#/components/responses/Problem'}}
+  /template-versions/{templateVersionId}/preview:
+    post:
+      operationId: previewTemplateVersion
+      parameters: [{$ref: '#/components/parameters/TemplateVersionId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateMergeRequest'}}}}
+      responses: {'201': {description: Lenient render of immutable version data, content: {application/json: {schema: {$ref: '#/components/schemas/TemplatePreview'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /template-versions/{templateVersionId}/test-send:
+    post:
+      operationId: sendTemplateVersionTest
+      parameters: [{$ref: '#/components/parameters/TemplateVersionId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateMergeRequest'}}}}
+      responses: {'201': {description: Test email delivered only to the authenticated actor, content: {application/json: {schema: {$ref: '#/components/schemas/TemplateTestSend'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /auth/login:
+    post:
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '204': {description: Authenticated; session cookie set}
+        '401': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      responses:
+        '204': {description: Session rotated; new cookie set}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/logout:
+    post:
+      operationId: logout
+      responses:
+        '204': {description: Session revoked}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Me'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/forgot-password:
+    post:
+      security: []
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ForgotPasswordRequest'}
+      responses:
+        '202': {description: 'Recovery email sent if the address is registered (response is identical either way to avoid account enumeration)'}
+  /auth/reset-password:
+    post:
+      security: []
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ResetPasswordRequest'}
+      responses:
+        '204': {description: 'Password changed; all existing sessions for the user are revoked'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /recipients:
+    get:
+      operationId: listRecipients
+      description: 'BR-REC-007/008 and BR-SEG-007: search plus status/list/tag filters, server-side cursor pagination, tenant-scoped.'
+      parameters:
+        - {name: search, in: query, required: false, schema: {type: string}}
+        - {name: status, in: query, required: false, schema: {type: array, items: {$ref: '#/components/schemas/RecipientStatus'}}, style: form, explode: true}
+        - {name: listIds, in: query, required: false, schema: {type: array, items: {type: string, format: uuid}}, style: form, explode: true}
+        - {name: tagIds, in: query, required: false, schema: {type: array, items: {type: string, format: uuid}}, style: form, explode: true}
+        - {name: cursor, in: query, required: false, schema: {type: string}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses:
+        '200':
+          description: Page of recipients
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientListResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createRecipient
+      description: 'BR-REC-001: duplicate email (case/whitespace-insensitive) within the tenant returns 409 with the existing recipient''s id.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientCreateRequest'}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/Problem'}
+  /recipients/{recipientId}:
+    get:
+      operationId: getRecipient
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      responses:
+        '200':
+          description: Recipient
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateRecipient
+      description: 'BR-REC-004: an unsubscribed -> active transition is refused (403) unless the caller holds settings:manage and confirms confirmReconsent.'
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientUpdateRequest'}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Recipient'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteRecipient
+      description: 'BR-GEN-006: soft delete only, never a hard DELETE. Row remains queryable for history/audit.'
+      parameters:
+        - {$ref: '#/components/parameters/RecipientId'}
+      responses:
+        '204': {description: Soft-deleted}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /recipient-lists:
+    get:
+      operationId: listRecipientLists
+      description: 'BR-SEG-001/004/007/010: tenant-scoped reusable recipient lists with server-computed active-recipient counts.'
+      parameters:
+        - {$ref: '#/components/parameters/SegmentSearch'}
+        - {$ref: '#/components/parameters/SegmentCursor'}
+        - {$ref: '#/components/parameters/SegmentLimit'}
+      responses:
+        '200':
+          description: Stable name/id ordered page of recipient lists
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientListCatalogResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createRecipientList
+      description: 'BR-SEG-002: name is trimmed and case-insensitively unique among active lists in the current tenant.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientListCreateRequest'}
+      responses:
+        '201':
+          description: Recipient list created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipient-lists/{recipientListId}:
+    get:
+      operationId: getRecipientList
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      responses:
+        '200':
+          description: Recipient list
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateRecipientList
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RecipientListUpdateRequest'}
+      responses:
+        '200':
+          description: Recipient list updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientList'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteRecipientList
+      description: 'BR-SEG-005: soft-deletes a list and removes only its memberships. Refuses a list referenced by a scheduled campaign snapshot.'
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      responses:
+        '204': {description: List soft-deleted; recipients and campaign snapshots are unchanged}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /recipient-lists/{recipientListId}/members:
+    post:
+      operationId: addRecipientListMembers
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'201': {description: Memberships added idempotently}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: removeRecipientListMembers
+      parameters: [{$ref: '#/components/parameters/RecipientListId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'204': {description: Memberships removed}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /recipients/{recipientId}/segments:
+    get:
+      operationId: getRecipientSegments
+      description: 'BR-SEG-007 / BR-REC-005/006: canonical list/tag membership for a recipient, consumed by the recipient table and form.'
+      parameters: [{$ref: '#/components/parameters/RecipientId'}]
+      responses:
+        '200':
+          description: Recipient segment memberships
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RecipientSegments'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /tags:
+    get:
+      operationId: listTags
+      description: 'BR-SEG-001/003/004/007/010: tenant-scoped flexible tags with server-computed active-recipient counts.'
+      parameters:
+        - {$ref: '#/components/parameters/SegmentSearch'}
+        - {$ref: '#/components/parameters/SegmentCursor'}
+        - {$ref: '#/components/parameters/SegmentLimit'}
+      responses:
+        '200':
+          description: Stable name/id ordered page of tags
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TagCatalogResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TagCreateRequest'}
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /tags/{tagId}:
+    get:
+      operationId: getTag
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      responses:
+        '200':
+          description: Tag
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateTag
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TagUpdateRequest'}
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteTag
+      description: 'BR-SEG-006: soft-deletes the tag and removes only tag memberships; recipients and custom data remain unchanged.'
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      responses: {'204': {description: Tag soft-deleted}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /tags/{tagId}/members:
+    post:
+      operationId: addTagMembers
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'201': {description: Memberships added idempotently}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: removeTagMembers
+      parameters: [{$ref: '#/components/parameters/TagId'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SegmentMembersRequest'}
+      responses: {'204': {description: Memberships removed}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /custom-fields:
+    get:
+      operationId: listCustomFields
+      description: 'BR-CF-001/002: admin-defined typed custom-field schema for the tenant. Consumed by the recipient add/edit form and, from M4 onward, the compose variable panel.'
+      responses:
+        '200':
+          description: Custom field schema
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomFieldListResponse'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createCustomField
+      description: 'BR-CF-001: key is a-z/0-9/underscore starting with a letter, unique per tenant, immutable after creation. BR-CF-003: a reserved system key (email, first_name, last_name, unsubscribe_url) is rejected with 422 and the reserved-key list.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CustomFieldCreateRequest'}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/CustomFieldReservedKeyProblem'}
+  /custom-fields/{customFieldId}:
+    get:
+      operationId: getCustomField
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      responses:
+        '200':
+          description: Custom field
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    patch:
+      operationId: updateCustomField
+      description: 'BR-CF-001: "đổi label không đổi key" -- the request body never accepts key; a body that includes it is rejected with 400.'
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CustomFieldUpdateRequest'}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CustomField'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+    delete:
+      operationId: deleteCustomField
+      parameters:
+        - {$ref: '#/components/parameters/CustomFieldId'}
+      responses:
+        '204': {description: Deleted only when no active draft or published template references the field key}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /import-jobs:
+    get:
+      operationId: listImportJobs
+      description: "Lists the current tenant's most recent import jobs. The response is the authoritative history backing the recipient import view."
+      responses:
+        '200':
+          description: Tenant-scoped import history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ImportJob'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createImportJob
+      description: 'M2-S4 / BR-GEN-005, BR-IMP-002/004/006/007: persists a validated, bounded import preview as a durable job. Idempotency-Key replays the original accepted job for an identical request and returns 409 for a changed payload.'
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ImportJobCreateRequest'}
+      responses:
+        '202':
+          description: Import job accepted; `idempotencyReplayed` distinguishes a new job from a same-key replay.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportJob'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /import-jobs/preview:
+    post:
+      operationId: previewImportJob
+      description: 'Validates up to the first 20 import rows against the current tenant custom-field schema without creating a job.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ImportJobCreateRequest'}
+      responses:
+        '200':
+          description: Cell-level import preview
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportPreview'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /import-jobs/{importJobId}:
+    get:
+      operationId: getImportJob
+      description: 'Reads the tenant-scoped canonical job state; realtime events are hints and this endpoint remains authoritative.'
+      parameters:
+        - {$ref: '#/components/parameters/ImportJobId'}
+      responses:
+        '200':
+          description: Import job
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ImportJob'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /import-jobs/{importJobId}/error-file:
+    get:
+      operationId: downloadImportErrorFile
+      description: 'Downloads failed import rows with row number, machine-readable reason, and original source payload. The job remains tenant-scoped.'
+      parameters:
+        - {$ref: '#/components/parameters/ImportJobId'}
+      responses:
+        '200':
+          description: CSV file of failed rows; header-only when the job has no failures.
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      parameters:
+        - {name: status, in: query, required: false, schema: {type: string, enum: [draft, scheduled, queued, validating, sending, paused, completed, partial_failed, failed, cancelled], default: draft}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+        - {name: scope, in: query, required: false, description: 'Defaults to drafts owned by the caller. Admin may request all tenant drafts.', schema: {type: string, enum: [mine, all], default: mine}}
+      responses: {'200': {description: Tenant-scoped draft list, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+    post:
+      operationId: createCampaignDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CampaignDraftCreateRequest'}
+      responses: {'201': {description: Draft created, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Campaign'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}:
+    get:
+      operationId: getCampaign
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'200': {description: Tenant-scoped campaign draft, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Campaign'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+    patch:
+      operationId: updateCampaignDraft
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CampaignDraftUpdateRequest'}
+      responses: {'200': {description: Draft updated, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Campaign'}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '412': {$ref: '#/components/responses/Problem'}, '428': {$ref: '#/components/responses/Problem'}}
+    delete:
+      operationId: deleteCampaignDraft
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses: {'204': {description: Draft soft-deleted}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}, '412': {$ref: '#/components/responses/Problem'}, '428': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/duplicate:
+    post:
+      operationId: duplicateCampaign
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'201': {description: Independent draft copy, headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Campaign'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/audience/preview:
+    post:
+      operationId: previewCampaignAudience
+      description: >-
+        Read-only and side-effect free despite the POST verb: the audience
+        may not yet be saved to the draft (the picker previews before
+        committing), so it is supplied in the request body rather than read
+        from the stored campaign.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PreviewCampaignAudienceRequest'}
+      responses: {'200': {description: Deduplicated, eligibility-filtered audience resolution, content: {application/json: {schema: {$ref: '#/components/schemas/AudienceResolution'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '422': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/validate-audience:
+    post:
+      operationId: validateCampaignAudience
+      description: >-
+        Read-only despite the POST verb: reads the draft's own saved
+        template and audience rather than an unsaved body -- once a
+        template is attached there is nothing new to preview, unlike
+        audience/preview. Replaces the arch_contracts-era
+        /templates/{templateId}/validate-audience stub, which named the
+        wrong resource: a template id alone cannot produce a resolved
+        campaign audience to validate variables against.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses: {'200': {description: Missing-required-variable matrix over the actionable audience, content: {application/json: {schema: {$ref: '#/components/schemas/ValidateCampaignAudienceResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /campaigns/{campaignId}/preflight:
+    get:
+      operationId: getCampaignPreflight
+      description: Read-only send/schedule checklist. Blocking checks are authoritative; content and domain readiness are warnings.
+      parameters: [{$ref: '#/components/parameters/CampaignId'}]
+      responses:
+        '200': {description: Current campaign preflight report, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignScheduleValidationReport'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/audience-waiver:
+    post:
+      operationId: acceptCampaignAudienceWaiver
+      description: >-
+        BR-CMP-005's accepted-resolution path: records an audited decision
+        to exclude every recipient the server *currently* computes as
+        missing a required variable. The set is always recomputed
+        server-side, never taken from the request body -- there is no
+        request body -- so the client can never under- or over-state who
+        gets excluded from a compliance-adjacent decision.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IfMatch'}
+      responses:
+        '201':
+          description: Waiver accepted and persisted on the draft
+          headers: {ETag: {$ref: '#/components/headers/CampaignETag'}}
+          content: {application/json: {schema: {$ref: '#/components/schemas/Campaign'}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '412': {$ref: '#/components/responses/Problem'}
+        '428': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/schedule:
+    post:
+      operationId: scheduleCampaign
+      description: >-
+        M5-S2 (BR-SCH-001/002/004/005, BR-GEN-003, DEC-080/090/093): shares
+        freezeCampaignSnapshot with sendCampaign (one freeze path). Also the
+        reschedule route -- called again on an already-scheduled or blocked
+        campaign, it supersedes the live snapshot and freezes a new one in
+        the same transaction (DEC-090/091). `localDateTime` is deliberately
+        zone-less (DEC-093): pairing it with an offset would let the client
+        pre-resolve the DST ambiguity BR-SCH-003 exists to force into the
+        open. Previously a bodyless mock; the response body and required
+        header are new on an operation no client could have depended on,
+        since it was never implemented (same justification M4-S3/M4-S4 used
+        for their own stub removals).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CampaignScheduleRequest'}
+      responses:
+        '202':
+          description: Snapshot frozen and campaign scheduled
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignScheduleAccepted'}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422':
+          description: 'A blocking validation report (BR-SCH-004), or a zone-resolution failure (BR-SCH-001/003): UNKNOWN_TIME_ZONE, NONEXISTENT_LOCAL_TIME, AMBIGUOUS_LOCAL_TIME or OUT_OF_SCHEDULE_WINDOW.'
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignScheduleValidationReport'}}}
+  /campaigns/{campaignId}/schedule/cancel:
+    post:
+      operationId: cancelCampaignSchedule
+      description: >-
+        M5-S2 (BR-SCH-008, DEC-091): a separate route from /cancel because
+        the two have different legal source states (scheduled here, queued
+        there) and different terminal states (cancelled here, draft there --
+        a cancelled *schedule* is terminal, unlike M4-S4's cancel-to-refresh).
+        Refused 409 inside the lock window, same as a reschedule.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses:
+        '202':
+          description: Schedule cancelled
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignScheduleCancelAccepted'}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/send:
+    post:
+      operationId: sendCampaign
+      description: >-
+        M4-S4 (BR-CMP-007, BR-CMP-010, BR-TPL-001/012, BR-CF-008): freezes
+        the resolved audience, merge data and rendered content into an
+        immutable campaign_snapshot, moving the campaign from draft to
+        queued. Idempotency-Key is required (BR-GEN-005) -- the same key and
+        payload replays the prior result rather than creating a second
+        snapshot; the same key with a different payload is rejected 409.
+        Previously a bodyless mock; the response body and required header
+        are new on an operation no client could have depended on, since it
+        was never implemented (same justification M4-S3 used for its own
+        stub removal).
+
+        M5-GATE (BR-CFG-002, D-112): refuses 422 `SENDER_NOT_VERIFIED` /
+        `SENDER_NOT_FOUND` when the campaign's sender config is not verified
+        and active -- previously only the schedule route enforced this, so an
+        unusable sender reached the worker as a queued campaign.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202':
+          description: Snapshot frozen and queued for send
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignSnapshotAccepted'}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422':
+          description: 'BR-CFG-002: the campaign sender is missing, absent or not verified (`code`: SENDER_MISSING, SENDER_NOT_FOUND, SENDER_NOT_VERIFIED).'
+          content: {application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}}
+        '429': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/progress:
+    get:
+      operationId: getCampaignProgress
+      description: >-
+        M5-S3 CP6 (BR-SEND-002, D-92): real per-status counts from
+        campaign_recipient, recomputed on read. Previously an in-memory mock
+        returning fabricated counts and a fabricated eta for any id,
+        including one that did not exist -- no client could have depended on
+        that behaviour, since it was never a real implementation (the same
+        justification M4-S3/M4-S4/M5-S2 each already used for their own
+        stub removals).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses:
+        '200':
+          description: Canonical progress
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CampaignProgress'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/recipients:
+    get:
+      operationId: getCampaignRecipients
+      description: 'BR-HIS-003: tenant-scoped recipient drill-down over the live frozen snapshot, including the latest attempt classification and safe failure reason. Viewer-readable; bulk export remains separately gated by history:export.'
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {name: status, in: query, required: false, schema: {$ref: '#/components/schemas/CampaignRecipientStatus'}}
+        - {name: search, in: query, required: false, schema: {type: string, minLength: 1, maxLength: 320}}
+        - {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+        - {name: cursor, in: query, required: false, schema: {type: string}}
+      responses:
+        '200': {description: Recipient delivery result page, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignRecipientHistoryPage'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/send/cancel:
+    post:
+      operationId: cancelCampaignSend
+      description: >-
+        M5-S3 CP6 (BR-SEND-010, A18). A separate route from
+        /campaigns/{id}/cancel (M4-S4, legal only while queued -- supersedes
+        the snapshot and returns to draft) and
+        /campaigns/{id}/schedule/cancel (M5-S2, legal only while scheduled)
+        -- DEC-091's precedent: each has a different legal source state and a
+        different terminal effect, and overloading one route would make the
+        409 messages unreadable and hide which rule refused. Legal only
+        while sending: flips every not-yet-submitted recipient to
+        cancelled and leaves already-submitted ones untouched (they keep
+        receiving delivery events via M5-S4), reporting both counts
+        separately. Idempotency-Key is required (BR-GEN-005).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202':
+          description: Not-yet-submitted recipients cancelled; already-submitted ones untouched
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignSendCancelAccepted'}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/cancel:
+    post:
+      operationId: cancelCampaign
+      description: >-
+        M4-S4 (BR-CMP-007, BR-CF-008): the only refresh path -- supersedes
+        the live snapshot (kept, immutable, readable) and returns the
+        campaign to draft so a subsequent send freezes a genuinely new
+        snapshot. Only legal while queued; any other status is 409.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses:
+        '202':
+          description: Frozen snapshot superseded; campaign returned to draft
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignSnapshotAccepted'}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/snapshot:
+    get:
+      operationId: getCampaignSnapshot
+      description: >-
+        M4-S4: the live (not superseded) frozen snapshot for this campaign
+        -- the read surface the compose screen's frozen banner and
+        post-freeze evidence both use. Superseded snapshots are retained but
+        reachable only through the database; a history endpoint is out of
+        this node's scope (M6-S3-history-recovery).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+      responses:
+        '200':
+          description: The live frozen snapshot for this campaign
+          content: {application/json: {schema: {$ref: '#/components/schemas/CampaignSnapshot'}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/history:
+    get:
+      operationId: getCampaignHistory
+      description: >-
+        M6-S3 (BR-HIS-001/004), widened by ADR-034. Newest-first
+        server-paginated campaign list -- distinct from GET /campaigns (M4-S1's
+        drafts list, status='draft' default, CONTENT_MANAGE-guarded): this
+        route is viewer-readable (CAMPAIGN_READ) and defaults to every
+        non-draft status. Pass includeDrafts to cover the whole campaign
+        lifecycle; draft rows are then returned only to a caller holding
+        content:manage, and only their own drafts unless they are an admin
+        with settings:manage. A caller without content:manage is silently
+        downgraded to the non-draft result rather than refused, because a 403
+        would blank a list they are entitled to read. serverTime
+        is the top-level anchor every client-side countdown must be computed
+        against, never the client's own clock (BR-HIS-004). A row's progress
+        is null until a live execution exists -- "no progress before start"
+        falls out of the data model rather than being special-cased.
+      parameters:
+        - {name: status, in: query, schema: {enum: [draft, scheduled, blocked, missed, queued, validating, sending, paused, completed, partial_failed, failed, cancelled]}}
+        - {name: dateFrom, in: query, schema: {type: string, format: date-time}}
+        - {name: dateTo, in: query, schema: {type: string, format: date-time}}
+        - {name: senderConfigId, in: query, schema: {type: string, format: uuid}}
+        - {name: createdBy, in: query, schema: {type: string, format: uuid}}
+        - {name: search, in: query, schema: {type: string, maxLength: 200}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+        - {name: cursor, in: query, schema: {type: string}}
+        - {name: includeDrafts, in: query, schema: {type: boolean, default: false}}
+        - {name: scope, in: query, schema: {enum: [mine, all]}}
+      responses:
+        '200': {description: A page of send history, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignHistoryPage'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+  /campaigns/bulk:
+    post:
+      operationId: bulkCampaignAction
+      description: >-
+        ADR-034. Synchronous bulk action over a bounded campaign selection.
+        Each campaign is applied in its own transaction and reported
+        individually: a precondition failure is `skipped` with a reason code,
+        an error is `failed`, and neither stops the remaining rows. The route
+        is guarded by CAMPAIGN_READ only as a floor -- the real permission
+        differs per action (content:manage for delete/duplicate,
+        campaign:manage for cancel) and is checked against the body. `cancel`
+        dispatches by the campaign's current status across schedule
+        cancellation, queued cancellation and in-flight send cancellation.
+        Deliberately carries no If-Match (N versions cannot travel in one
+        request; a moved version comes back as CAMPAIGN_VERSION_CONFLICT for
+        that row alone) and no Idempotency-Key (the call is synchronous and
+        the client disables the control while it is in flight).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, campaignIds]
+              additionalProperties: false
+              properties:
+                action: {enum: [delete, duplicate, cancel]}
+                campaignIds: {type: array, minItems: 1, maxItems: 100, items: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Per-campaign outcomes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, succeeded, failed, skipped]
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [campaignId, outcome, code, message]
+                      properties:
+                        campaignId: {type: string, format: uuid}
+                        outcome: {enum: [succeeded, failed, skipped]}
+                        code: {type: string}
+                        message: {type: string}
+                  succeeded: {type: integer}
+                  failed: {type: integer}
+                  skipped: {type: integer}
+        '403': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/pause:
+    post:
+      operationId: pauseCampaign
+      description: >-
+        M6-S3 (BR-SEND-009, ADR-027). Legal only from 'sending'. Effect
+        within 10 seconds is enforced inside the worker's own send loop
+        (a bounded re-check), not by this route alone -- the scheduler's
+        60-second scan cadence cannot meet the bound on its own (D-123).
+        Already-submitted messages are never recalled.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202': {description: Campaign moved to paused, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignPauseResumeAccepted'}}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/resume:
+    post:
+      operationId: resumeCampaign
+      description: 'M6-S3 (BR-SEND-009, ADR-027). Legal only from ''paused''; continues the remaining unsent recipients without resubmitting any already-submitted one.'
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202': {description: Campaign resumed to sending, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignPauseResumeAccepted'}}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/resend:
+    post:
+      operationId: resendCampaign
+      description: >-
+        M6-S3 (BR-HIS-005, ADR-027, DEC-133). Legal only from
+        partial_failed/failed, and only when at least one failed sendable
+        recipient exists on the parent's live snapshot. Creates a *new*
+        snapshot generation (parent_snapshot_id set) carrying only the
+        parent's failed recipients, superseding the parent, and a new
+        execution linked via parentExecutionId -- never reuses the parent
+        snapshot (see ADR-027's own rationale: the DAG's own idempotency key
+        depends on this).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      responses:
+        '202': {description: A new execution created over the parent's failed recipients, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignResendAccepted'}}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/exports:
+    post:
+      operationId: createCampaignExport
+      description: >-
+        M6-S3 (BR-HIS-003/007). Gated by history:export, not campaign:read
+        or campaign:manage -- the viewer already holds campaign:read, which
+        this rule says must not be sufficient to export recipient-level PII
+        in bulk. Renders inline at or below EXPORT_INLINE_MAX_ROWS;
+        otherwise stays queued for the worker's own export-scan. Never
+        includes a secret_ref or any field drawn from sender_config/app_user
+        by construction (the renderer never joins those tables).
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                kind: {enum: [campaign_recipients, campaign_failures], default: campaign_recipients}
+                statusFilter: {type: array, maxItems: 8, items: {enum: [pending, queued, submitted, delivered, bounced, failed, skipped, cancelled]}}
+      responses:
+        '202': {description: Export job created (queued or already completed), content: {application/json: {schema: {$ref: '#/components/schemas/CampaignExport'}}}}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/exports/{exportId}:
+    get:
+      operationId: getCampaignExport
+      description: M6-S3 (BR-HIS-003/007). Status of a single export job -- the client polls this until status is completed or failed.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {name: exportId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: Export job status, content: {application/json: {schema: {$ref: '#/components/schemas/CampaignExport'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /campaigns/{campaignId}/exports/{exportId}/file:
+    get:
+      operationId: downloadCampaignExport
+      description: >-
+        M6-S3 (BR-HIS-007). 404 unless the job belongs to this tenant and
+        campaign and is completed with a real artifact -- a wrong-tenant
+        export id gets the identical 404 a nonexistent one would, never
+        leaking cross-tenant existence. 410 once past expires_at, serving no
+        bytes. Every successful download increments downloaded_count and
+        appends one audit_log row in the same transaction as the read.
+      parameters:
+        - {$ref: '#/components/parameters/CampaignId'}
+        - {name: exportId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: The export artifact, content: {text/csv: {schema: {type: string, format: binary}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '410': {$ref: '#/components/responses/Problem'}
+  /notifications:
+    get:
+      operationId: listNotifications
+      parameters:
+        - {name: unread, in: query, schema: {type: boolean, default: false}}
+        - {name: cursor, in: query, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        '200': {description: Durable notification page, content: {application/json: {schema: {$ref: '#/components/schemas/NotificationPage'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+  /notifications/{notificationId}/read:
+    put:
+      operationId: markNotificationRead
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses: {'204': {description: Read state persisted}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /notifications/{notificationId}/deep-link:
+    get:
+      operationId: resolveNotificationDeepLink
+      description: Rechecks the current user permission and target existence before returning a notification route. An unavailable response never includes a route or target payload.
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200': {description: Authorized route or safe unavailable state, content: {application/json: {schema: {$ref: '#/components/schemas/NotificationDeepLink'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /notifications/read-all:
+    put:
+      operationId: markAllNotificationsRead
+      responses: {'204': {description: Read state persisted}, '403': {$ref: '#/components/responses/Problem'}}
+  /notifications/{notificationId}/action-state:
+    patch:
+      operationId: updateNotificationActionState
+      parameters: [{name: notificationId, in: path, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/NotificationActionStateRequest'}}}}
+      responses: {'204': {description: Action state persisted}, '403': {$ref: '#/components/responses/Problem'}}
+  /notification-preferences:
+    get:
+      operationId: getNotificationPreferences
+      responses: {'200': {description: Notification preferences}, '403': {$ref: '#/components/responses/Problem'}}
+    put:
+      operationId: updateNotificationPreferences
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/NotificationPreferenceRequest'}}}}
+      responses: {'200': {description: Notification preference}, '403': {$ref: '#/components/responses/Problem'}}
+  /bulk-jobs:
+    get:
+      operationId: listBulkJobs
+      description: "Lists the current tenant's recent bulk-update jobs. This canonical history backs the recipient result UI; realtime only prompts a refetch."
+      responses:
+        '200':
+          description: Tenant-scoped bulk job history
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/BulkJob'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createBulkJob
+      description: 'M2-S4 / BR-GEN-005, BR-CF-004/005/006/007, BR-REC-009: resolves and freezes an explicit recipient selection before queuing the bulk operation.'
+      parameters:
+        - {$ref: '#/components/parameters/IdempotencyKey'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkJobCreateRequest'}
+      responses:
+        '202':
+          description: Bulk job accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJob'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/preview:
+    post:
+      operationId: previewBulkJob
+      description: 'BR-CF-004 authoritative dry-run: validates the action and returns the resolved selected-recipient scope without creating a job or checkpoint.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkJobCreateRequest'}
+      responses:
+        '200':
+          description: Validated bulk scope estimate
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJobPreview'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/{bulkJobId}:
+    get:
+      operationId: getBulkJob
+      parameters:
+        - {$ref: '#/components/parameters/BulkJobId'}
+      responses:
+        '200':
+          description: Bulk job
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkJob'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/{bulkJobId}/error-file:
+    get:
+      operationId: downloadBulkErrorFile
+      description: 'Downloads failed bulk-update recipient checkpoints with a machine-readable error reason. The job remains tenant-scoped.'
+      parameters:
+        - {$ref: '#/components/parameters/BulkJobId'}
+      responses:
+        '200':
+          description: CSV file of failed recipient checkpoints; header-only when the job has no failures.
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /bulk-jobs/{bulkJobId}/result-file:
+    get:
+      operationId: downloadBulkResultFile
+      description: 'Downloads the tenant-scoped CSV result for a completed bulk export. Other bulk job types do not expose this artifact.'
+      parameters:
+        - {$ref: '#/components/parameters/BulkJobId'}
+      responses:
+        '200':
+          description: CSV file containing the successful frozen recipient checkpoints for the export.
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /webhooks/providers/{provider}:
+    post:
+      security: []
+      operationId: ingestProviderWebhook
+      description: >-
+        M5-S4 (BR-SEND-008). No session on this route -- the request is
+        authenticated by its HMAC signature (X-EOW-Signature), verified
+        server-side, never by hiding the URL (same security: [] declaration
+        /auth/login uses). The tenant and recipient are resolved server-side
+        from the payload's own Message-ID, never trusted from the request
+        body. 400 is a malformed signature header or a payload missing a
+        required field; 401 is a signature that is forged, tampered, or
+        expired outside the tolerance window; 404 is an unrecognized
+        provider; 413 is a body over the 1 MiB webhook size limit; 503 means
+        the signing secret is not configured for this deployment, which
+        never falls back to accepting an unverified event.
+      parameters:
+        - {name: provider, in: path, required: true, schema: {enum: [smtp]}}
+        - name: X-EOW-Signature
+          in: header
+          required: true
+          schema: {type: string}
+          description: 't=<unix seconds>,v1=<hex hmac-sha256 of "<t>.<raw body>">'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProviderWebhookPayload'}
+      responses:
+        '200':
+          description: 'Event handled: applied, a duplicate replay, ignored (stale or an illegal transition), or unmatched to any known message.'
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProviderWebhookResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '413': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /dead-letter-events:
+    get:
+      operationId: listDeadLetterEvents
+      parameters: [{name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}, {name: cursor, in: query, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Tenant-scoped dead-letter page, content: {application/json: {schema: {$ref: '#/components/schemas/DeadLetterEventListResponse'}}}}, '403': {$ref: '#/components/responses/Problem'}}
+  /dead-letter-events/{deadLetterEventId}:
+    get:
+      operationId: getDeadLetterEvent
+      parameters: [{$ref: '#/components/parameters/DeadLetterEventId'}]
+      responses: {'200': {description: Tenant-scoped dead-letter event, content: {application/json: {schema: {$ref: '#/components/schemas/DeadLetterEvent'}}}}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}}
+  /dead-letter-events/{deadLetterEventId}/replay:
+    post:
+      operationId: replayDeadLetterEvent
+      parameters: [{$ref: '#/components/parameters/DeadLetterEventId'}, {$ref: '#/components/parameters/IdempotencyKey'}]
+      responses: {'202': {description: Dead-letter source restored to the authoritative relay, content: {application/json: {schema: {type: object, required: [id, enqueued, replayCount], properties: {id: {type: string, format: uuid}, enqueued: {type: boolean}, replayCount: {type: integer, minimum: 0}}}}}}, '400': {$ref: '#/components/responses/Problem'}, '403': {$ref: '#/components/responses/Problem'}, '404': {$ref: '#/components/responses/Problem'}, '409': {$ref: '#/components/responses/Problem'}}
+components:
+  securitySchemes:
+    sessionCookie: {type: apiKey, in: cookie, name: eow_session}
+  parameters:
+    CampaignId: {name: campaignId, in: path, required: true, schema: {type: string, format: uuid}}
+    IfMatch: {name: If-Match, in: header, required: true, schema: {type: string}, description: 'Strong ETag from the most recent campaign response. Missing precondition returns 428.'}
+    TemplateId: {name: templateId, in: path, required: true, schema: {type: string, format: uuid}}
+    TemplateVersionId: {name: templateVersionId, in: path, required: true, schema: {type: string, format: uuid}}
+    RecipientId: {name: recipientId, in: path, required: true, schema: {type: string, format: uuid}}
+    RecipientListId: {name: recipientListId, in: path, required: true, schema: {type: string, format: uuid}}
+    TagId: {name: tagId, in: path, required: true, schema: {type: string, format: uuid}}
+    CustomFieldId: {name: customFieldId, in: path, required: true, schema: {type: string, format: uuid}}
+    ConfiguredVariableId: {name: configuredVariableId, in: path, required: true, schema: {type: string, format: uuid}}
+    AssetId: {name: assetId, in: path, required: true, schema: {type: string, format: uuid}}
+    ReusableBlockId: {name: reusableBlockId, in: path, required: true, schema: {type: string, format: uuid}}
+    ImportJobId: {name: importJobId, in: path, required: true, schema: {type: string, format: uuid}}
+    BulkJobId: {name: bulkJobId, in: path, required: true, schema: {type: string, format: uuid}}
+    SenderConfigId: {name: senderConfigId, in: path, required: true, schema: {type: string, format: uuid}}
+    DeadLetterEventId: {name: deadLetterEventId, in: path, required: true, schema: {type: string, format: uuid}}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 255}
+      description: 'Required by BR-GEN-005 so every import/bulk job creation is retry-safe.'
+    SegmentSearch: {name: search, in: query, required: false, schema: {type: string, maxLength: 200}}
+    SegmentCursor: {name: cursor, in: query, required: false, schema: {type: string}}
+    SegmentLimit: {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+  headers:
+    CampaignETag: {description: 'Strong quoted campaign version for optimistic concurrency.', schema: {type: string, pattern: '^"[0-9]+"$'}}
+  schemas:
+    DeadLetterEvent:
+      type: object
+      required: [id, source, eventId, eventType, aggregateType, aggregateId, payload, attempts, lastError, deadLetteredAt, replayedAt, replayCount]
+      properties:
+        id: {type: string, format: uuid}
+        source: {type: string, enum: [outbox, job]}
+        eventId: {type: [string, 'null'], format: uuid}
+        eventType: {type: string}
+        aggregateType: {type: [string, 'null']}
+        aggregateId: {type: [string, 'null'], format: uuid}
+        payload: {type: object, additionalProperties: true}
+        attempts: {type: integer, minimum: 0}
+        lastError: {type: [string, 'null']}
+        deadLetteredAt: {type: string, format: date-time}
+        replayedAt: {type: [string, 'null'], format: date-time}
+        replayCount: {type: integer, minimum: 0}
+    DeadLetterEventListResponse:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/DeadLetterEvent'}}
+        nextCursor: {type: [string, 'null'], format: uuid}
+    ReadinessCheck:
+      type: object
+      required: [ok, latencyMs]
+      properties:
+        ok: {type: boolean}
+        latencyMs: {type: integer, minimum: 0}
+    ReadinessResponse:
+      type: object
+      required: [status, checks]
+      properties:
+        status: {type: string, enum: [ready, unready]}
+        checks:
+          type: object
+          required: [database, redis]
+          properties:
+            database: {$ref: '#/components/schemas/ReadinessCheck'}
+            redis: {$ref: '#/components/schemas/ReadinessCheck'}
+    SenderConfig:
+      type: object
+      required: [id, name, fromName, fromEmail, replyTo, provider, host, port, username, secretRef, credentialConfigured, status, verifiedAt, lastTestedAt, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        fromName: {type: string}
+        fromEmail: {type: string, format: email}
+        replyTo: {type: [string, 'null'], format: email}
+        provider: {type: string, enum: [smtp]}
+        host: {type: string}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        username: {type: string}
+        secretRef: {type: string, description: 'Masked reference only; plaintext secret is never returned.'}
+        credentialConfigured: {type: boolean, description: 'True when the API and worker can resolve a durable encrypted credential or an explicit legacy environment reference.'}
+        status: {type: string, enum: [pending, verified, failed, disabled]}
+        verifiedAt: {type: [string, 'null'], format: date-time}
+        lastTestedAt: {type: [string, 'null'], format: date-time}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    SenderConfigListResponse:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: '#/components/schemas/SenderConfig'}}}
+    SenderConfigCreateRequest:
+      type: object
+      required: [name, fromEmail, host, secret]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        fromName: {type: string, maxLength: 160}
+        fromEmail: {type: string, format: email}
+        replyTo: {type: string, format: email}
+        host: {type: string}
+        port: {type: integer, default: 1025}
+        username: {type: string}
+        secret: {type: string, writeOnly: true, maxLength: 4096, description: 'Required by this request contract. Send an empty string only for a no-authentication SMTP server; a non-empty username requires a non-empty credential.'}
+    SenderConfigUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        fromName: {type: string, maxLength: 160}
+        fromEmail: {type: string, format: email}
+        replyTo: {type: [string, 'null'], format: email}
+        host: {type: string}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        username: {type: string}
+        secret: {type: string, writeOnly: true, description: Omit to retain the current write-only secret.}
+    SendingPolicy:
+      type: object
+      required: [defaultSenderConfigId, replyTo, batchSize, maxAttempts, tenantRateLimitPerMinute, defaultTimezone]
+      properties:
+        defaultSenderConfigId: {type: [string, 'null'], format: uuid}
+        replyTo: {type: [string, 'null'], format: email}
+        batchSize: {type: integer, minimum: 1, maximum: 5000}
+        maxAttempts: {type: integer, minimum: 1, maximum: 20}
+        tenantRateLimitPerMinute: {type: integer, minimum: 1, maximum: 1000000}
+        defaultTimezone: {type: [string, 'null'], maxLength: 64, description: 'ADR-036: tenant default IANA zone for rendering typed variables. Null keeps the pre-ADR-036 behaviour (UTC).'}
+    SendingPolicyUpdateRequest:
+      type: object
+      required: [defaultSenderConfigId, replyTo]
+      properties:
+        defaultSenderConfigId: {type: [string, 'null'], format: uuid}
+        replyTo: {type: [string, 'null'], format: email}
+        batchSize: {type: integer, minimum: 1, maximum: 5000, default: 100}
+        maxAttempts: {type: integer, minimum: 1, maximum: 20, default: 5}
+        tenantRateLimitPerMinute: {type: integer, minimum: 1, maximum: 1000000, default: 600}
+        defaultTimezone: {type: [string, 'null'], maxLength: 64, default: null, description: 'ADR-036: omitting this clears the tenant default zone, as with every other field of this replace-semantics PUT.'}
+    SendingQuota:
+      type: object
+      required: [limit, period]
+      properties:
+        limit: {type: [integer, 'null'], minimum: 1}
+        period: {type: string, enum: [day, month]}
+    SendingQuotaUpdateRequest:
+      $ref: '#/components/schemas/SendingQuota'
+    SendingQuotaUsage:
+      type: object
+      required: [limit, period, periodKey, used, ratio]
+      properties:
+        limit: {type: [integer, 'null'], minimum: 1}
+        period: {type: string, enum: [day, month]}
+        periodKey: {type: string}
+        used: {type: integer, minimum: 0}
+        ratio: {type: [number, 'null'], minimum: 0}
+    RetentionPolicy:
+      type: object
+      required: [messageEventRetentionDays, source]
+      properties:
+        messageEventRetentionDays: {type: integer, minimum: 30, maximum: 3650}
+        source: {type: string, enum: [policy, default]}
+    RetentionPolicyUpdateRequest:
+      type: object
+      required: [messageEventRetentionDays]
+      properties:
+        messageEventRetentionDays: {type: integer, minimum: 30, maximum: 3650}
+    Notification:
+      type: object
+      required: [id, type, severity, title, body, readAt, actionState, messageKey, params, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        type: {type: string}
+        severity: {type: string, enum: [info, success, warning, critical]}
+        title: {type: string}
+        body: {type: string}
+        readAt: {type: [string, 'null'], format: date-time}
+        actionState: {type: string, enum: [open, resolved, expired]}
+        messageKey: {type: string}
+        params: {type: object, additionalProperties: true}
+        deepLinkRoute: {type: [string, 'null']}
+        entityId: {type: [string, 'null'], format: uuid}
+        createdAt: {type: string, format: date-time}
+    NotificationPage:
+      type: object
+      required: [items, unread, nextCursor]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Notification'}}
+        unread: {type: integer, minimum: 0}
+        nextCursor: {type: [string, 'null']}
+    NotificationDeepLink:
+      oneOf:
+        - type: object
+          required: [state, route]
+          properties:
+            state: {type: string, enum: [available]}
+            route: {type: string}
+        - type: object
+          required: [state, reason]
+          properties:
+            state: {type: string, enum: [unavailable]}
+            reason: {type: string, enum: [not_actionable, permission_revoked, target_deleted, unsupported_target]}
+    NotificationActionStateRequest:
+      type: object
+      required: [actionState]
+      properties: {actionState: {type: string, enum: [open, resolved, expired]}}
+    NotificationPreferenceRequest:
+      type: object
+      required: [category, enabled]
+      properties: {category: {type: string}, enabled: {type: boolean}}
+    Template:
+      type: object
+      required: [id, name, status, origin, draftRevision, subject, html, textBody, projectData, validation, createdAt, updatedAt, latestVersionId]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        status: {type: string, enum: [draft, published, archived]}
+        origin: {type: string, enum: [imported, builder]}
+        draftRevision: {type: integer, minimum: 1}
+        subject: {type: string}
+        html: {type: string}
+        textBody: {type: string}
+        projectData: {type: [object, 'null'], additionalProperties: true, description: 'Opaque component tree for builder-origin templates. Never read by the API; draftHtml stays the only content rendered and sent (ADR-019).'}
+        validation: {type: object, additionalProperties: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        latestVersionId: {type: [string, 'null'], format: uuid, description: 'The id of the highest-numbered published version, for driving preview/test-send; null until first published.'}
+    TemplateSummary:
+      type: object
+      required: [id, name, status, origin, draftRevision, subject, validation, createdAt, updatedAt, latestVersionId]
+      description: >-
+        Template metadata for the library grid. Deliberately omits html and textBody:
+        html alone is capped at 5 MB per template, so including it made the listing
+        scale with content size rather than row count. Fetch GET /templates/{id} for
+        the content of a single template.
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        status: {type: string, enum: [draft, published, archived]}
+        origin: {type: string, enum: [imported, builder]}
+        draftRevision: {type: integer, minimum: 1}
+        subject: {type: string}
+        validation: {type: object, additionalProperties: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        latestVersionId: {type: [string, 'null'], format: uuid, description: 'The id of the highest-numbered published version, for driving preview/test-send; null until first published.'}
+    TemplateListResponse:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: '#/components/schemas/TemplateSummary'}}}
+    TemplateCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        subject: {type: string, maxLength: 998}
+        html: {type: string, maxLength: 6291456}
+        textBody: {type: string, maxLength: 1048576}
+        origin: {type: string, enum: [imported, builder], default: imported, description: 'Fixed at creation; a template cannot switch content models afterward.'}
+    TemplateUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        subject: {type: string, maxLength: 998}
+        html: {type: string, maxLength: 6291456}
+        textBody: {type: string, maxLength: 1048576}
+        projectData: {type: [object, 'null'], additionalProperties: true, description: 'Opaque component tree for builder-origin templates. Never read by the API.'}
+    TemplateAnalyzeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        templateId: {type: string, format: uuid}
+        subject: {type: string, maxLength: 998}
+        html: {type: string, maxLength: 6291456}
+        textBody:
+          type: string
+          maxLength: 1048576
+          description: >-
+            The plain-text body as authored. Send it (even as "") from any surface that
+            lets the author edit text: an empty or whitespace-only value is what raises the
+            TEXT_BODY_EMPTY lint warning. Omit it from HTML-only analysis and the response
+            lints a generated fallback instead, so no text-body warning is raised.
+            Variables and sanitized output always read the fallback, never the empty value.
+    TemplateVariableOccurrence:
+      type: object
+      required: [field, key, start, end, classification, source, label]
+      properties:
+        field: {type: string, enum: [subject, html, textBody]}
+        key: {type: string}
+        start: {type: integer, minimum: 0}
+        end: {type: integer, minimum: 0}
+        classification: {type: string, enum: [system, custom, unknown]}
+        source: {type: string, enum: [system, recipient, global, template, unknown]}
+        label: {type: [string, 'null']}
+    TemplateAnalysis:
+      type: object
+      required: [sanitizedHtml, validation, variables, unknownVariables, catalogue, lint]
+      properties:
+        sanitizedHtml: {type: string}
+        validation: {type: object, additionalProperties: true}
+        variables: {type: array, items: {$ref: '#/components/schemas/TemplateVariableOccurrence'}}
+        unknownVariables:
+          type: array
+          items:
+            allOf:
+              - {$ref: '#/components/schemas/TemplateVariableOccurrence'}
+              - type: object
+                required: [suggestedActions]
+                properties: {suggestedActions: {type: array, items: {type: string, enum: [CREATE_TEMPLATE_VARIABLE, RENAME_VARIABLE, REMOVE_VARIABLE]}}}
+        catalogue:
+          type: array
+          items:
+            type: object
+            required: [key, label, classification, source, required, dataType, format, timezone, example]
+            properties:
+              key: {type: string}
+              label: {type: string}
+              classification: {type: string, enum: [system, custom]}
+              source: {type: string, enum: [system, recipient, global, template]}
+              required: {type: boolean}
+              dataType: {$ref: '#/components/schemas/CustomFieldType'}
+              format: {type: [string, 'null'], description: 'ADR-036: the effective pattern, with the variable default already applied. Null for a type that has no presentation of its own.'}
+              timezone: {type: [string, 'null'], description: 'ADR-036: the effective IANA zone, with variable then tenant then UTC already applied.'}
+              example: {type: [string, 'null'], description: 'ADR-036: today rendered through the same function the send uses, so an author can see how a date will read. Null when the type has no presentation.'}
+        lint:
+          type: array
+          items:
+            type: object
+            required: [code, severity, count, field]
+            properties:
+              code: {type: string, enum: [HTML_SIZE_LARGE, HTML_SIZE_GMAIL_CLIP, TEXT_BODY_EMPTY, IMAGE_ALT_MISSING, LINK_TARGET_MISSING, LINK_PLACEHOLDER, LINK_INVALID, HEADING_ORDER_INVALID], description: 'ADR-051 added HTML_SIZE_GMAIL_CLIP and HEADING_ORDER_INVALID.'}
+              severity: {type: string, enum: [warning]}
+              count: {type: integer, minimum: 1}
+              field: {type: string, enum: [html, textBody]}
+    TemplateVersionSummary:
+      type: object
+      description: History-list entry. Carries no html/textBody on purpose — a template may be 5 MB and a list of them would be unusable; fetch one version to read its content.
+      required: [id, version, subject, contentHash, publishedAt, publishedBy]
+      properties:
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        subject: {type: string}
+        contentHash: {type: string}
+        publishedAt: {type: string, format: date-time}
+        publishedBy: {type: string, format: uuid, nullable: true, description: Null for versions published before this was recorded; the actor is not recoverable for those.}
+    TemplateVersion:
+      type: object
+      required: [id, templateId, version, subject, html, textBody, variableSchema, contentHash, publishedAt]
+      properties:
+        id: {type: string, format: uuid}
+        templateId: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        subject: {type: string}
+        html: {type: string}
+        textBody: {type: string}
+        variableSchema:
+          type: object
+          required: [required, optional]
+          properties:
+            required: {type: array, items: {type: string}}
+            optional: {type: array, items: {type: string}}
+            defaults:
+              type: object
+              description: Immutable default values for optional custom variables on this published version.
+              additionalProperties: true
+            configured:
+              type: object
+              additionalProperties:
+                type: object
+                required: [label, scope, allowCampaignOverride]
+                properties:
+                  label: {type: string}
+                  scope: {type: string, enum: [global, template]}
+                  allowCampaignOverride: {type: boolean}
+        contentHash: {type: string, pattern: '^[a-f0-9]{64}$'}
+        publishedAt: {type: string, format: date-time}
+    TemplateMergeRequest:
+      type: object
+      required: [mergeData]
+      properties:
+        mergeData: {type: object, additionalProperties: true}
+    TemplatePreview:
+      type: object
+      required: [subject, html, textBody, missingKeys]
+      properties:
+        subject: {type: string}
+        html: {type: string}
+        textBody: {type: string}
+        missingKeys: {type: array, items: {type: string}}
+    TemplateTestSend:
+      type: object
+      required: [id, recipient, idempotencyReplayed]
+      properties:
+        id: {type: string, format: uuid}
+        recipient: {type: string, format: email}
+        idempotencyReplayed: {type: boolean}
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, minLength: 1}
+        remember: {type: boolean, default: false}
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email}
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string, minLength: 1}
+        password: {type: string, minLength: 8}
+    Me:
+      type: object
+      required: [id, tenantId, email, displayName, role, permissions]
+      properties:
+        id: {type: string, format: uuid}
+        tenantId: {type: string, format: uuid}
+        email: {type: string, format: email}
+        displayName: {type: string}
+        role: {type: string}
+        permissions:
+          type: array
+          items: {type: string}
+          description: 'Effective permission keys resolved server-side from user_role -> role_permission (BR-AUTH-003/004); the frontend uses this to gate nav/routes, but every operation is independently enforced server-side regardless of what this list says.'
+    CampaignProgress:
+      type: object
+      required: [campaignId, version, status, total, queued, sent, delivered, failed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        version: {type: integer, minimum: 0}
+        status: {enum: [draft, scheduled, blocked, missed, queued, validating, sending, paused, completed, partial_failed, failed, cancelled]}
+        total: {type: integer, minimum: 0}
+        queued: {type: integer, minimum: 0}
+        # M5-S4 CP5 (D-105): sent/delivered/failed are monotonic rollups --
+        # "has this message ever reached (at least) this state" -- not raw
+        # counts.* passthroughs. A delivery webhook (M5-S4) moves a row out
+        # of counts.submitted into counts.delivered/counts.bounced, so a
+        # naive counts.submitted passthrough would visibly decrease the
+        # instant that happens (AGENTS.md SS4: progress counters never
+        # decrease). sent and failed deliberately overlap on a bounced
+        # message (it was sent and it did fail -- two different questions
+        # about the same event); counts below is the exact partition BR-
+        # SEND-002's "sum to totalSnapshot" applies to, and is unchanged.
+        sent: {type: integer, minimum: 0, description: 'counts.submitted + counts.delivered + counts.bounced -- never decreases.'}
+        delivered: {type: integer, minimum: 0, description: 'counts.delivered -- a terminal state, never decreases.'}
+        failed: {type: integer, minimum: 0, description: 'counts.failed + counts.bounced -- never decreases.'}
+        # M6-S1 (BR-SEND-003): 0..100, never decreases; 100 only when every
+        # actionable recipient is terminal (aggregate.ts's own terminal
+        # condition, reused here rather than reimplemented).
+        percent: {type: integer, minimum: 0, maximum: 100}
+        # M6-S1: campaign_recipient rows with eligibility='sendable' -- the
+        # denominator progressPercent divides by. Distinct from totalSnapshot,
+        # which also counts skipped rows.
+        actionable: {type: integer, minimum: 0}
+        # M6-S1 (D-116/DEC-122): campaign_execution.progress_seq, the cursor
+        # campaign.progress's own AsyncAPI envelope carries as `version` --
+        # deliberately NOT this object's own top-level `version` (that is
+        # campaign.version, which only bumps on status transitions and stays
+        # constant through an entire send pass).
+        progressSeq: {type: integer, minimum: 0}
+        # M6-S1 (BR-SEND-005): widened from M5-S3 CP7's 'null'-only narrowing
+        # (D-92 -- the field it replaced was a fabricated "now + 8 minutes"
+        # from an unimplemented mock; emitting null was honest until this
+        # node implemented the rule that defines a real value). 'estimating'
+        # below the minimum sample size; null again once every actionable
+        # recipient is terminal ("biến mất khi complete" is a disappearance,
+        # not a number).
+        eta:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [state]
+              properties: {state: {enum: [estimating]}}
+            - type: object
+              required: [state, secondsRemaining]
+              properties: {state: {enum: [estimated]}, secondsRemaining: {type: integer, minimum: 0}}
+        counts:
+          type: object
+          description: 'BR-SEND-002''s full per-message-status breakdown; sums to totalSnapshot.'
+          required: [pending, queued, submitted, delivered, bounced, failed, skipped, cancelled]
+          properties:
+            pending: {type: integer, minimum: 0}
+            queued: {type: integer, minimum: 0}
+            submitted: {type: integer, minimum: 0}
+            delivered: {type: integer, minimum: 0}
+            bounced: {type: integer, minimum: 0}
+            failed: {type: integer, minimum: 0}
+            skipped: {type: integer, minimum: 0}
+            cancelled: {type: integer, minimum: 0}
+        totalSnapshot: {type: integer, minimum: 0}
+        executionId: {type: [string, 'null'], format: uuid}
+    CampaignSendCancelAccepted:
+      type: object
+      required: [campaignId, status, submittedCount, cancelledCount, cancelledAt, idempotencyReplayed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        executionId: {type: [string, 'null'], format: uuid}
+        status: {enum: [cancelled]}
+        submittedCount: {type: integer, minimum: 0}
+        cancelledCount: {type: integer, minimum: 0}
+        cancelledAt: {type: string, format: date-time}
+        idempotencyReplayed: {type: boolean}
+    CampaignHistoryPage:
+      type: object
+      required: [serverTime, items, nextCursor]
+      properties:
+        # BR-HIS-004: every client-side countdown is computed as an offset
+        # against this field, never against the client's own clock.
+        serverTime: {type: string, format: date-time}
+        items: {type: array, items: {$ref: '#/components/schemas/CampaignHistoryRow'}}
+        nextCursor: {type: [string, 'null']}
+    CampaignHistoryRow:
+      type: object
+      required: [id, name, subject, status, scheduledAtUtc, scheduledTimezone, createdAt, createdBy, executionId, startedAt, finishedAt, senderConfigId, progress, cursor]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        subject: {type: string}
+        status: {enum: [scheduled, blocked, missed, queued, validating, sending, paused, completed, partial_failed, failed, cancelled]}
+        scheduledAtUtc: {type: [string, 'null'], format: date-time}
+        scheduledTimezone: {type: [string, 'null']}
+        createdAt: {type: string, format: date-time}
+        createdBy: {type: [string, 'null'], format: uuid}
+        executionId: {type: [string, 'null'], format: uuid}
+        startedAt: {type: [string, 'null'], format: date-time}
+        finishedAt: {type: [string, 'null'], format: date-time}
+        senderConfigId: {type: [string, 'null'], format: uuid}
+        # BR-HIS-004: null until a live execution exists -- never a zeroed object.
+        progress:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [executionStatus, totalSnapshot, percent, sent, delivered, failed, pending]
+              properties:
+                executionStatus: {type: string}
+                totalSnapshot: {type: integer, minimum: 0}
+                percent: {type: integer, minimum: 0, maximum: 100}
+                sent: {type: integer, minimum: 0}
+                delivered: {type: integer, minimum: 0}
+                failed: {type: integer, minimum: 0}
+                pending: {type: integer, minimum: 0}
+        cursor: {type: string}
+    CampaignRecipientStatus:
+      type: string
+      enum: [pending, queued, submitted, delivered, bounced, failed, skipped, cancelled]
+    CampaignRecipientHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/CampaignRecipientHistoryRow'}}
+        nextCursor: {type: [string, 'null']}
+    CampaignRecipientHistoryRow:
+      type: object
+      additionalProperties: false
+      required: [id, recipientId, email, displayName, status, skippedReason, attemptCount, providerMessageId, lastErrorCode, lastErrorClass, failureReason, lastAttemptAt, submittedAt, deliveredAt, nextRetryAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        recipientId: {type: string, format: uuid}
+        email: {type: string, format: email, description: 'Frozen SMTP recipient envelope from the campaign snapshot (ADR-029).'}
+        displayName: {type: [string, 'null']}
+        status: {$ref: '#/components/schemas/CampaignRecipientStatus'}
+        skippedReason: {type: [string, 'null']}
+        attemptCount: {type: integer, minimum: 0}
+        providerMessageId: {type: [string, 'null']}
+        lastErrorCode: {type: [string, 'null']}
+        lastErrorClass: {type: [string, 'null'], enum: [transient, permanent, auth, config, null]}
+        failureReason: {type: [string, 'null'], description: 'Safe provider response or known transport error message; never contains SMTP secrets.'}
+        lastAttemptAt: {type: [string, 'null'], format: date-time}
+        submittedAt: {type: [string, 'null'], format: date-time}
+        deliveredAt: {type: [string, 'null'], format: date-time}
+        nextRetryAt: {type: [string, 'null'], format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CampaignPauseResumeAccepted:
+      type: object
+      required: [campaignId, executionId, status, idempotencyReplayed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        executionId: {type: [string, 'null'], format: uuid}
+        status: {enum: [paused, sending]}
+        idempotencyReplayed: {type: boolean}
+    CampaignResendAccepted:
+      type: object
+      required: [campaignId, executionId, snapshotId, parentExecutionId, resendGeneration, recipientCount, idempotencyReplayed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        executionId: {type: string, format: uuid}
+        snapshotId: {type: string, format: uuid}
+        parentExecutionId: {type: string, format: uuid}
+        resendGeneration: {type: integer, minimum: 1}
+        recipientCount: {type: integer, minimum: 1}
+        idempotencyReplayed: {type: boolean}
+    CampaignExport:
+      type: object
+      required: [id, campaignId, status, kind, rowCount, expiresAt, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        campaignId: {type: string, format: uuid}
+        status: {enum: [queued, running, completed, failed]}
+        kind: {enum: [campaign_recipients, campaign_failures]}
+        rowCount: {type: integer, minimum: 0}
+        expiresAt: {type: [string, 'null'], format: date-time}
+        createdAt: {type: string, format: date-time}
+    CampaignSender:
+      type: object
+      additionalProperties: false
+      properties:
+        senderConfigId: {type: [string, 'null'], format: uuid}
+        fromName: {type: string, maxLength: 160}
+        fromEmail: {type: string, format: email, maxLength: 320}
+        replyTo: {type: [string, 'null'], format: email, maxLength: 320}
+    CampaignAudience:
+      type: object
+      additionalProperties: false
+      properties:
+        listIds: {type: array, maxItems: 200, items: {type: string, format: uuid}}
+        tagIds: {type: array, maxItems: 200, items: {type: string, format: uuid}}
+        recipientIds: {type: array, maxItems: 5000, items: {type: string, format: uuid}}
+        excludeListIds: {type: array, maxItems: 200, items: {type: string, format: uuid}}
+        excludeTagIds: {type: array, maxItems: 200, items: {type: string, format: uuid}}
+        excludeRecipientIds: {type: array, maxItems: 5000, items: {type: string, format: uuid}}
+    CampaignSettings:
+      type: object
+      additionalProperties: false
+      properties:
+        cc: {type: array, maxItems: 50, items: {type: string, format: email}}
+        bcc: {type: array, maxItems: 50, items: {type: string, format: email}}
+        variableOverrides:
+          type: object
+          description: Values supplied for published configured variables that explicitly allow per-campaign override.
+          propertyNames: {pattern: '^[a-z][a-z0-9_]{0,63}$'}
+          additionalProperties: true
+    ConfiguredVariable:
+      type: object
+      required: [id, scope, templateId, key, label, dataType, enumOptions, format, timezone, defaultValue, required, allowCampaignOverride, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        scope: {type: string, enum: [global, template]}
+        templateId: {type: [string, 'null'], format: uuid}
+        key: {type: string, pattern: '^[a-z][a-z0-9_]{0,63}$'}
+        label: {type: string}
+        dataType:
+          allOf: [{$ref: '#/components/schemas/CustomFieldType'}]
+          description: 'ADR-036: configured variables were untyped free text. A row created before this reads back as "text", which is what it already was.'
+        enumOptions: {type: [array, 'null'], items: {type: string}}
+        format: {type: [string, 'null'], description: 'ADR-036: presentation pattern for a date variable (dd/MM/yyyy tokens). Null means the product default. Resolved at render time; never frozen into a template version and never part of contentHash.'}
+        timezone: {type: [string, 'null'], description: 'ADR-036: IANA zone this variable renders in. Null falls back to the tenant default timezone, then UTC.'}
+        defaultValue: {}
+        required: {type: boolean}
+        allowCampaignOverride: {type: boolean}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    Asset:
+      type: object
+      required: [id, url, filename, contentType, kind, byteSize, width, height, createdBy, createdByName, archivedAt, createdAt]
+      properties:
+        id: {type: string, format: uuid, description: 'Also the capability in the public URL: unguessable, and enough on its own to fetch the image.'}
+        url:
+          type: string
+          format: uri
+          description: >-
+            Absolute https, built from the API's own configured public origin.
+            Measured, not assumed: the template sanitizer keeps this shape byte
+            for byte and strips a root-relative path outright, so a relative URL
+            here would silently produce images missing from every published
+            email (ADR-043 §Consequences, plan Task 32).
+        filename: {type: string, description: The uploaded name, reduced to a leaf with no separators. Display only -- storage keys are derived from ids.}
+        contentType: {enum: [image/png, image/jpeg, image/gif, image/webp], description: Decided by magic bytes, never by what the client declared.}
+        kind:
+          enum: [logo, image]
+          description: >-
+            What a person says this file IS, which is a different question from
+            contentType and cannot be derived from it: the same PNG is a logo in
+            one tenant's brand kit and a photograph in another's newsletter.
+            Chosen at upload (default image) and changeable afterwards through
+            updateAsset, because the two are told apart by intent, not by bytes,
+            and intent is the thing people get wrong first. Drives MC-UI-005's
+            library filter bar and its brand kit section (ADR-044 Task SV-4).
+        byteSize: {type: integer, description: 'Stored size in bytes; at most 5 MB.'}
+        width: {type: integer, nullable: true, description: Null until image dimensions are read -- no decoding library is in the dependency set yet.}
+        height: {type: integer, nullable: true}
+        createdBy: {type: string, format: uuid, nullable: true, description: Attribution only. Never used for authorization -- the asset belongs to the tenant.}
+        createdByName: {type: string, nullable: true, description: Display name for createdBy, resolved within the tenant. Null when the account no longer exists.}
+        archivedAt: {type: string, format: date-time, nullable: true, description: Set by archiveAsset. An archived asset is hidden from the library and still served.}
+        createdAt: {type: string, format: date-time}
+    UpdateAssetRequest:
+      type: object
+      required: [kind]
+      properties:
+        kind: {enum: [logo, image], description: The new classification. Required -- a PATCH with an empty body would be a no-op that looks like a success.}
+    AssetListResponse:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: '#/components/schemas/Asset'}}}
+    ReusableBlockSummary:
+      type: object
+      required: [id, name, columns, elements, createdBy, createdByName, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        columns:
+          type: integer
+          description: >-
+            Bars to draw in MC-UI-004's row preview, one per column, clamped to
+            4 -- past that the strip is unreadable. Derived server-side from the
+            stored tree: the listing already holds it, so this costs no query,
+            and a client-computed count would be a second opinion about data the
+            server owns (ADR-044 Task SV-4).
+        elements:
+          type: integer
+          description: >-
+            Leaves in the saved tree -- what a reader can actually see, not
+            counting the Section/Row/Column wrappers. The row label beside the
+            preview.
+        createdBy: {type: string, format: uuid, nullable: true, description: Attribution only. Never used for authorization -- the block belongs to the tenant.}
+        createdByName: {type: string, nullable: true, description: Display name for createdBy, resolved within the tenant. Null when the account no longer exists.}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    ReusableBlock:
+      allOf:
+        - $ref: '#/components/schemas/ReusableBlockSummary'
+        - type: object
+          required: [node]
+          properties:
+            node:
+              type: object
+              description: >-
+                A Node subtree from the builder's own document model. Opaque to the API,
+                the same contract email_template.projectData carries (ADR-019) -- the
+                server stores and returns it and never parses it. Not HTML: a second
+                path onto the canvas that the component tree does not know about is what
+                ADR-037 §3 forbids.
+              additionalProperties: true
+              required: [kind]
+              properties: {kind: {type: string}}
+    ReusableBlockListResponse:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: '#/components/schemas/ReusableBlockSummary'}}}
+    ReusableBlockCreateRequest:
+      type: object
+      required: [name, node]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 120}
+        node: {type: object, additionalProperties: true, required: [kind], properties: {kind: {type: string}}}
+    ReusableBlockRenameRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties: {name: {type: string, minLength: 1, maxLength: 120}}
+    ConfiguredVariableListResponse:
+      type: object
+      required: [items]
+      properties: {items: {type: array, items: {$ref: '#/components/schemas/ConfiguredVariable'}}}
+    GlobalVariableCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [key, label, defaultValue]
+      properties:
+        key: {type: string, pattern: '^[a-z][a-z0-9_]{0,63}$'}
+        label: {type: string, minLength: 1, maxLength: 120}
+        dataType: {allOf: [{$ref: '#/components/schemas/CustomFieldType'}], default: text}
+        enumOptions: {type: array, items: {type: string}, description: 'Required and non-empty when dataType is "enum"; invalid otherwise.'}
+        format: {type: [string, 'null'], maxLength: 40, description: 'ADR-036: presentation pattern for a date variable (dd/MM/yyyy tokens). Null means the product default. Resolved at render time; never frozen into a template version and never part of contentHash.'}
+        timezone: {type: [string, 'null'], maxLength: 64, description: 'ADR-036: IANA zone this variable renders in. Null falls back to the tenant default timezone, then UTC.'}
+        defaultValue: {}
+        allowCampaignOverride: {type: boolean, default: false}
+    GlobalVariableUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'dataType is deliberately absent: like a custom field type it is immutable after creation, and a body containing it is rejected with 400.'
+      properties:
+        label: {type: string, minLength: 1, maxLength: 120}
+        enumOptions: {type: array, items: {type: string}}
+        format: {type: [string, 'null'], maxLength: 40}
+        timezone: {type: [string, 'null'], maxLength: 64}
+        defaultValue: {}
+        allowCampaignOverride: {type: boolean}
+    TemplateVariableCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [key, label]
+      properties:
+        key: {type: string, pattern: '^[a-z][a-z0-9_]{0,63}$'}
+        label: {type: string, minLength: 1, maxLength: 120}
+        dataType: {allOf: [{$ref: '#/components/schemas/CustomFieldType'}], default: text}
+        enumOptions: {type: array, items: {type: string}, description: 'Required and non-empty when dataType is "enum"; invalid otherwise.'}
+        format: {type: [string, 'null'], maxLength: 40, description: 'ADR-036: presentation pattern for a date variable (dd/MM/yyyy tokens). Null means the product default. Resolved at render time; never frozen into a template version and never part of contentHash.'}
+        timezone: {type: [string, 'null'], maxLength: 64, description: 'ADR-036: IANA zone this variable renders in. Null falls back to the tenant default timezone, then UTC.'}
+        defaultValue: {}
+        required: {type: boolean, default: false}
+        allowCampaignOverride: {type: boolean, default: false}
+    TemplateVariableUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: 'dataType is deliberately absent: like a custom field type it is immutable after creation, and a body containing it is rejected with 400.'
+      properties:
+        label: {type: string, minLength: 1, maxLength: 120}
+        enumOptions: {type: array, items: {type: string}}
+        format: {type: [string, 'null'], maxLength: 40}
+        timezone: {type: [string, 'null'], maxLength: 64}
+        defaultValue: {}
+        required: {type: boolean}
+        allowCampaignOverride: {type: boolean}
+    Campaign:
+      type: object
+      required: [id, name, subject, templateId, templateVersionId, sender, audience, settings, status, scheduledAtUtc, scheduledTimezone, scheduleLockWindowSeconds, version, completeness, ownerId, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 200, description: 'Internal campaign name; it is not rendered into template subject or body.'}
+        subject: {type: string, maxLength: 998}
+        templateId: {type: [string, 'null'], format: uuid}
+        templateVersionId: {type: [string, 'null'], format: uuid}
+        sender: {$ref: '#/components/schemas/CampaignSender'}
+        audience: {$ref: '#/components/schemas/CampaignAudience'}
+        settings: {$ref: '#/components/schemas/CampaignSettings'}
+        status: {type: string, enum: [draft, scheduled, blocked, missed, queued, validating, sending, paused, completed, partial_failed, failed, cancelled]}
+        scheduledAtUtc: {type: [string, 'null'], format: date-time, description: 'M5-S2: set only while status is scheduled/blocked; null otherwise (BR-SCH-002).'}
+        scheduledTimezone: {type: [string, 'null'], description: 'M5-S2: the original IANA zone name paired with scheduledAtUtc (BR-SCH-002).'}
+        scheduleLockWindowSeconds: {type: integer, minimum: 0, description: 'M5-S2: SCHEDULE_LOCK_WINDOW_SECONDS -- reschedule/cancel refuse with 409 once scheduledAtUtc is this close (BR-SCH-005).'}
+        version: {type: integer, minimum: 0}
+        completeness: {type: integer, minimum: 0, maximum: 100, multipleOf: 20}
+        ownerId: {type: [string, 'null'], format: uuid, description: 'Immutable draft owner; legacy rows may be null.'}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CampaignListResponse:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Campaign'}}
+    CampaignDraftCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: {type: string, minLength: 0, maxLength: 200, description: 'The UI sends an explicit empty string for a new unnamed draft; a non-blank name is required by preflight before send or schedule.'}
+        subject: {type: string, maxLength: 998}
+        templateId: {type: [string, 'null'], format: uuid}
+        templateVersionId: {type: [string, 'null'], format: uuid}
+        sender: {$ref: '#/components/schemas/CampaignSender'}
+        audience: {$ref: '#/components/schemas/CampaignAudience'}
+        settings: {$ref: '#/components/schemas/CampaignSettings'}
+    CampaignDraftUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        subject: {type: string, maxLength: 998}
+        templateId: {type: [string, 'null'], format: uuid}
+        templateVersionId: {type: [string, 'null'], format: uuid}
+        sender: {$ref: '#/components/schemas/CampaignSender'}
+        audience: {$ref: '#/components/schemas/CampaignAudience'}
+        settings: {$ref: '#/components/schemas/CampaignSettings'}
+    PreviewCampaignAudienceRequest:
+      type: object
+      additionalProperties: false
+      required: [audience]
+      properties:
+        audience: {$ref: '#/components/schemas/CampaignAudience'}
+    AudienceSkipReason:
+      type: string
+      enum: [deleted, status_paused, status_unsubscribed, status_bounced, excluded_by_list, excluded_by_tag, excluded_by_recipient]
+      description: >-
+        One reason per exclusion cause (BR-SEG-009). Precedence is deleted ->
+        status -> exclusion: a compliance fact (BR-CMP-003/BR-REC-003) is
+        always reported even when the operator also excluded the recipient,
+        so intent can never mask a compliance fact in the preview.
+    AudienceSkipCount:
+      type: object
+      additionalProperties: false
+      required: [reason, count]
+      properties:
+        reason: {$ref: '#/components/schemas/AudienceSkipReason'}
+        count: {type: integer, minimum: 0}
+    AudienceSampleEntry:
+      type: object
+      additionalProperties: false
+      required: [recipientId, normalizedEmail, displayName, subscriptionStatus, skipReason]
+      properties:
+        recipientId: {type: string, format: uuid}
+        normalizedEmail: {type: string, format: email}
+        displayName: {type: string}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        skipReason: {oneOf: [{$ref: '#/components/schemas/AudienceSkipReason'}, {type: 'null'}]}
+    AudienceResolution:
+      type: object
+      additionalProperties: false
+      required: [totalMatched, totalUnique, deduplicated, actionable, skipped, skippedByReason, sample]
+      properties:
+        totalMatched: {type: integer, minimum: 0, description: 'Rows matched by include sources, before dedup.'}
+        totalUnique: {type: integer, minimum: 0, description: 'The real audience size, after both dedup rules (BR-SEG-008, BR-CMP-002).'}
+        deduplicated: {type: integer, minimum: 0, description: 'Matched rows that collapsed into an already-seen person; a merge, not a skip.'}
+        actionable: {type: integer, minimum: 0}
+        skipped: {type: integer, minimum: 0}
+        skippedByReason: {type: array, items: {$ref: '#/components/schemas/AudienceSkipCount'}}
+        sample: {type: array, items: {$ref: '#/components/schemas/AudienceSampleEntry'}}
+    MissingVariableBreakdown:
+      type: object
+      additionalProperties: false
+      required: [key, label, count]
+      properties:
+        key: {type: string, description: 'The variable key, e.g. a system key like unsubscribe_url or a custom field key.'}
+        label: {type: string, description: 'The same human label the compose variable catalogue shows for this key.'}
+        count: {type: integer, minimum: 0}
+    VariableValidationSample:
+      type: object
+      additionalProperties: false
+      required: [recipientId, email, missingKeys]
+      properties:
+        recipientId: {type: string, format: uuid}
+        email: {type: string, format: email}
+        missingKeys: {type: array, items: {type: string}}
+    AudienceWaiverStatus:
+      type: string
+      enum: [none, valid, stale]
+      description: >-
+        BR-CMP-005: none = no waiver has ever been accepted for this draft;
+        valid = an accepted waiver still covers every currently-missing
+        recipient; stale = the audience changed since acceptance and a
+        recipient the waiver never reviewed is now missing something.
+    ValidateCampaignAudienceResponse:
+      type: object
+      additionalProperties: false
+      required: [totalActionable, completeCount, missingCount, missingByVariable, sample, waiverStatus, waiverAcceptedAt]
+      properties:
+        totalActionable: {type: integer, minimum: 0}
+        completeCount: {type: integer, minimum: 0}
+        missingCount: {type: integer, minimum: 0}
+        missingByVariable: {type: array, items: {$ref: '#/components/schemas/MissingVariableBreakdown'}}
+        sample: {type: array, items: {$ref: '#/components/schemas/VariableValidationSample'}}
+        waiverStatus: {$ref: '#/components/schemas/AudienceWaiverStatus'}
+        waiverAcceptedAt: {type: [string, 'null'], format: date-time}
+    CampaignAudienceWaiver:
+      type: object
+      additionalProperties: false
+      required: [acceptedAt, acceptedBy, missingVariableRecipientIds]
+      properties:
+        acceptedAt: {type: string, format: date-time}
+        acceptedBy: {type: [string, 'null'], format: uuid}
+        missingVariableRecipientIds: {type: array, items: {type: string, format: uuid}}
+    CampaignRecipientSkipReason:
+      type: string
+      enum: [deleted, status_paused, status_unsubscribed, status_bounced, excluded_by_list, excluded_by_tag, excluded_by_recipient, missing_required_variable]
+      description: >-
+        BR-CMP-007: AudienceSkipReason's seven audience-level reasons plus
+        the one this node adds -- missing_required_variable, the durable
+        form of a recipient frozen into the send set with an unmet required
+        template variable because the campaign's waiver covered them (never
+        silently dropped, always recorded with why).
+    CampaignRecipientSkipCount:
+      type: object
+      additionalProperties: false
+      required: [reason, count]
+      properties:
+        reason: {$ref: '#/components/schemas/CampaignRecipientSkipReason'}
+        count: {type: integer, minimum: 0}
+    CampaignSnapshotPolicyResult:
+      type: object
+      additionalProperties: false
+      required: [totalActionable, completeCount, missingCount, missingByVariable, waiver, webOrigin]
+      properties:
+        totalActionable: {type: integer, minimum: 0}
+        completeCount: {type: integer, minimum: 0}
+        missingCount: {type: integer, minimum: 0}
+        missingByVariable: {type: array, items: {$ref: '#/components/schemas/MissingVariableBreakdown'}}
+        waiver: {oneOf: [{$ref: '#/components/schemas/CampaignAudienceWaiver'}, {type: 'null'}]}
+        webOrigin: {type: string, description: 'unsubscribe_url generation input frozen at send time; changing config later must not silently reinterpret already-frozen data.'}
+    CampaignSnapshotAccepted:
+      type: object
+      additionalProperties: false
+      required: [campaignId, snapshotId, status, totalSnapshot, sendableCount, skippedCount, frozenAt, idempotencyReplayed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        snapshotId: {type: string, format: uuid}
+        status: {type: string, enum: [queued, draft], description: 'queued for a fresh or replayed freeze (sendCampaign); draft for the superseded-by-cancel form (cancelCampaign).'}
+        totalSnapshot: {type: integer, minimum: 0}
+        sendableCount: {type: integer, minimum: 0}
+        skippedCount: {type: integer, minimum: 0}
+        frozenAt: {type: string, format: date-time}
+        idempotencyReplayed: {type: boolean}
+    CampaignScheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [localDateTime, timeZone]
+      properties:
+        localDateTime: {type: string, pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$', description: 'Zone-less by design (DEC-093); paired with timeZone below.'}
+        timeZone: {type: string, description: IANA zone name.}
+        offsetMinutes: {type: integer, description: 'Required only to resolve a prior AMBIGUOUS_LOCAL_TIME response by picking one of its two candidateOffsetMinutes.'}
+    CampaignScheduleAccepted:
+      type: object
+      additionalProperties: false
+      required: [campaignId, snapshotId, status, scheduledAtUtc, timeZone, offsetMinutes, lockedAt, totalSnapshot, sendableCount, skippedCount, idempotencyReplayed]
+      properties:
+        campaignId: {type: string, format: uuid}
+        snapshotId: {type: string, format: uuid}
+        status: {type: string, enum: [scheduled]}
+        scheduledAtUtc: {type: string, format: date-time}
+        timeZone: {type: string}
+        offsetMinutes: {type: integer}
+        lockedAt: {type: string, format: date-time}
+        totalSnapshot: {type: integer, minimum: 0}
+        sendableCount: {type: integer, minimum: 0}
+        skippedCount: {type: integer, minimum: 0}
+        idempotencyReplayed: {type: boolean}
+    CampaignScheduleCancelAccepted:
+      type: object
+      additionalProperties: false
+      required: [campaignId, status]
+      properties:
+        campaignId: {type: string, format: uuid}
+        status: {type: string, enum: [cancelled]}
+    CampaignScheduleValidationReport:
+      type: object
+      additionalProperties: false
+      required: [blocking, name, subject, sender, template, audience, variables, quota, content, domain]
+      description: 'BR-SCH-004/007 and GAP-CMP-004: authoritative blocking checks plus non-blocking content/domain warnings.'
+      properties:
+        blocking: {type: boolean}
+        name: {type: object, additionalProperties: false, required: [valid], properties: {valid: {type: boolean}, reason: {type: string}}}
+        subject: {type: object, additionalProperties: false, required: [valid], properties: {valid: {type: boolean}, reason: {type: string}}}
+        sender: {type: object, additionalProperties: false, required: [valid], properties: {valid: {type: boolean}, reason: {type: string}}}
+        template: {type: object, additionalProperties: false, required: [valid], properties: {valid: {type: boolean}, reason: {type: string}}}
+        audience: {type: object, additionalProperties: false, required: [valid, totalUnique], properties: {valid: {type: boolean}, totalUnique: {type: integer, minimum: 0}, reason: {type: string}}}
+        variables: {type: object, additionalProperties: false, required: [valid, missingCount, waiverStatus], properties: {valid: {type: boolean}, missingCount: {type: integer, minimum: 0}, waiverStatus: {type: string, enum: [none, valid, stale]}}}
+        quota: {type: object, additionalProperties: false, required: [valid, limit, used, requested], properties: {valid: {type: boolean}, limit: {type: [integer, 'null'], minimum: 1}, used: {type: integer, minimum: 0}, requested: {type: integer, minimum: 0}, reason: {type: string}}}
+        content: {type: object, additionalProperties: false, required: [valid, warnings], properties: {valid: {type: boolean, enum: [true]}, warnings: {type: array, items: {type: object, required: [code, severity, count, field], properties: {code: {type: string}, severity: {type: string, enum: [warning]}, count: {type: integer, minimum: 1}, field: {type: string}}}}}}
+        domain: {type: object, additionalProperties: false, required: [valid, warnings], properties: {valid: {type: boolean, enum: [true]}, warnings: {type: array, items: {type: string, enum: [DOMAIN_READINESS_UNVERIFIED]}}}}
+    CampaignSnapshot:
+      type: object
+      additionalProperties: false
+      required: [id, campaignId, templateVersionId, sender, audienceQuery, policyResult, configuredVariableValues, totalSnapshot, sendableCount, skippedCount, frozenAt, supersededAt, skippedByReason]
+      properties:
+        id: {type: string, format: uuid}
+        campaignId: {type: string, format: uuid}
+        templateVersionId: {type: string, format: uuid}
+        sender: {$ref: '#/components/schemas/CampaignSender'}
+        audienceQuery: {$ref: '#/components/schemas/CampaignAudience'}
+        policyResult: {$ref: '#/components/schemas/CampaignSnapshotPolicyResult'}
+        configuredVariableValues: {type: object, additionalProperties: true}
+        totalSnapshot: {type: integer, minimum: 0}
+        sendableCount: {type: integer, minimum: 0}
+        skippedCount: {type: integer, minimum: 0}
+        frozenAt: {type: string, format: date-time}
+        supersededAt: {type: [string, 'null'], format: date-time}
+        skippedByReason: {type: array, items: {$ref: '#/components/schemas/CampaignRecipientSkipCount'}}
+    RecipientStatus:
+      type: string
+      enum: [active, paused, unsubscribed, bounced]
+      description: 'BR-REC-003: only active is eligible to receive email.'
+    Recipient:
+      type: object
+      required: [id, email, subscriptionStatus, customData, unsubscribedAt, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        firstName: {type: [string, 'null']}
+        lastName: {type: [string, 'null']}
+        phone: {type: [string, 'null']}
+        department: {type: [string, 'null']}
+        title: {type: [string, 'null']}
+        location: {type: [string, 'null']}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+        unsubscribedAt: {type: [string, 'null'], format: date-time}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    RecipientListResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Recipient'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    RecipientList:
+      type: object
+      required: [id, name, description, memberCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: [string, 'null']}
+        memberCount: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    RecipientListCatalogResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/RecipientList'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    RecipientListCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: [string, 'null'], maxLength: 1000}
+    RecipientListUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: [string, 'null'], maxLength: 1000}
+    Tag:
+      type: object
+      required: [id, name, color, memberCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        color: {$ref: '#/components/schemas/TagColor'}
+        memberCount: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    TagCatalogResponse:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Tag'}}
+        nextCursor: {type: [string, 'null']}
+        total: {type: integer, minimum: 0}
+    TagColor:
+      type: string
+      enum: ['#ef6f45', '#7356c8', '#278b6e', '#d79022', '#3a78c2', '#9a5eb0', '#31806b', '#b85b73']
+    TagCreateRequest:
+      type: object
+      required: [name, color]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        color: {$ref: '#/components/schemas/TagColor'}
+    TagUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        color: {$ref: '#/components/schemas/TagColor'}
+    SegmentMembersRequest:
+      type: object
+      required: [recipientIds]
+      properties:
+        recipientIds: {type: array, minItems: 1, maxItems: 10000, items: {type: string, format: uuid}}
+    RecipientSegments:
+      type: object
+      required: [lists, tags]
+      properties:
+        lists: {type: array, items: {$ref: '#/components/schemas/RecipientList'}}
+        tags: {type: array, items: {$ref: '#/components/schemas/Tag'}}
+    RecipientCreateRequest:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        firstName: {type: string, maxLength: 120}
+        lastName: {type: string, maxLength: 120}
+        phone: {type: string, maxLength: 40}
+        department: {type: string, maxLength: 120}
+        title: {type: string, maxLength: 120}
+        location: {type: string, maxLength: 120}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+    RecipientUpdateRequest:
+      type: object
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        firstName: {type: string, maxLength: 120}
+        lastName: {type: string, maxLength: 120}
+        phone: {type: string, maxLength: 40}
+        department: {type: string, maxLength: 120}
+        title: {type: string, maxLength: 120}
+        location: {type: string, maxLength: 120}
+        subscriptionStatus: {$ref: '#/components/schemas/RecipientStatus'}
+        customData: {type: object, additionalProperties: true}
+        confirmReconsent:
+          type: boolean
+          description: 'BR-REC-004: must be true, and the caller must hold settings:manage, to move subscriptionStatus from unsubscribed back to active.'
+    Problem:
+      type: object
+      required: [type, title, status, detail, code, category, messageKey, retryable, traceId]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        code: {type: string, pattern: '^[A-Z][A-Z0-9_]*$', description: Stable application error code}
+        category: {type: string, enum: [validation, authentication, permission, not_found, conflict, rate_limit, server]}
+        messageKey: {type: string, description: Stable localization key}
+        retryable: {type: boolean}
+        fieldErrors:
+          type: array
+          items:
+            type: object
+            required: [field, code]
+            properties:
+              field: {type: string}
+              code: {type: string}
+              message: {type: string}
+              value: {}
+        nextAction: {type: string, description: Stable client action identifier}
+        traceId: {type: string}
+    CustomFieldType:
+      type: string
+      enum: [text, number, date, boolean, enum]
+      description: 'BR-CF-002: recipient custom-data values are stored and validated according to this declared type, never as an opaque string.'
+    CustomField:
+      type: object
+      required: [id, key, label, type, required, sensitive, format, timezone, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        key: {type: string, description: 'BR-CF-001: a-z/0-9/underscore, starting with a letter. Immutable after creation.'}
+        label: {type: string}
+        type: {$ref: '#/components/schemas/CustomFieldType'}
+        required: {type: boolean}
+        defaultValue: {}
+        enumOptions: {type: [array, 'null'], items: {type: string}}
+        sensitive: {type: boolean, description: 'BR-CF-009: when true, this field''s recipient-level value is masked in audit_log rows.'}
+        format: {type: [string, 'null'], description: 'ADR-036: presentation pattern for a date variable (dd/MM/yyyy tokens). Null means the product default. Resolved at render time; never frozen into a template version and never part of contentHash.'}
+        timezone: {type: [string, 'null'], description: 'ADR-036: IANA zone this variable renders in. Null falls back to the tenant default timezone, then UTC.'}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CustomFieldListResponse:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/CustomField'}}
+    CustomFieldCreateRequest:
+      type: object
+      required: [key, label, type]
+      properties:
+        key: {type: string, maxLength: 64}
+        label: {type: string, maxLength: 120}
+        type: {$ref: '#/components/schemas/CustomFieldType'}
+        required: {type: boolean, default: false}
+        defaultValue: {}
+        enumOptions: {type: array, items: {type: string}, description: 'Required and non-empty when type is "enum"; invalid otherwise.'}
+        sensitive: {type: boolean, default: false}
+        format: {type: [string, 'null'], maxLength: 40, description: 'ADR-036: presentation pattern for a date variable (dd/MM/yyyy tokens). Null means the product default. Resolved at render time; never frozen into a template version and never part of contentHash.'}
+        timezone: {type: [string, 'null'], maxLength: 64, description: 'ADR-036: IANA zone this variable renders in. Null falls back to the tenant default timezone, then UTC.'}
+    CustomFieldUpdateRequest:
+      type: object
+      description: 'BR-CF-001: key is deliberately absent -- "đổi label không đổi key". A body that includes key is rejected with 400.'
+      properties:
+        label: {type: string, maxLength: 120}
+        required: {type: boolean}
+        defaultValue: {}
+        enumOptions: {type: array, items: {type: string}}
+        sensitive: {type: boolean}
+        format: {type: [string, 'null'], maxLength: 40}
+        timezone: {type: [string, 'null'], maxLength: 64}
+    ImportMode:
+      type: string
+      enum: [create_only, update_existing, upsert]
+    ImportMapping:
+      type: object
+      minProperties: 1
+      additionalProperties: {type: string, minLength: 1, maxLength: 120}
+      description: 'Destination field -> unique source-column name. `email` is required; a source column cannot be mapped to two destinations.'
+    ImportSourceRow:
+      type: object
+      required: [rowNumber, rawData]
+      properties:
+        rowNumber: {type: integer, minimum: 2}
+        rawData: {type: object, additionalProperties: true}
+    ImportJobCreateRequest:
+      type: object
+      required: [fileName, fileSizeBytes, mapping, rows]
+      properties:
+        fileName: {type: string, minLength: 1, maxLength: 255, pattern: '^.*\\.(csv|xlsx)$'}
+        fileSizeBytes: {type: integer, minimum: 0, maximum: 52428800}
+        fileFingerprint: {type: string, pattern: '^[a-f0-9]{64}$', description: SHA-256 of the selected file used to resume mapping safely without storing file bytes}
+        mode: {$ref: '#/components/schemas/ImportMode'}
+        mapping: {$ref: '#/components/schemas/ImportMapping'}
+        rows:
+          type: array
+          maxItems: 100000
+          items: {$ref: '#/components/schemas/ImportSourceRow'}
+    ImportPreviewCellError:
+      type: object
+      required: [rowNumber, column, reason]
+      properties:
+        rowNumber: {type: integer, minimum: 2}
+        column: {type: string}
+        reason: {type: string}
+    ImportPreview:
+      type: object
+      required: [rows, errors]
+      properties:
+        rows:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/ImportSourceRow'}
+        errors:
+          type: array
+          items: {$ref: '#/components/schemas/ImportPreviewCellError'}
+    ImportJob:
+      type: object
+      required: [jobId, kind, fileName, status, totalRows, processedRows, succeededRows, failedRows, skippedRows, idempotencyReplayed, createdAt]
+      properties:
+        jobId: {type: string, format: uuid}
+        kind: {type: string, enum: [import]}
+        fileName: {type: string}
+        status: {type: string, enum: [queued, running, completed, partial_success, failed]}
+        totalRows: {type: integer, minimum: 0}
+        processedRows: {type: integer, minimum: 0}
+        succeededRows: {type: integer, minimum: 0}
+        failedRows: {type: integer, minimum: 0}
+        skippedRows: {type: integer, minimum: 0}
+        idempotencyReplayed: {type: boolean}
+        createdAt: {type: string, format: date-time}
+    BulkJobAction:
+      type: string
+      enum: [add_tag, remove_tag, add_list, remove_list, set_custom_data, export, delete]
+    BulkJobCreateRequest:
+      type: object
+      required: [action, actionPayload, recipientIds]
+      properties:
+        action: {$ref: '#/components/schemas/BulkJobAction'}
+        actionPayload:
+          type: object
+          additionalProperties: true
+          description: 'set_custom_data requires key + value; tag actions require tagId; list actions require listId; export and delete require an empty object.'
+        recipientIds:
+          type: array
+          maxItems: 100000
+          items: {type: string, format: uuid}
+    BulkJob:
+      type: object
+      required: [jobId, kind, action, status, selectionSnapshot, resolvedCount, processedRows, succeededRows, failedRows, skippedRows, idempotencyReplayed, createdAt]
+      properties:
+        jobId: {type: string, format: uuid}
+        kind: {type: string, enum: [bulk_update]}
+        action: {$ref: '#/components/schemas/BulkJobAction'}
+        status: {type: string, enum: [queued, running, completed, partial_success, failed]}
+        selectionSnapshot:
+          type: array
+          items: {type: string, format: uuid}
+        resolvedCount: {type: integer, minimum: 0}
+        processedRows: {type: integer, minimum: 0}
+        succeededRows: {type: integer, minimum: 0}
+        failedRows: {type: integer, minimum: 0}
+        skippedRows: {type: integer, minimum: 0}
+        idempotencyReplayed: {type: boolean}
+        createdAt: {type: string, format: date-time}
+    BulkJobPreview:
+      type: object
+      required: [scope, estimatedCount, action, actionPayload]
+      properties:
+        scope: {type: string, enum: [selected_recipients]}
+        estimatedCount: {type: integer, minimum: 0}
+        action: {$ref: '#/components/schemas/BulkJobAction'}
+        actionPayload: {type: object, additionalProperties: true}
+    # M5-S4. The inbound body a provider posts -- deliberately NOT named
+    # ProviderWebhookEvent, which is the *parsed*, server-side shape
+    # (apps/api/src/sender-config/provider-adapter.ts) that reads exactly
+    # these fields and ignores every other key a payload may carry (D-106).
+    ProviderWebhookPayload:
+      type: object
+      required: [id, type, messageId]
+      properties:
+        id: {type: string, description: 'Provider event id; the idempotency key.'}
+        type: {enum: [delivered, bounced, complaint, deferred]}
+        messageId: {type: string, description: 'The Message-ID this system minted at send time.'}
+        occurredAt: {type: string, format: date-time}
+    ProviderWebhookResult:
+      type: object
+      required: [status]
+      properties:
+        status: {enum: [applied, duplicate, ignored, unmatched]}
+        eventId: {type: [string, 'null']}
+  responses:
+    Problem:
+      description: RFC 9457 problem
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    CustomFieldReservedKeyProblem:
+      description: 'BR-CF-003: the submitted key is a reserved system variable; reservedKeys lists every key that may not be used.'
+      content:
+        application/problem+json:
+          schema:
+            allOf:
+              - {$ref: '#/components/schemas/Problem'}
+              - type: object
+                required: [reservedKeys]
+                properties:
+                  reservedKeys: {type: array, items: {type: string}}

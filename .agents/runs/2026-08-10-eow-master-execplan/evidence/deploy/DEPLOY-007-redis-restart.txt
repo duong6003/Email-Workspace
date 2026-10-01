@@ -1,0 +1,48 @@
+DEPLOY-007 real Redis restart
+--- before ---
+        Name                      Command                  State                 Ports          
+------------------------------------------------------------------------------------------------
+eow-m7s4_api_1         docker-entrypoint.sh node  ...   Up (healthy)   3000/tcp                 
+eow-m7s4_redis_1       docker-entrypoint.sh redis ...   Up (healthy)   127.0.0.1:56379->6379/tcp
+eow-m7s4_scheduler_1   docker-entrypoint.sh node  ...   Up (healthy)                            
+eow-m7s4_worker_1      docker-entrypoint.sh node  ...   Up (healthy)                            
+ recipient_count 
+-----------------
+               0
+(1 row)
+
+ duplicate_attempt_groups 
+--------------------------
+                        0
+(1 row)
+
+ decreasing_counter_violations 
+-------------------------------
+                             0
+(1 row)
+
+--- restart redis ---
+Restarting eow-m7s4_redis_1 ... 
+Restarting eow-m7s4_redis_1 ... done
+--- after ---
+        Name                      Command                  State                 Ports          
+------------------------------------------------------------------------------------------------
+eow-m7s4_api_1         docker-entrypoint.sh node  ...   Up (healthy)   3000/tcp                 
+eow-m7s4_redis_1       docker-entrypoint.sh redis ...   Up (healthy)   127.0.0.1:56379->6379/tcp
+eow-m7s4_scheduler_1   docker-entrypoint.sh node  ...   Up (healthy)                            
+eow-m7s4_worker_1      docker-entrypoint.sh node  ...   Up (healthy)                            
+ recipient_count 
+-----------------
+               0
+(1 row)
+
+ duplicate_attempt_groups 
+--------------------------
+                        0
+(1 row)
+
+ decreasing_counter_violations 
+-------------------------------
+                             0
+(1 row)
+

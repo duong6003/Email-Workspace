@@ -1,0 +1,162 @@
+[
+  {
+    "event": "rt.connection.ready",
+    "channel": "user:{user_id}",
+    "purpose": "Connection authorized; includes server_time and resume capability",
+    "cadence": "At connect",
+    "dedupe": "No",
+    "priority": "P0"
+  },
+  {
+    "event": "rt.resync_required",
+    "channel": "user:{user_id}",
+    "purpose": "Cursor is outside replay window; client refetches affected resources",
+    "cadence": "On gap",
+    "dedupe": "No",
+    "priority": "P0"
+  },
+  {
+    "event": "notification.created",
+    "channel": "user:{user_id}",
+    "purpose": "New durable notification; update badge and optionally show toast",
+    "cadence": "Immediate",
+    "dedupe": "notification_id",
+    "priority": "P0"
+  },
+  {
+    "event": "notification.updated",
+    "channel": "user:{user_id}",
+    "purpose": "Notification resolved/changed",
+    "cadence": "Immediate",
+    "dedupe": "notification_id",
+    "priority": "P1"
+  },
+  {
+    "event": "notification.read",
+    "channel": "user:{user_id}",
+    "purpose": "Read state synchronized across tabs/devices",
+    "cadence": "Immediate",
+    "dedupe": "notification_id+user_id",
+    "priority": "P1"
+  },
+  {
+    "event": "campaign.state_changed",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Draft/scheduled/queued/sending/paused/completed/failed/canceled",
+    "cadence": "Immediate",
+    "dedupe": "campaign_id+version",
+    "priority": "P0"
+  },
+  {
+    "event": "campaign.progress",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Aggregate processed/sent/failed/skipped/pending/progress/ETA",
+    "cadence": "Throttle <=1/s",
+    "dedupe": "campaign_id+version",
+    "priority": "P0"
+  },
+  {
+    "event": "campaign.issue_detected",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Failure threshold, provider rejection or reconciliation mismatch",
+    "cadence": "Immediate",
+    "dedupe": "issue_id",
+    "priority": "P0"
+  },
+  {
+    "event": "schedule.state_changed",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Created, rescheduled, canceled, due, dispatched, missed",
+    "cadence": "Immediate",
+    "dedupe": "schedule_id+version",
+    "priority": "P0"
+  },
+  {
+    "event": "audience.validation_progress",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Large audience/variable validation progress",
+    "cadence": "Throttle <=1/s",
+    "dedupe": "validation_job_id+version",
+    "priority": "P1"
+  },
+  {
+    "event": "audience.validation_completed",
+    "channel": "campaign:{campaign_id}",
+    "purpose": "Counts and link to missing-variable resolution",
+    "cadence": "Once",
+    "dedupe": "validation_job_id",
+    "priority": "P0"
+  },
+  {
+    "event": "import.progress",
+    "channel": "job:{job_id}",
+    "purpose": "Rows parsed/valid/created/updated/skipped/failed",
+    "cadence": "Throttle <=1/s",
+    "dedupe": "job_id+version",
+    "priority": "P1"
+  },
+  {
+    "event": "import.completed",
+    "channel": "job:{job_id}",
+    "purpose": "Final import summary and error-file link",
+    "cadence": "Once",
+    "dedupe": "job_id",
+    "priority": "P1"
+  },
+  {
+    "event": "bulk_update.progress",
+    "channel": "job:{job_id}",
+    "purpose": "Resolved scope and progress for custom data/list/tag changes",
+    "cadence": "Throttle <=1/s",
+    "dedupe": "job_id+version",
+    "priority": "P1"
+  },
+  {
+    "event": "bulk_update.completed",
+    "channel": "job:{job_id}",
+    "purpose": "Final result with partial failures",
+    "cadence": "Once",
+    "dedupe": "job_id",
+    "priority": "P1"
+  },
+  {
+    "event": "export.completed",
+    "channel": "job:{job_id}",
+    "purpose": "Download is ready or export failed",
+    "cadence": "Once",
+    "dedupe": "job_id",
+    "priority": "P2"
+  },
+  {
+    "event": "sender.state_changed",
+    "channel": "org:{organization_id}",
+    "purpose": "Sender verified, disabled, credential problem or quota issue",
+    "cadence": "Immediate",
+    "dedupe": "sender_id+version",
+    "priority": "P0"
+  },
+  {
+    "event": "quota.threshold_reached",
+    "channel": "org:{organization_id}",
+    "purpose": "Configured 80/90/100 percent sending quota threshold",
+    "cadence": "Per threshold",
+    "dedupe": "quota_period+threshold",
+    "priority": "P1"
+  },
+  {
+    "event": "recipient.segment_changed",
+    "channel": "resource:recipients",
+    "purpose": "Invalidate list/tag/member counts after bulk job",
+    "cadence": "After commit",
+    "dedupe": "change_set_id",
+    "priority": "P2"
+  },
+  {
+    "event": "template.published",
+    "channel": "resource:templates",
+    "purpose": "Invalidate template list/version cache",
+    "cadence": "After commit",
+    "dedupe": "template_version_id",
+    "priority": "P2"
+  }
+]

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "../../packages/api-schematics/collection.json",
+  "sourceRoot": "src"
+}

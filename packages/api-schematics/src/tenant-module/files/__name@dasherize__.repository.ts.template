@@ -1,0 +1,7 @@
+import type { EntityManager } from 'typeorm';
+import { TenantScopedRepository } from '../database/tenant-scoped.repository.js';
+import { <%= entity %> } from '../database/entities/<%= entityPath %>.entity.js';
+
+export class <%= classify(name) %>Repository extends TenantScopedRepository<<%= entity %>> {
+  constructor(manager: EntityManager, tenantId: string) { super(manager.getRepository(<%= entity %>), tenantId); }
+}

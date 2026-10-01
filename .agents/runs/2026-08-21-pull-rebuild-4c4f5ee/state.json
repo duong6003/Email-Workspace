@@ -1,0 +1,99 @@
+{
+    "runId":  "2026-08-21-pull-rebuild-4c4f5ee",
+    "goal":  "Pull latest origin/main at 4c4f5ee, build the current source, apply migrations 069 and 070, and recreate the complete local Docker Compose stack",
+    "approval":  {
+                     "evidence":  "User explicitly requested pull and rebuild on 2026-08-21",
+                     "scope":  [
+                                   "inspect branch and working tree",
+                                   "pull origin/main using fast-forward only",
+                                   "validate Compose configuration",
+                                   "build current source into Docker images",
+                                   "apply forward migrations",
+                                   "recreate Compose services without deleting volumes",
+                                   "verify health, served frontend assets, migration evidence, and runtime logs"
+                               ],
+                     "exclusions":  [
+                                        "production deployment",
+                                        "destructive data or volume removal",
+                                        "discarding unrelated local untracked files",
+                                        "exposing secret values"
+                                    ]
+                 },
+    "mode":  "loop",
+    "status":  "completed",
+    "currentNode":  null,
+    "nodes":  [
+                  {
+                      "id":  "pull",
+                      "dependsOn":  [
+
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  2,
+                      "successConditions":  [
+                                                "Local main fast-forwards to origin/main without overwriting local files"
+                                            ],
+                      "evidence":  [
+                                       "git pull --ff-only updated dd6fb68 to 4c4f5ee",
+                                       "53 files changed: 1290 insertions and 115 deletions",
+                                       "Untracked run evidence and .claude/settings.local.json were preserved"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "build-recreate",
+                      "dependsOn":  [
+                                        "pull"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "Images build from pulled source, migrations 069 and 070 apply, and all services recreate"
+                                            ],
+                      "evidence":  [
+                                       "Compose config validation passed",
+                                       "docker compose --env-file .env up -d --build --force-recreate --wait completed",
+                                       "New image IDs: web 8d9e1de35e44, api 90815370b9f8, worker 3ee54abf2890, scheduler 5bd7ab908430",
+                                       "Migration 069_configured_variables_and_history_indexes applied",
+                                       "Migration 070_configured_variable_template_tenant_fk applied",
+                                       "Migration container exited 0"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "verify",
+                      "dependsOn":  [
+                                        "build-recreate"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "All services healthy, new frontend bundle served, HTTP smoke checks pass, and logs are clean"
+                                            ],
+                      "evidence":  [
+                                       "postgres, redis, mailpit, api, worker, scheduler, and web reported healthy",
+                                       "Frontend serves /assets/index-BlDwrEut.js and /assets/index-CDRBZVtC.css",
+                                       "Web health, API liveness, API readiness, and Mailpit returned HTTP 200",
+                                       "Database and Redis readiness checks returned ok",
+                                       "No application error, fatal, or unhandled exception patterns found after rebuild"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  }
+              ],
+    "schedule":  null,
+    "evidence":  [
+                     "Repository HEAD is 4c4f5ee variable-ux completion_gate: close verified remediation",
+                     "Latest origin/main was pulled via fast-forward",
+                     "Complete stack rebuilt and recreated from pulled source",
+                     "Forward migrations 069 and 070 applied successfully",
+                     "No named volumes were removed and no destructive action was performed"
+                 ],
+    "blocker":  null,
+    "updatedAt":  "2026-08-21T06:48:00Z"
+}

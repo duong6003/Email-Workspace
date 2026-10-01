@@ -1,0 +1,11 @@
+screens:
+  - id: UI-EXAMPLE-001
+    name: Replace with approved screen name
+    route: /replace-me
+    source_files: []
+    business_rules: []
+    api_operations: []
+    realtime_events: []
+    required_states: [loading, empty, error, success, permission_denied]
+    viewports: [desktop, tablet, mobile]
+    status: not_inventoried

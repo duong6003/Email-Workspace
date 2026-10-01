@@ -1,0 +1,50 @@
+[
+  [
+    "OD-01",
+    "Campaign loại transactional hay marketing?",
+    "Ảnh hưởng unsubscribe/List-Unsubscribe và consent.",
+    "Tách campaign_type; marketing bắt buộc unsubscribe, transactional theo policy."
+  ],
+  [
+    "OD-02",
+    "Có cho re-consent recipient trong UI?",
+    "Rủi ro compliance nếu bật lại tùy tiện.",
+    "Chỉ Admin qua luồng có evidence; MVP có thể chỉ đọc trạng thái."
+  ],
+  [
+    "OD-03",
+    "Snapshot audience khi schedule hay ngay trước send?",
+    "Tính tái lập so với dữ liệu mới nhất.",
+    "Chốt snapshot khi schedule; muốn cập nhật phải refresh/cancel-reschedule."
+  ],
+  [
+    "OD-04",
+    "Retention chi tiết message/event",
+    "Chi phí lưu trữ và yêu cầu kiểm toán.",
+    "Mặc định 12 tháng detail, 24 tháng summary; tenant config theo policy."
+  ],
+  [
+    "OD-05",
+    "Provider đầu tiên",
+    "Quyết định webhook, rate/quota, error mapping.",
+    "Giữ provider adapter; chọn 1 provider MVP sau POC deliverability."
+  ],
+  [
+    "OD-06",
+    "Ngưỡng file/import/campaign",
+    "Ảnh hưởng UX, hạ tầng và chi phí.",
+    "Mặc định 50 MB, 100k dòng, 100k recipient/campaign; cấu hình theo tenant."
+  ],
+  [
+    "OD-07",
+    "Rollback bulk update",
+    "Cần lưu before value, tăng storage.",
+    "P1: cho rollback trong 24h với job_items before/after; MVP có audit + export lỗi."
+  ],
+  [
+    "OD-08",
+    "Kênh realtime",
+    "SSE đơn giản hơn WebSocket cho one-way progress.",
+    "Ưu tiên SSE + polling fallback; WebSocket chỉ khi cần tương tác hai chiều."
+  ]
+]

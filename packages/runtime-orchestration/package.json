@@ -1,0 +1,1 @@
+{"name":"@eow/runtime-orchestration","private":true,"version":"0.1.0","type":"module","scripts":{"build":"tsc -p tsconfig.json","typecheck":"tsc -p tsconfig.json --noEmit","test":"vitest run --reporter=default --reporter=../../scripts/no-skipped-tests-reporter.mjs"},"devDependencies":{"typescript":"5.9.3","vitest":"4.1.10"}}

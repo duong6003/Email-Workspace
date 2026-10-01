@@ -1,0 +1,129 @@
+{
+  "runId": "2026-08-20-followup-ui-runtime-remediation",
+  "goal": "Fix the six reported template, sender, notification, recipient sample, default policy and publishing defects without screenshot capture",
+  "approval": {
+    "evidence": "User explicitly requested these six fixes after the prior remediation and previously approved omitting screenshot capture",
+    "scope": [
+      "rebalance the template preview presentation",
+      "repair sender selection and add locked edit-confirm-cancel interaction",
+      "make notification actions reconcile through realtime events",
+      "provide a standards-compliant recipient XLSX sample with complete embedded guidance",
+      "make the default sending policy usable",
+      "repair template publishing and return actionable errors",
+      "update tests, contracts, traceability and handoff evidence"
+    ],
+    "exclusions": [
+      "screenshot capture and screenshot-based visual-equivalence claims",
+      "production deployment or destructive data operations",
+      "real provider credentials or paid external actions",
+      "material changes to accepted business semantics"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": null,
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Approval, working tree and UI handoff readiness are recorded"
+      ],
+      "evidence": [
+        "User supplied six concrete defects and requested fixes",
+        "git status was clean at intake",
+        "python3 scripts/ui_handoff.py status reported ready, registered and 41 source files"
+      ],
+      "nextAction": "Reproduce each defect against the current web and API contracts",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": ["intake"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Each reported defect has a source-level or executable reproduction",
+        "The smallest authoritative document and test set is identified"
+      ],
+      "evidence": [
+        "Read project manifest, start guide, UI source contract, graph and loop policies, approval policy and realtime notification architecture",
+        "Identified modal-only sender editing, missing notification action controls, minimal XLSX guidance, unused execution defaults and generic template publish feedback"
+      ],
+      "nextAction": "Run focused verification for the implemented vertical slices",
+      "failureClass": null
+    },
+    {
+      "id": "frontend_backend",
+      "dependsOn": ["discovery"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 5,
+      "successConditions": [
+        "All six defects are corrected at their root cause",
+        "REST remains authoritative and realtime events trigger reconciliation",
+        "Changed interactions preserve the approved handoff conventions"
+      ],
+      "evidence": [
+        "Sender details now use locked inline inputs with explicit edit, confirm and cancel actions",
+        "Sending policy exposes and persists sender, reply-to, batch size, attempts and tenant rate; validation freezes execution defaults",
+        "Campaign sender snapshot and SMTP adapter carry reply-to",
+        "Notification action controls update through the authoritative REST route and reconcile notification.updated events",
+        "Recipient XLSX template includes a data-first sheet, embedded guidance and last-name mapping",
+        "Template preview is rebalanced and publishing performs preflight with actionable field-level errors"
+      ],
+      "nextAction": "Run narrow checks followed by workspace verification",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": ["frontend_backend"],
+      "status": "completed",
+      "attempt": 3,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Focused and workspace checks pass with zero skipped tests",
+        "Test and skip counts are compared with the previous 1212/0 checkpoint",
+        "No screenshot evidence is claimed"
+      ],
+      "evidence": [
+        "Focused checks passed: web 10, API 22 and worker 32 tests; 64 passed and 0 skipped",
+        "pnpm check passed with API 845, worker 154, API schematics 1, architecture 125, runtime orchestration 3 and web 92 tests; total 1220 passed and 0 skipped",
+        "The verified workspace count increased by 8 tests from the prior 1212/0 checkpoint",
+        "The first full attempt exposed the host Compose v1/v2 mismatch; the second exposed missing explicit EOW test environment; the third passed with legacy docker-compose selected and the isolated database/Redis variables supplied",
+        "OpenAPI compatibility, bundle validation, UI handoff status, plan validation and git diff whitespace validation passed",
+        "No screenshot capture was performed and no screenshot-based equivalence is claimed"
+      ],
+      "nextAction": "Commit the verified implementation checkpoint",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": ["integration_qa"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Run state, traceability, commits and handoff report match verified evidence"
+      ],
+      "evidence": [
+        "Implementation and integration evidence committed at cb70b72 with workspace count 1220 passed and 0 skipped",
+        "Traceability and UI screen catalogue include notification.updated, sender policy, import sample and template publishing evidence",
+        "Completion report records delivered scope, verification, remaining non-blocking risks and the approved screenshot exception"
+      ],
+      "nextAction": "Push the completed checkpoints to origin/main and report",
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "Prior release checkpoint df5e11f reported 1212 tests passed and 0 skipped",
+    "Follow-up workspace verification reports 1220 tests passed and 0 skipped"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-20T20:48:00Z"
+}

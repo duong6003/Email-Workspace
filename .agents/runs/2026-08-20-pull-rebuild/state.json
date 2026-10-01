@@ -1,0 +1,92 @@
+{
+    "runId":  "2026-08-20-pull-rebuild",
+    "goal":  "Pull the latest main branch and rebuild/recreate the complete local Docker Compose stack from current source",
+    "approval":  {
+                     "evidence":  "User explicitly requested pull and rebuild on 2026-08-20",
+                     "scope":  [
+                                   "inspect branch and working tree",
+                                   "pull origin/main using fast-forward only",
+                                   "build current source into Docker images",
+                                   "recreate Compose services without deleting volumes",
+                                   "verify health, served frontend assets, and runtime logs"
+                               ],
+                     "exclusions":  [
+                                        "production deployment",
+                                        "destructive data or volume removal",
+                                        "discarding unrelated local untracked files"
+                                    ]
+                 },
+    "mode":  "loop",
+    "status":  "completed",
+    "currentNode":  null,
+    "nodes":  [
+                  {
+                      "id":  "pull",
+                      "dependsOn":  [
+
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  2,
+                      "successConditions":  [
+                                                "Local main fast-forwards to origin/main without overwriting local work"
+                                            ],
+                      "evidence":  [
+                                       "git pull --ff-only updated df5e11f to ef990d8",
+                                       "41 files changed: 748 insertions and 215 deletions",
+                                       "Local untracked .agents run evidence and .claude/settings.local.json were preserved"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "build-recreate",
+                      "dependsOn":  [
+                                        "pull"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "Application images build from pulled source and all Compose services recreate successfully"
+                                            ],
+                      "evidence":  [
+                                       "docker compose --env-file .env up -d --build --force-recreate --wait completed",
+                                       "New image IDs: web 0e16105a228a, api 1ce81a880f80, worker c1af7d391367, scheduler a010994b1a5b",
+                                       "Migration exited 0"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "verify",
+                      "dependsOn":  [
+                                        "build-recreate"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "All long-running services healthy, frontend serves new bundle, HTTP smoke checks pass, and startup logs are clean"
+                                            ],
+                      "evidence":  [
+                                       "postgres, redis, mailpit, api, worker, scheduler, and web reported healthy",
+                                       "Frontend serves /assets/index-BcRP0cCi.js and /assets/index-Bv6Aa15K.css",
+                                       "Web health, API liveness, API readiness, and Mailpit returned HTTP 200",
+                                       "Database and Redis readiness checks returned ok",
+                                       "No application error, fatal, or unhandled exception patterns found after rebuild"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  }
+              ],
+    "schedule":  null,
+    "evidence":  [
+                     "Repository HEAD is ef990d8 followup-remediation completion_gate: close six defects",
+                     "Latest origin/main was pulled via fast-forward",
+                     "Complete stack rebuilt and recreated from pulled source",
+                     "No named volumes were removed and no destructive action was performed"
+                 ],
+    "blocker":  null,
+    "updatedAt":  "2026-08-20T21:10:00Z"
+}

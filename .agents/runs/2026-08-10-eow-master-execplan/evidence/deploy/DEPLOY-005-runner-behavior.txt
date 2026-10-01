@@ -1,0 +1,11 @@
+
+ RUN  v4.1.10 /home/duong.vu/workspace/mail-operation/eow-m7-s4/packages/architecture-tests
+
+ ✓ src/migration-runner-behavior.test.ts (36 tests | 35 skipped) 3353ms
+     ✓ fails checksum mismatch and does not apply later migration  3331ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 35 skipped (36)
+   Start at  18:49:49
+   Duration  3.50s (transform 56ms, setup 0ms, import 71ms, tests 3.35s, environment 0ms)
+

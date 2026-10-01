@@ -1,0 +1,17 @@
+import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import type { DataSource } from 'typeorm';
+import { runInTenantContext } from '../database/tenant-transaction.js';
+import type { <%= classify(name) %>CreateDto } from './dto/<%= dasherize(name) %>.dto.js';
+import { <%= classify(name) %>Repository } from './<%= dasherize(name) %>.repository.js';
+
+@Injectable()
+export class <%= classify(name) %>Service {
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
+  list(tenantId: string) {
+    return runInTenantContext(this.dataSource, tenantId, (manager) => new <%= classify(name) %>Repository(manager, tenantId).find());
+  }
+  create(tenantId: string, input: <%= classify(name) %>CreateDto) {
+    return runInTenantContext(this.dataSource, tenantId, (manager) => new <%= classify(name) %>Repository(manager, tenantId).save(input));
+  }
+}

@@ -1,0 +1,31 @@
+version: 1
+scope: coding_agent_iteration
+cycle: [observe, hypothesize, act, verify, reflect, checkpoint]
+entry_requirements:
+  - approved_scope
+  - measurable_success_condition
+  - reproducible_or_observable_signal
+  - max_iterations
+  - time_or_cost_budget
+defaults:
+  max_iterations_per_node: 5
+  max_same_failure_class: 3
+  require_new_evidence_each_iteration: true
+continue_when:
+  - success_condition_is_false
+  - budget_remains
+  - next_action_is_inside_approved_scope
+  - next_action_can_produce_new_evidence
+exit_when:
+  success: all_success_conditions_pass
+  blocked: stop_gate_or_external_dependency_without_schedule
+  failed: budget_exhausted_or_no_new_evidence
+  cancelled: human_or_policy_cancelled
+forbidden:
+  - unbounded_retry
+  - repeating_same_action_without_new_evidence
+  - silently_widening_scope
+  - weakening_tests_to_make_them_pass
+  - hiding_or_deleting_unrelated_user_changes
+  - sleep_or_busy_wait
+checkpoint_fields: [iteration, hypothesis, actions, evidence, failure_class, next_action]

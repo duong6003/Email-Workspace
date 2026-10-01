@@ -1,0 +1,337 @@
+{
+  "runId": "2026-08-20-feature-gap-remediation",
+  "goal": "Implement and verify the missing and defective product capabilities identified by the 2026-08-20 feature-gap audit",
+  "approval": {
+    "evidence": "User explicitly requested implementation on 2026-08-20 and approved omitting screenshot capture while retaining all other verification",
+    "scope": [
+      "error contract standardization across API and web",
+      "direct compose entry and complete draft workflow",
+      "draft ownership and my-drafts semantics",
+      "sender configuration selection, editing and default resolution",
+      "template import variable preflight and guided repair UX",
+      "template and recipient import sample downloads",
+      "immediate template preview UX",
+      "durable realtime notification delivery and badge layout",
+      "business hardening for preflight, conflicts, import persistence, template lint and offline states",
+      "contracts, migrations, tests, observability, traceability, documentation and release verification"
+    ],
+    "exclusions": [
+      "production deployment or external publishing",
+      "destructive database operations",
+      "real provider credentials or paid external services",
+      "silently changing accepted ADRs or unresolved business semantics"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": null,
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Authoritative instructions, UI handoff status, current branch and prior audit evidence are recorded"
+      ],
+      "evidence": [
+        "AGENTS.md and routed product, architecture, frontend, realtime and delivery documents were read",
+        "UI handoff status was verified ready",
+        "Current branch is main at a6c7c74 with a clean worktree before handoff creation",
+        "Nine user-reported feature gaps and related P0/P1 business gaps were reproduced against current source"
+      ],
+      "nextAction": "Resume with architecture_contracts",
+      "failureClass": null
+    },
+    {
+      "id": "architecture_contracts",
+      "dependsOn": [
+        "intake"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Required ADR or superseding ADR is proposed before changing tenant, ownership, snapshot, notification or public contract semantics",
+        "OpenAPI and AsyncAPI changes are designed before implementation",
+        "Migration numbers, rollback/recovery and cross-node file ownership are assigned"
+      ],
+      "evidence": [
+        "UI handoff verified ready with python3 scripts/ui_handoff.py status (41 files, registered)",
+        "Accepted ADR-010 keeps realtime as a hint and ADR-011 keeps notifications durable",
+        "Accepted ADR-013 requires sender and policy to be frozen in the campaign snapshot",
+        "User approved implementation without screenshot capture; visual screenshot evidence will remain explicitly pending",
+        "ADR-028 records immutable draft ownership, direct compose creation, deterministic default sender, stable problem fields, template analysis, sample artifacts, notification reconciliation and preflight severity."
+      ],
+      "nextAction": "Implement error_contract",
+      "failureClass": null
+    },
+    {
+      "id": "error_contract",
+      "dependsOn": [
+        "architecture_contracts"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "All API errors expose stable code, category, message key, trace ID, retryability and structured field/resource context",
+        "Frontend maps machine codes to actionable Vietnamese messages without displaying raw backend errors by default",
+        "400, 401, 403, 404, 409, 422, 429 and 5xx behavior has unit, contract and integration coverage"
+      ],
+      "evidence": [
+        "API problem unit tests: 7 passed across problem and Zod validation suites",
+        "Web problem mapping tests: 7 passed",
+        "OpenAPI Problem schema now requires code, category, messageKey, retryable and traceId",
+        "Frontend maps stable codes to safe actionable Vietnamese copy and retains trace IDs",
+        "API, contracts and web typechecks passed; additive OpenAPI compatibility check passed."
+      ],
+      "nextAction": "Implement sender configuration management",
+      "failureClass": null
+    },
+    {
+      "id": "sender_config_management",
+      "dependsOn": [
+        "architecture_contracts",
+        "error_contract"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Sender settings support create, edit, test connection, disable and clear status/error recovery states",
+        "Secrets remain write-only and masked; sender status and domain readiness are explicit",
+        "Existing sender API behavior remains tenant-scoped and history-safe"
+      ],
+      "evidence": [
+        "Sender edit overlay uses existing PATCH API and never hydrates the stored secret",
+        "Blank edit secret retains current secret; nonblank secret is an explicit rotation request",
+        "Sender search/filter, explicit status labels and disable confirmation are wired",
+        "Sender settings helper tests: 3 passed, 0 skipped; web typecheck passed",
+        "OpenAPI PATCH request now correctly models a partial update; compatibility check passed"
+      ],
+      "nextAction": "Implement compose and owned drafts",
+      "failureClass": null
+    },
+    {
+      "id": "compose_drafts",
+      "dependsOn": [
+        "architecture_contracts",
+        "error_contract",
+        "sender_config_management"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Compose CTA opens a usable composer directly and creates or resumes a draft without an unexplained intermediate step",
+        "Drafts have explicit my-drafts/all-drafts semantics, owner authorization and bounded pagination",
+        "Composer can select a verified sender, applies the default policy when appropriate and freezes the selected sender into the send snapshot",
+        "Autosave conflict UX shows server/local choices or a safe merge path and preserves user input",
+        "Draft, sender, audience, template, preview and send actions are covered by web/API/integration tests"
+      ],
+      "evidence": [
+        "Compose route now auto-creates a durable draft once and replaces the URL with its draft id",
+        "Draft creation applies the current verified default sender once; sender updates hydrate identity server-side and reject raw spoofed From values",
+        "Compose lists only verified active senders through a content-safe read endpoint and wires a functional sender selector",
+        "Draft API defaults to scope=mine, exposes immutable ownerId, restricts scope=all to Admin with settings:manage, and enforces owner/Admin mutation access",
+        "Draft list exposes Bản nháp của tôi and Admin-only Tất cả bản nháp",
+        "Focused unit tests: 10 passed, 0 skipped; campaign draft integration: 7 passed, 0 skipped; campaign draft HTTP: 4 passed, 0 skipped",
+        "API/web typechecks and additive OpenAPI compatibility passed",
+        "Sender HTTP suite: 2 passed, 1 environment failure because Mailpit was unavailable; failure is unrelated to the changed sender list contract"
+      ],
+      "nextAction": "Implement template import analysis and immediate preview",
+      "failureClass": null
+    },
+    {
+      "id": "template_import_preview",
+      "dependsOn": [
+        "architecture_contracts",
+        "error_contract"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Import analyzes variables before publish and identifies unknown custom variables with location, label and repair action",
+        "User can create or select a custom field, rename a token or return to edit without losing imported HTML",
+        "Template card opens immediate preview; management actions are secondary",
+        "Preview supports draft/published content, sample data, missing-data states and desktop/mobile views",
+        "Template lint covers size, links, images, alt text and actionable severity"
+      ],
+      "evidence": [
+        "Added side-effect-free template analysis API with sanitization, variable occurrences, classification, offsets, repair actions and safe catalogue",
+        "Unknown variables now return actionable stable error guidance and remain blocking at publish",
+        "Added draft preview API; template cards now open preview immediately while the ellipsis retains management actions",
+        "Import HTML runs preflight before persistence and displays unknown-variable locations with a custom-field repair link",
+        "Template unit tests: 24 passed, 0 skipped; template persistence integration: 2 passed, 0 skipped; API/web typechecks and OpenAPI compatibility passed"
+      ],
+      "nextAction": "Add versioned import sample artifacts and resumable job affordances",
+      "failureClass": null
+    },
+    {
+      "id": "import_samples_and_jobs",
+      "dependsOn": [
+        "architecture_contracts",
+        "error_contract"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Recipient CSV/XLSX sample files and HTML template sample files are downloadable from relevant flows",
+        "Sample files document required headers, supported custom fields, encoding, limits and mapping behavior",
+        "Import preview/mapping can be resumed or safely expires with a file fingerprint",
+        "Long-running import outcomes remain discoverable after navigation through notification or activity surfaces"
+      ],
+      "evidence": [
+        "Recipient import flow now downloads versioned CSV and generated XLSX samples plus a UTF-8/import mapping guide; template import downloads a safe HTML sample",
+        "Browser checkpoint stores mapping, step and a stable idempotency key for 24 hours and restores only when the reselected file name, size and SHA-256 fingerprint match",
+        "The API validates the optional lowercase SHA-256 fingerprint and persists it as a non-sensitive source_file_ref instead of storing raw file bytes",
+        "Recipient import history displays the source file name and supports direct navigation to /recipients?view=imports for durable job discovery",
+        "Web tests: 82 passed, 0 skipped; focused API validation: 8 passed, 0 skipped; API/web/contracts typechecks and builds passed; additive OpenAPI compatibility passed"
+      ],
+      "nextAction": "Publish durable notification changes into the existing user realtime room",
+      "failureClass": null
+    },
+    {
+      "id": "notification_realtime",
+      "dependsOn": [
+        "architecture_contracts",
+        "error_contract"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Notification created/updated/read events are published after durable persistence and consumed by the web shell",
+        "Unread count updates without reopening the popover and reconciles through REST after reconnect",
+        "Badge is constrained, responsive and accessible; 99+ does not break the utility bar",
+        "Mark-all-read emits correct metrics and read state remains durable across tabs/devices",
+        "Trigger ownership, action lifecycle, preferences and deep-link safety are explicit"
+      ],
+      "evidence": [
+        "API notification create, grouped update, single-read, read-all and action-state mutations publish versioned notification.created/updated/read hints only after durable transaction completion",
+        "Worker-created import, bulk and export notifications publish to each affected eow:user:{userId} Redis channel after persistence; import deep links open /recipients?view=imports",
+        "AppShell keeps the shared authenticated socket connected, updates the unread badge without opening the popover and reconciles through REST on reconnect",
+        "Notification popover refetches on realtime hints; read state propagates across tabs/devices through the user room while REST remains authoritative",
+        "Badge is bounded to 99+, positioned within the trigger and retains an accessible unread-count label",
+        "Web suite: 84 passed, 0 skipped; API focused/unit: 11 passed and notification integration: 9 passed; worker focused: 1 passed and notification-writer integration: 3 passed; API/web/worker typechecks and builds passed"
+      ],
+      "nextAction": "Harden send preflight, dependency protection and stale/offline states",
+      "failureClass": null
+    },
+    {
+      "id": "business_hardening",
+      "dependsOn": [
+        "compose_drafts",
+        "template_import_preview",
+        "import_samples_and_jobs",
+        "notification_realtime"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Send preflight includes sender/domain/quota/content/link/variable checks with blocking vs warning semantics",
+        "Ownership, custom-field dependency protection, sender/domain readiness and unsubscribe behavior are documented and enforced",
+        "Offline/stale state, long-job navigation and live-update accessibility are visible and testable",
+        "Remaining P0/P1 gaps are closed with evidence or explicitly reclassified with an owner and next node"
+      ],
+      "evidence": [
+        "GAP-CMP-004: GET /campaigns/{id}/preflight and the send/schedule paths share authoritative sender, template, audience, variable and quota checks; content/domain findings are explicit warnings in OpenAPI and both confirmation overlays.",
+        "GAP-TPL-002: template analysis and preflight lint oversized HTML, missing text bodies, missing image alt text, missing/placeholder/invalid links; API unit coverage is 2 tests and the schedule integration asserts warning propagation.",
+        "GAP-AUD-005: custom-field deletion returns 409 CUSTOM_FIELD_IN_USE for exact-key references in active drafts or immutable published versions; integration coverage is 3 passed, 0 skipped.",
+        "GAP-COL-002: autosave conflicts retain the in-flight/local patch, load the latest server draft, render server/local field values and support explicit discard or rebase; reducer coverage increased to 4 tests.",
+        "GAP-UX-001/004: AppShell shows browser-offline versus socket-reconnecting states with a manual retry and polite live announcement; toast/live-region coverage is consistently applied without focus movement.",
+        "GAP-UX-002 and GAP-NOT-002/004/005/006 retain durable job deep links, recipient ownership rules, preferences, action state and message-key/parameter persistence from CP6.",
+        "FEATURE-GAP-REMEDIATION-REMAINING.md explicitly re-owns GAP-ORG-003, GAP-IMP-003, GAP-SND-001, GAP-SND-005 and GAP-SND-008 with owners and next nodes; signed unsubscribe remains a documented security/compliance STOP gate rather than an invented implementation.",
+        "Verification: API focused unit/integration 60 passed, web suite 88 passed, 0 skipped; API/web/contracts typechecks, API/web builds and additive OpenAPI compatibility passed. Previous CP6 web count was 84, so CP7 adds 4 executed web tests without reducing coverage."
+      ],
+      "nextAction": "Run integration QA, architecture and workspace checks without screenshot capture",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": [
+        "business_hardening"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Focused unit/API/web tests pass with zero skipped tests",
+        "Tenant isolation, authorization, idempotency, snapshot immutability and realtime reconnect tests pass",
+        "Visual states pass at 1440x900, 768x1024 and 390x844 for changed screens",
+        "Workspace test count and skip count are compared against the previous checkpoint"
+      ],
+      "evidence": [
+        "Full pnpm check passed after bounded repair: API 843, worker 152, API schematics 1, architecture 125, runtime orchestration 3 and web 88 tests passed; zero skipped tests were reported.",
+        "Workspace typechecks and builds passed for all eight packages; the web production bundle completed with only the existing non-blocking chunk-size warning.",
+        "The previous CP7 evidence executed 60 focused API tests and 88 web tests; CP8 expands this to 1,212 executed workspace tests with no skipped-test regression.",
+        "Tenant isolation, authorization, idempotency, snapshot immutability, quota 429 behavior, realtime reconnect and migration behavior suites all passed.",
+        "Screenshot capture at 1440x900, 768x1024 and 390x844 remains intentionally excluded by explicit user approval; no screenshot-based visual-equivalence claim is made."
+      ],
+      "nextAction": "Run packaging, dependency security and deployment smoke checks",
+      "failureClass": null
+    },
+    {
+      "id": "packaging_security",
+      "dependsOn": [
+        "integration_qa"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "One-command Compose validation remains valid",
+        "Clean-checkout typecheck/build path is reproducible",
+        "Prior audit blockers and dependency vulnerabilities are rechecked or documented with owners",
+        "No secrets, generated artifacts or unrelated user changes are committed"
+      ],
+      "evidence": [
+        "python3 scripts/validate_bundle.py passed with 44 required files, expected catalogue counts, deployment contract and UI handoff scaffold checks.",
+        "docker-compose --env-file /tmp/eow-feature-gap-deploy.env config --quiet passed using generated local-only secrets and non-conflicting ports.",
+        "A full isolated Compose build/up smoke passed: postgres, redis, mailpit, api, worker, scheduler and web were healthy; migrate exited 0; edge liveness, API liveness and API readiness returned 200. The isolated stack and volumes were removed afterward.",
+        "Nodemailer was upgraded from 7.0.6 to 9.0.1 in API and worker after reviewing registry license/repository metadata; SMTP adapter tests, a 17-case real worker send suite, typechecks and the full workspace check passed.",
+        "pnpm audit --prod now reports zero high/critical vulnerabilities and one moderate transitive uuid@8.3.2 advisory through exceljs; this does not affect the accepted import path's tested API surface and remains dependency-maintenance follow-up.",
+        "The approved UI handoff remains registered and ready with 41 files; no secrets, generated evidence logs, node_modules, dist or coverage output were committed."
+      ],
+      "nextAction": "Run the completion gate and write the terminal report",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": [
+        "packaging_security"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Definition of done is rechecked against rule, contract, code, test, observability, UI, security, packaging and recovery evidence",
+        "No P0/P1 defect remains without an explicit approved exception and owner",
+        "State is terminal and completion report is written"
+      ],
+      "evidence": [
+        "Completion report written at .agents/runs/2026-08-20-feature-gap-remediation/completion-report.json.",
+        "FEATURE-GAP-REMEDIATION-REMAINING.md names the explicit Product, Backend, Security and SRE owners for unresolved organization, import persistence, domain readiness, credential rotation and signed-unsubscribe semantics.",
+        "No unresolved implementation defect remains in the delivered scope; screenshot evidence is an approved verification exception and is not claimed.",
+        "Recovery is commit-based for code/dependency changes; no new database migration or destructive data action was introduced by CP8/CP9."
+      ],
+      "nextAction": null,
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "CP8 integration QA passed with 1,212 workspace tests and zero skipped tests",
+    "CP9 packaging/security passed with full Compose build/up smoke, zero high/critical production dependency advisories and a terminal completion report",
+    "The approved UI handoff remains ready; screenshot capture is intentionally excluded by user approval",
+    "Prior audit evidence remains at .agents/runs/2026-08-20-project-audit/state.json",
+    "Implementation start approved by user on 2026-08-20; screenshot capture explicitly excluded."
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-20T18:58:00Z"
+}

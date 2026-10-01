@@ -1,0 +1,36 @@
+{
+  "name": "email-operations-workspace",
+  "private": true,
+  "version": "3.3.0",
+  "type": "module",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @eow/web --filter @eow/api --filter @eow/worker --filter @eow/scheduler dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "check": "pnpm typecheck && pnpm build && pnpm test",
+    "ui:status": "python scripts/ui_handoff.py status",
+    "ui:register": "python scripts/ui_handoff.py register",
+    "contracts:generate": "pnpm --filter @eow/contracts run generate",
+    "contracts:compat-check": "node scripts/openapi-compat-check.mjs",
+    "generate:api-module": "pnpm --filter @eow/api-schematics build && node scripts/generate-api-module.mjs",
+    "infra:up": "docker compose --profile dev up -d postgres redis mailpit minio --wait",
+    "infra:down": "docker compose --profile dev down",
+    "deploy:config": "docker compose --env-file .env --profile dev config --quiet",
+    "deploy:up": "docker compose --env-file .env --profile dev up -d --build --wait",
+    "deploy:down": "docker compose --env-file .env --profile dev down",
+    "deploy:logs": "docker compose --env-file .env --profile dev logs --follow --tail=200",
+    "deploy:smoke": "python scripts/smoke_deploy.py",
+    "deploy:backup": "python3 scripts/backup_db.py --env-file .env --out deploy-backups/eow.dump",
+    "deploy:restore": "python3 scripts/restore_db.py --env-file .env"
+  },
+  "devDependencies": {
+    "@angular-devkit/schematics": "19.2.17",
+    "@nestjs/schematics": "11.0.9",
+    "js-yaml": "5.2.3"
+  }
+}

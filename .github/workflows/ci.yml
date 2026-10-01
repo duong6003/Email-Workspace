@@ -1,0 +1,36 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: pnpm/action-setup@v4
+        with: {version: 11.21.0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22.13.0, cache: pnpm}
+      - run: pnpm install --frozen-lockfile
+      - name: OpenAPI backward-compatibility check
+        run: |
+          git show "origin/${{ github.base_ref || 'main' }}:contracts/openapi.yaml" > /tmp/openapi-base.yaml 2>/dev/null || true
+          node scripts/openapi-compat-check.mjs /tmp/openapi-base.yaml contracts/openapi.yaml
+      - name: Repository script tests
+        run: node --test "scripts/*.test.mjs"
+      - run: pnpm check
+      - run: python scripts/ui_handoff.py status --allow-pending
+      - run: python scripts/validate_bundle.py
+      - run: cp .env.deploy.example .env
+      - run: |
+          sed -i 's/^EOW_POSTGRES_PASSWORD=$/EOW_POSTGRES_PASSWORD=ci-postgres-password/' .env
+          sed -i 's/^EOW_POSTGRES_APP_PASSWORD=$/EOW_POSTGRES_APP_PASSWORD=ci-postgres-app-password/' .env
+          sed -i 's/^EOW_REDIS_PASSWORD=$/EOW_REDIS_PASSWORD=ci-redis-password/' .env
+          sed -i 's/^EOW_MINIO_ROOT_PASSWORD=$/EOW_MINIO_ROOT_PASSWORD=ci-minio-password/' .env
+          sed -i 's/^EOW_SESSION_SECRET=$/EOW_SESSION_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/' .env
+          sed -i 's/^EOW_SENDER_CREDENTIAL_KEY=$/EOW_SENDER_CREDENTIAL_KEY=abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789/' .env
+      - run: docker compose --env-file .env config --quiet

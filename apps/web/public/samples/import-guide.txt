@@ -1,0 +1,10 @@
+EMAIL OPERATIONS WORKSPACE - HƯỚNG DẪN FILE IMPORT
+
+- Định dạng: CSV UTF-8 hoặc XLSX, tối đa 50 MB và 100.000 dòng dữ liệu.
+- Cột bắt buộc: một cột chứa email; tên cột nguồn có thể khác và được chọn ở bước mapping.
+- Cột gợi ý: first_name, last_name, department, list, tag.
+- Trường tùy chỉnh: tạo trường tại Cài đặt > Trường tùy chỉnh, sau đó map cột nguồn vào trường tương ứng.
+- Danh sách/tag: mỗi ô chỉ chứa một tên danh sách hoặc tag đã tồn tại trong hệ thống.
+- XLSX chuẩn: giữ sheet Nguoi_nhan ở vị trí đầu tiên và không đổi hàng tiêu đề số 1.
+- Mapping và bước preview được lưu tối đa 24 giờ theo SHA-256 của file. Chọn lại đúng file để tiếp tục.
+- Nếu nội dung file thay đổi, mapping cũ không được áp dụng.

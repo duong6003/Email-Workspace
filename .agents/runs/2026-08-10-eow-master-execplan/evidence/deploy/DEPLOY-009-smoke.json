@@ -1,0 +1,35 @@
+{
+  "status": "ok",
+  "checks": [
+    {
+      "case": "DEPLOY-002",
+      "name": "compose-services",
+      "ok": true,
+      "detail": "{\"api\": \"healthy\", \"mailpit\": \"healthy\", \"migrate\": \"exited\", \"postgres\": \"healthy\", \"redis\": \"healthy\", \"scheduler\": \"healthy\", \"web\": \"healthy\", \"worker\": \"healthy\"}"
+    },
+    {
+      "case": "DEPLOY-002",
+      "name": "migration-exit",
+      "ok": true,
+      "detail": "migrate=exited, exit0=True"
+    },
+    {
+      "case": "DEPLOY-003",
+      "name": "edge-liveness",
+      "ok": true,
+      "detail": "http://localhost:8080/healthz (200)"
+    },
+    {
+      "case": "DEPLOY-003",
+      "name": "api-liveness",
+      "ok": true,
+      "detail": "http://localhost:8080/api/v1/health (200, status=ready)"
+    },
+    {
+      "case": "DEPLOY-003",
+      "name": "api-readiness",
+      "ok": true,
+      "detail": "http://localhost:8080/api/v1/health/ready (200, status=ready)"
+    }
+  ]
+}

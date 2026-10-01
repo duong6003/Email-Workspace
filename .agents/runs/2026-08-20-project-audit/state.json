@@ -1,0 +1,110 @@
+{
+  "runId": "2026-08-20-project-audit",
+  "goal": "Audit all current bugs and outstanding issues in the Email Operations Workspace",
+  "approval": {
+    "evidence": "User explicitly requested a full project bug and outstanding-issue audit on 2026-08-20",
+    "scope": [
+      "repository and authoritative documentation inspection",
+      "workspace build, typecheck and focused test verification",
+      "contract, security, deployment and frontend handoff checks",
+      "release-readiness and backlog consistency audit"
+    ],
+    "exclusions": [
+      "production deployment",
+      "destructive database cleanup",
+      "dependency upgrades or runtime code fixes"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": null,
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Mandatory workspace instructions and authoritative documents inspected"
+      ],
+      "evidence": [
+        "AGENTS.md, project manifest, start-here, UI source contract, orchestration and approval policies, graph policy, routed docs and current run state inspected"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "verification",
+      "dependsOn": [
+        "intake"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Relevant automated checks and reproducible failure cases recorded"
+      ],
+      "evidence": [
+        "Clean pnpm typecheck reproduced failure because apps/web cannot resolve @eow/contracts before contracts build",
+        "pnpm build passed after generated contract artifacts existed",
+        "Web tests passed: 23 files, 73 tests, 0 skipped",
+        "API schematics passed: 1 test; runtime orchestration passed: 3 tests",
+        "Worker tests failed during discovery for 21 suites because .env is absent; 14 files and 63 tests passed",
+        "Architecture tests had 2 migration-runner failures because the host has legacy docker-compose only",
+        "OpenAPI compatibility check passed",
+        "UI handoff status and folder/zip tests passed",
+        "validate_bundle.py failed because it requires the intentionally absent UI placeholder",
+        "validate_plan.py passed with one known observability-evidence warning",
+        "pnpm audit reported 2 high and 6 moderate vulnerabilities among 9 total findings"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "release-readiness",
+      "dependsOn": [
+        "verification"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Open rules, incomplete milestones, deployment limitations and product backlog drift classified"
+      ],
+      "evidence": [
+        "M7-S5, M7-GATE, packaging, final QA/security, documentation and completion nodes remain pending in the current master state",
+        "Traceability has 4 partially_closed rows and 1 not_started row; BR-SEC-006 is not_started",
+        "Business-gap catalog contains 75 open items: 35 P0, 33 P1 and 7 P2",
+        "Current development database pollution and known test isolation risks are documented in the M7-S5 handoff",
+        "Catalog library decisions still conflict with ADR-025 and the shipped React/Vite, Nest Express and Zod implementation"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "report",
+      "dependsOn": [
+        "release-readiness"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Severity-ranked audit findings and verification limitations reported to the user"
+      ],
+      "evidence": [
+        "Final report will distinguish reproducible defects, release blockers, environment blockers and unresolved product gaps"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "Working tree was clean at audit completion",
+    "No production action or destructive database operation was performed"
+  ],
+  "blocker": "Deployment smoke, real integration suites and load targets cannot be fully verified on this host because .env is absent and Docker Compose v2 is unavailable.",
+  "updatedAt": "2026-08-20T07:21:33Z"
+}

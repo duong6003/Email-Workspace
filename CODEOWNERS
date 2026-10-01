@@ -1,0 +1,9 @@
+/docs/adr/ @architecture
+/contracts/ @architecture @backend @frontend
+/database/ @backend @devops
+/apps/web/ @frontend
+/design-reference/ @frontend @product @qa
+/apps/api/ @backend
+/apps/worker/ @backend @devops
+/apps/scheduler/ @backend @devops
+/catalog/ @product @qa

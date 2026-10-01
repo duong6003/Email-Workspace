@@ -1,0 +1,102 @@
+[
+  [
+    "organizations",
+    "id, name, timezone, status, limits_json",
+    "Tenant root"
+  ],
+  [
+    "users / roles / user_roles",
+    "id, organization_id, email, password_hash, status",
+    "Identity và RBAC"
+  ],
+  [
+    "sender_accounts",
+    "id, organization_id, provider, from_email, reply_to, secret_ref, status, rate_limit",
+    "Chỉ lưu secret_ref"
+  ],
+  [
+    "recipients",
+    "id, organization_id, normalized_email, profile fields, subscription_status, deleted_at",
+    "Unique (organization_id, normalized_email)"
+  ],
+  [
+    "recipient_lists / list_memberships",
+    "list_id, recipient_id, joined_at, source",
+    "Many-to-many, unique pair"
+  ],
+  [
+    "tags / recipient_tags",
+    "tag_id, recipient_id, color",
+    "Many-to-many, unique pair"
+  ],
+  [
+    "custom_field_definitions",
+    "id, key, label, data_type, required, default_json, validation_json",
+    "Unique key/tenant"
+  ],
+  [
+    "recipient_custom_values",
+    "recipient_id, field_id, value_text/number/date/bool",
+    "Typed value + indexes"
+  ],
+  [
+    "templates",
+    "id, name, status, current_draft_version",
+    "Mutable aggregate"
+  ],
+  [
+    "template_versions",
+    "id, template_id, version_no, subject, html, text, variable_schema_json, content_hash",
+    "Immutable after publish"
+  ],
+  [
+    "campaigns",
+    "id, name, status, owner_id, sender_account_id, template_version_id, scheduled_at, timezone",
+    "Draft and lifecycle root"
+  ],
+  [
+    "campaign_audience_rules",
+    "campaign_id, source_type, source_id, operator, payload_json",
+    "Include/exclude definition"
+  ],
+  [
+    "campaign_recipients",
+    "campaign_id, recipient_id, email_snapshot, merge_data_json, eligibility, skipped_reason",
+    "Immutable send snapshot"
+  ],
+  [
+    "campaign_executions",
+    "id, campaign_id, status, totals, started_at, completed_at, idempotency_key",
+    "One send attempt/execution"
+  ],
+  [
+    "message_attempts",
+    "id, execution_id, campaign_recipient_id, attempt_no, provider_message_id, state, error_class",
+    "Unique execution+recipient+attempt"
+  ],
+  [
+    "delivery_events",
+    "id, provider_event_id, provider_message_id, event_type, occurred_at, payload_ref",
+    "Unique provider+event id"
+  ],
+  [
+    "async_jobs / job_items",
+    "id, type, status, scope_snapshot, counts, result_file_ref",
+    "Import, bulk, export, reconcile"
+  ],
+  [
+    "idempotency_keys",
+    "tenant_id, key, request_hash, resource_type, resource_id, expires_at",
+    "Duplicate request protection"
+  ],
+  [
+    "audit_logs",
+    "id, tenant_id, actor_id, action, target, diff_masked, correlation_id, created_at",
+    "Append-only"
+  ],
+  [
+    "outbox_events",
+    "id, aggregate_type, aggregate_id, event_type, payload, published_at",
+    "Transactional outbox"
+  ]
+]

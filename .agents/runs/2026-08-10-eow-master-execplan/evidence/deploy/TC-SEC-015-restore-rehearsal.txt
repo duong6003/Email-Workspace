@@ -1,0 +1,36 @@
+{
+  "status": "ok",
+  "dump": "/home/duong.vu/workspace/mail-operation/m7s4-scratch/eow-20260819T120613Z.dump",
+  "metadata": "/home/duong.vu/workspace/mail-operation/m7s4-scratch/eow-20260819T120613Z.dump.json",
+  "timestamp_utc": "2026-08-19T12:06:36.080227+00:00",
+  "project": "eow-m7s4",
+  "database": "eow",
+  "dump_size_bytes": 185436,
+  "sha256": "d6440e82b0102699b9dc81cae81a2f80a24b6d061eefcbad2510a29d46184895",
+  "duration_seconds": 0.828,
+  "counts": {
+    "tenant": 2,
+    "campaign": 0,
+    "recipient": 0,
+    "message_attempt": 0,
+    "schema_migrations": 32
+  }
+}
+Creating network "eow-m7s4-restore_backend" with driver "bridge"
+Creating volume "eow-m7s4-restore_postgres_data" with default driver
+Creating volume "eow-m7s4-restore_redis_data" with default driver
+Creating eow-m7s4-restore_postgres_1 ... 
+Creating eow-m7s4-restore_postgres_1 ... done
+{
+  "status": "ok",
+  "project": "eow-m7s4-restore",
+  "verified_counts": {
+    "tenant": 2,
+    "campaign": 0,
+    "recipient": 0,
+    "message_attempt": 0,
+    "schema_migrations": 32
+  },
+  "rto_seconds": 4.289,
+  "rpo_age_seconds": 5.159
+}

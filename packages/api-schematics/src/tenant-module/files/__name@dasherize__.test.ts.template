@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest';
+describe('<%= classify(name) %>Service', () => { it('has a co-located unit test', () => expect(true).toBe(true)); });

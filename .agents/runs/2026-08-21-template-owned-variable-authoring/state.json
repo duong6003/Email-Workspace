@@ -1,0 +1,158 @@
+{
+  "runId": "2026-08-21-template-owned-variable-authoring",
+  "goal": "Move template variable authoring into the template workflow, keep recipient variables isolated, and expose default/recipient/template variables where email content is authored",
+  "approval": {
+    "evidence": "User explicitly requested template-local variable configuration and separation from user/recipient variables on 2026-08-21",
+    "scope": [
+      "remove template/global variable management from the shared recipient custom-field settings surface",
+      "organize template-owned variables directly inside template authoring",
+      "show system defaults, recipient variables and template variables as separate catalogues",
+      "allow authors to insert available variables into template subject and content",
+      "preserve published-version and campaign snapshot semantics",
+      "update ADR, UI, tests, commits and completion evidence"
+    ],
+    "exclusions": [
+      "production deployment",
+      "destructive data operations",
+      "external SMTP credentials",
+      "screenshot capture"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": "completion_gate",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Approved scope and baseline recorded"
+      ],
+      "evidence": [
+        "main was clean at 4c4f5ee",
+        "UI handoff is ready and registered with 41 files",
+        "User approved moving template variable authoring into the template workflow"
+      ],
+      "nextAction": "Trace current template editor, import and compose catalogues",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": [
+        "intake"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Authoring and variable-source boundaries are traced"
+      ],
+      "evidence": [
+        "Settings custom-fields currently mixes tenant-global content values with recipient schema, despite distinct ownership and permissions",
+        "Template variables exist in the template action overlay but the overlay edits only name and subject; HTML content has no variable insertion workflow",
+        "Template import blocks unknown variables before a template id exists, preventing authors from creating template-local definitions after import",
+        "Compose already separates system/global/template/recipient catalogues but rows are informational only and immutable published content cannot accept new tokens",
+        "Approved UI handoff explicitly provides an insert-variable toolbar and separate recipient/common variable groups in the content authoring surface"
+      ],
+      "nextAction": "Supersede ADR-031 UI ownership while preserving snapshot semantics",
+      "failureClass": null
+    },
+    {
+      "id": "architecture_contracts",
+      "dependsOn": [
+        "discovery"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Accepted ADR is superseded where UI ownership changes"
+      ],
+      "evidence": [
+        "ADR-032 moves recipient schema management out of content-variable management",
+        "Template drafts own template-variable CRUD and token insertion",
+        "Legacy tenant-global variables remain read-only catalogue inputs for compatibility",
+        "Published template and campaign snapshot semantics remain governed by ADR-031"
+      ],
+      "nextAction": "Implement the template editor and simplify recipient settings",
+      "failureClass": null
+    },
+    {
+      "id": "implementation",
+      "dependsOn": [
+        "architecture_contracts"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 4,
+      "successConditions": [
+        "Template authoring owns template variables and catalogues remain isolated"
+      ],
+      "evidence": [
+        "Recipient settings now manages recipient-owned fields only; template-local variables moved into the template draft editor",
+        "Template editor groups system, legacy global, recipient and template-owned catalogues and inserts tokens into subject, HTML or text content",
+        "Template import saves unresolved tokens as a draft while publish remains blocked with actionable variable keys",
+        "Shared ModalFrame, EntityActionMenu and OverrideChoice primitives standardize update dialogs, ellipsis menus and inherit/override selection",
+        "Mobile template preview uses a bounded phone-width canvas with fixed-table and media overflow protections",
+        "Template-local key conflicts are scoped to the owning template while system, recipient and global shadowing remain blocked"
+      ],
+      "nextAction": "Run focused, contract and workspace verification",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": [
+        "implementation"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Focused and workspace checks pass without skip regression"
+      ],
+      "evidence": [
+        "Focused API tests: 3 files / 21 tests passed / 0 skipped",
+        "Focused web tests: 4 files / 7 tests passed / 0 skipped",
+        "API, web and generated-contract typechecks passed",
+        "OpenAPI compatibility reports no breaking changes",
+        "Production web, API and contracts builds passed",
+        "UI handoff status remains ready and registered with 41 files",
+        "Full workspace check passed: 1262 tests / 0 skipped, compared with baseline 1260 / 0"
+      ],
+      "nextAction": "Close the run with commit evidence",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": [
+        "integration_qa"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "State and commits contain complete evidence"
+      ],
+      "evidence": [
+        "Implementation and verification committed as d62365b",
+        "Commit body records workspace delta: 1262 passed / 0 skipped versus 1260 / 0",
+        "Working tree was clean immediately after the implementation commit",
+        "No screenshot capture was performed under the approved exclusion"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "UI handoff is ready and registered with 41 files",
+    "Baseline main is 4c4f5ee with prior workspace check 1260 passed and 0 skipped",
+    "Full workspace check passed with 1262 tests and 0 skipped; baseline was 1260 and 0 skipped",
+    "No screenshots were captured, matching the approved exclusion"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-21T07:40:55.092369Z"
+}

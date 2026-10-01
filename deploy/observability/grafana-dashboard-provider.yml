@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: EOW
+    folder: Email Operations Workspace
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,47 @@
+{
+  "runId": "2026-08-20-feature-gap-remediation",
+  "status": "completed",
+  "scopeDelivered": [
+    "Stable RFC 9457 API problem contract and actionable Vietnamese frontend error mapping",
+    "Direct compose entry, immutable draft ownership, owner-scoped draft listing and complete draft workflow",
+    "Sender create/edit/test/disable/default-selection workflows with write-only secrets",
+    "Template import analysis, guided variable repair, content lint and immediate draft/version preview",
+    "Recipient/template sample downloads, resumable import mapping and durable job outcome navigation",
+    "Durable notification reconciliation, realtime reconnect visibility and accessible live announcements",
+    "Authoritative campaign preflight, conflict resolution, custom-field dependency protection and quota enforcement"
+  ],
+  "changes": [
+    "Added and updated API, web, worker, OpenAPI, migration, test and operational documentation across checkpoints CP1 through CP8",
+    "Preserved the canonical PostgreSQL and idempotency contracts while making realtime payloads refetch hints only",
+    "Restored send quota overflow to the established 429 plus Retry-After contract while retaining quota status in preflight reports",
+    "Stabilized real-database test execution around database-global trigger cleanup and cross-tenant worker scans",
+    "Added negative cross-tenant coverage for template analyze and draft preview routes",
+    "Made migration behavior tests support configured Compose v1 or v2 commands and isolate their host-port environment",
+    "Upgraded nodemailer from 7.0.6 to 9.0.1 in API and worker to remove high-severity production advisories",
+    "Removed the obsolete UI placeholder requirement from bundle validation after a registered handoff replaced it"
+  ],
+  "verification": [
+    "pnpm check passed: API 843, worker 152, API schematics 1, architecture 125, runtime orchestration 3 and web 88 tests; total 1,212 passed and 0 skipped",
+    "All workspace typechecks and production builds passed; additive OpenAPI compatibility passed in the preceding feature checkpoint",
+    "python3 scripts/validate_bundle.py passed with expected 118 rules, 159 test cases and 75 catalogued gaps",
+    "UI handoff status is ready and registered with 41 files",
+    "Compose interpolation passed with generated local-only secrets and non-conflicting ports",
+    "Isolated Compose build/up smoke passed for all seven long-running services, migration exit, edge liveness, API liveness and API readiness; cleanup removed the stack and volumes",
+    "pnpm audit --prod reports 0 high, 0 critical and 1 moderate transitive advisory",
+    "Screenshot capture was explicitly excluded by the user and no screenshot-based visual equivalence claim is made"
+  ],
+  "traceability": [
+    "ADR-028 records the accepted feature-remediation semantics",
+    "FEATURE-GAP-REMEDIATION-REMAINING.md records closed gaps, explicit owners and verification exceptions",
+    "contracts/openapi.yaml and generated contract types cover the changed API surface",
+    "Architecture suites enforce tenant route coverage, migration safety, deployment contract, UTF-8 and UI handoff fidelity",
+    "Checkpoint commits CP1 through CP9 and mirrored run state provide resumable evidence"
+  ],
+  "remainingRisks": [
+    "GAP-ORG-003, GAP-IMP-003, GAP-SND-001, GAP-SND-005 and GAP-SND-008 require the named Product, Backend, Security or SRE owner decisions before implementation",
+    "One moderate uuid@8.3.2 advisory remains transitively through exceljs and is assigned to dependency maintenance",
+    "The web build has a non-blocking large-chunk warning assigned to frontend performance work",
+    "Viewport screenshot evidence is absent by approved user exception"
+  ],
+  "resumeNode": null
+}

@@ -1,0 +1,10 @@
+        Name                      Command                  State                                  Ports                            
+-----------------------------------------------------------------------------------------------------------------------------------
+eow-m7s4_api_1         docker-entrypoint.sh node  ...   Up (healthy)   3000/tcp                                                    
+eow-m7s4_mailpit_1     /mailpit                         Up (healthy)   127.0.0.1:1025->1025/tcp, 1110/tcp, 127.0.0.1:8025->8025/tcp
+eow-m7s4_migrate_1     docker-entrypoint.sh sh /d ...   Exit 0                                                                     
+eow-m7s4_postgres_1    docker-entrypoint.sh postgres    Up (healthy)   127.0.0.1:55432->5432/tcp                                   
+eow-m7s4_redis_1       docker-entrypoint.sh redis ...   Up (healthy)   127.0.0.1:56379->6379/tcp                                   
+eow-m7s4_scheduler_1   docker-entrypoint.sh node  ...   Up (healthy)                                                               
+eow-m7s4_web_1         /docker-entrypoint.sh ngin ...   Up (healthy)   80/tcp, 0.0.0.0:8080->8080/tcp                              
+eow-m7s4_worker_1      docker-entrypoint.sh node  ...   Up (healthy)                                                               

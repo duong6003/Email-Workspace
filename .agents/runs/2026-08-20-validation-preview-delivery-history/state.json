@@ -1,0 +1,145 @@
+{
+  "runId": "2026-08-20-validation-preview-delivery-history",
+  "goal": "Standardize actionable frontend validation, remove automatic campaign names, expand template preview, repair EENVELOPE delivery failures, and expose recipient-level delivery history",
+  "approval": {
+    "evidence": "User explicitly requested the five related UI and delivery fixes",
+    "scope": [
+      "define and apply a shared frontend field-validation convention with required/optional guidance and actionable errors",
+      "remove automatically filled campaign-name text",
+      "make template preview use available width without horizontal scrolling and emphasize rendered content",
+      "diagnose and repair SMTP EENVELOPE failures",
+      "make campaign history recipient detail show success, failure and failure reasons",
+      "update contracts, tests, traceability, run evidence, commits and push"
+    ],
+    "exclusions": [
+      "production deployment or destructive data operations",
+      "real provider credentials or paid external actions",
+      "changing accepted campaign snapshot or delivery semantics",
+      "screenshot capture unless required by an independently approved visual run"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": "completion_gate",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": ["Approval, clean working tree and UI handoff readiness are recorded"],
+      "evidence": [
+        "User supplied concrete validation, naming, preview, SMTP envelope and history defects",
+        "git status was clean on main and matched origin/main at intake",
+        "python3 scripts/ui_handoff.py status reported ready, registered and 41 source files"
+      ],
+      "nextAction": "Reproduce each defect against current contracts and tests",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": ["intake"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Each defect has a source-level or executable reproduction",
+        "The smallest authoritative rule, contract and test set is selected"
+      ],
+      "evidence": [
+        "Compose creates new drafts with an automatic timestamped name and disables send/schedule only on templateVersionId, leaving other blockers unexplained",
+        "The shared RFC 9457 client exposes fieldErrors but no reusable frontend mapping or required/optional field presentation exists",
+        "Template preview constrains rendered HTML to 680px inside a two-column grid and permits horizontal overflow",
+        "Worker derives SMTP RCPT TO only from merge_data_json.email; current rows can therefore reach Nodemailer with an empty recipient and produce EENVELOPE",
+        "History detail exposes aggregate counts and export only; it has no recipient-level REST drill-down despite BR-HIS-003"
+      ],
+      "nextAction": "Implement shared frontend validation and compose/preview changes",
+      "failureClass": null
+    },
+    {
+      "id": "frontend_validation_preview",
+      "dependsOn": ["discovery"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 5,
+      "successConditions": [
+        "Forms identify required and optional fields before submit and display field-specific errors after submit",
+        "Campaign names start empty",
+        "Template preview uses available viewport width without horizontal scrolling"
+      ],
+      "evidence": [
+        "Shared frontend validation helpers and docs now identify required versus optional inputs, explain consequences, map RFC 9457 fieldErrors and clear errors on edit",
+        "Compose, sender configuration and template import forms expose field-level guidance instead of silent disabled actions",
+        "New campaign drafts are created with an explicit empty name and send/schedule preflight blocks a blank name or subject with actionable reasons",
+        "Template preview uses the available viewport width, prevents horizontal overflow and emphasizes the rendered recipient content",
+        "Focused web validation tests passed: 4 files / 12 tests / 0 skipped; web typecheck passed"
+      ],
+      "nextAction": "Run full workspace verification",
+      "failureClass": null
+    },
+    {
+      "id": "delivery_history",
+      "dependsOn": ["discovery"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 5,
+      "successConditions": [
+        "Valid recipient envelopes are sent and invalid addresses return actionable classification",
+        "History detail exposes recipient status and latest failure reason under tenant/RBAC controls"
+      ],
+      "evidence": [
+        "ADR-029 and migration 067 persist an immutable recipient SMTP envelope, backfill older snapshots and keep the worker independent of live recipient edits",
+        "Worker sends from campaign_recipient.recipient_email, persists terminal error codes and safe SMTP failure reasons, and classifies sender-side EENVELOPE separately",
+        "History exposes tenant-scoped recipient drill-down with status, attempt timestamps, error code/class/reason, filtering and cursor pagination; realtime progress triggers a targeted refetch",
+        "Campaign export now includes the frozen recipient address and last_error_reason",
+        "Focused API/worker integration passed: campaign history/export/draft/freeze plus worker delivery, including a merge-data-free recipient envelope; 118 tests passed / 0 skipped across the focused runs"
+      ],
+      "nextAction": "Run full workspace verification",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": ["frontend_validation_preview", "delivery_history"],
+      "status": "completed",
+      "attempt": 3,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Focused and workspace checks pass with zero skipped tests",
+        "Test and skip counts are compared with the previous 1220/0 checkpoint"
+      ],
+      "evidence": [
+        "Repair attempt 1 exposed older send/schedule fixtures without the newly authoritative subject/name/audience preflight data; fixtures and send error selection were aligned without weakening the checks",
+        "Repair attempt 2 exposed the new recipient-history route missing from the mechanical cross-tenant matrix; an 82nd negative route case was added and passed",
+        "Final pnpm check passed typecheck, production build and all workspace suites: API 850, worker 156, schematics 1, architecture 125, runtime orchestration 3 and web 100 = 1235 tests passed, 0 skipped, 0 failed",
+        "The final workspace count increased from 1220/0 to 1235/0; the +15 test delta is consistent with new validation, recipient history, SMTP envelope and cross-tenant coverage",
+        "OpenAPI generation and additive compatibility check passed; migration 067 applied on a clean PostgreSQL database and migration lock hash matched",
+        "UI handoff remained ready, registered and unchanged at 41 source files; screenshot capture was intentionally omitted per approved scope"
+      ],
+      "nextAction": "Commit completion state and push main",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": ["integration_qa"],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": ["State, traceability, commits, push and handoff evidence agree"],
+      "evidence": [
+        "Implementation, bounded repair and final verification are recorded in checkpoint commits with test and skip counts",
+        "Working tree was clean before the completion commit and main contained six validation-delivery commits ahead of origin/main",
+        "Push to origin/main is the only remaining external handoff action after this terminal checkpoint"
+      ],
+      "nextAction": "Push main to origin/main",
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "Prior checkpoint ef990d8 reported 1220 tests passed and 0 skipped",
+    "Final workspace check reported 1235 tests passed, 0 skipped and 0 failed"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-20T22:45:00Z"
+}

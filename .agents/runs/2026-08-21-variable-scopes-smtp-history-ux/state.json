@@ -1,0 +1,156 @@
+{
+  "runId": "2026-08-21-variable-scopes-smtp-history-ux",
+  "goal": "Repair the sender configuration edit layout, standardize required-field presentation, introduce coherent global and template variable configuration with send-time overrides, and improve delivery-history performance and status wording",
+  "approval": {
+    "evidence": "User explicitly requested these sender, variable, validation and delivery-history fixes on 2026-08-21",
+    "scope": [
+      "make all sender configuration fields reachable with responsive scrolling when needed",
+      "replace required and optional label prose with a red required marker convention",
+      "design and implement global variables, template variables, defaults and optional per-campaign overrides",
+      "profile and improve delivery-history responsiveness without weakening canonical REST reconciliation",
+      "replace raw delivery statuses with clearer Vietnamese labels",
+      "update contracts, migrations, tests, traceability, commits and push main"
+    ],
+    "exclusions": [
+      "production deployment",
+      "real provider credential use",
+      "destructive database operations",
+      "screenshot capture"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": "completion_gate",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Approval, repository state, policies and UI handoff readiness are recorded"
+      ],
+      "evidence": [
+        "main was clean and synchronized with origin/main at dd6fb68",
+        "UI handoff status was ready and registered with 41 files",
+        "User explicitly approved the sender layout, variable-scope, validation and history improvements"
+      ],
+      "nextAction": "Trace current variable resolution, sender layout and history query paths",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": [
+        "intake"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Current UI, API, persistence, snapshot and query behavior have executable root causes and a bounded design"
+      ],
+      "evidence": [
+        "Sender detail uses a fixed-height master-detail shell while config-detail-body has no explicit overflow ownership; username and password are lower in the edit body and can be clipped behind the save bar",
+        "The shared form-validation convention still requires visible Bắt buộc/Không bắt buộc prose, conflicting with the newly approved red-asterisk convention",
+        "Existing custom fields are recipient attributes, while published template schemas already support defaults; no tenant-global constant or campaign override contract exists",
+        "Campaign snapshot renders and freezes per-recipient email content, so effective configured values must be resolved before rendering and recorded in snapshot metadata",
+        "Recipient history executes three per-row LATERAL lookups and every progress realtime hint reloads the full recipient page; no covering indexes match the latest/submitted attempt lookups"
+      ],
+      "nextAction": "Record additive variable precedence and immutable snapshot behavior",
+      "failureClass": null
+    },
+    {
+      "id": "architecture_contracts",
+      "dependsOn": [
+        "discovery"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Variable precedence and snapshot behavior are recorded in an ADR and public contracts"
+      ],
+      "evidence": [
+        "ADR-031 separates recipient data, tenant-global values and template-owned defaults and fixes precedence at campaign confirmation",
+        "Migration 069 adds tenant-RLS configured_variable storage, immutable snapshot value storage and covering history indexes",
+        "OpenAPI adds global/template variable CRUD and campaign variableOverrides without changing existing fields",
+        "API typecheck passes after registering the new canonical module and entity"
+      ],
+      "nextAction": "Build frontend management and compose override surfaces, then optimize history refresh",
+      "failureClass": null
+    },
+    {
+      "id": "implementation",
+      "dependsOn": [
+        "architecture_contracts"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 5,
+      "successConditions": [
+        "Sender, validation, variable and history changes work as one tenant-safe vertical slice"
+      ],
+      "evidence": [
+        "Sender detail and create overlays own vertical scrolling; username spans the grid and password/token remains reachable above the shared confirm/cancel save bar",
+        "Form labels use the shared red required marker convention without Bắt buộc/Không bắt buộc prose",
+        "Global variables are managed under Cấu hình biến; template-owned variables are managed beside template draft actions with defaults and per-campaign override permission",
+        "Compose loads system, global, template and recipient variable groups and persists only explicitly allowed campaign overrides",
+        "Recipient history pages before lateral attempt/event lookups, has covering indexes, debounced search and coalesced realtime refetches with stale-response suppression",
+        "Focused API tests: 33 passed; focused web tests: 14 passed; API/web typechecks pass; OpenAPI compatibility and migration lock checks pass",
+        "Bounded repair added the configured-variable routes to the real cross-tenant matrix and preserved compatibility for legacy campaign fixtures without settingsJson"
+      ],
+      "nextAction": "Run the full workspace check against the 1244-test, 0-skip baseline",
+      "failureClass": null
+    },
+    {
+      "id": "integration_qa",
+      "dependsOn": [
+        "implementation"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 3,
+      "successConditions": [
+        "Focused and workspace checks pass with no skipped-test regression"
+      ],
+      "evidence": [
+        "pnpm check exited 0 after the bounded repair loop",
+        "Workspace totals: 1260 tests passed, 0 skipped; previous checkpoint was 1244 passed, 0 skipped",
+        "Package counts: architecture 125, API schematics 1, runtime orchestration 3, sender credentials 3, API 867, web 103, worker 158",
+        "OpenAPI compatibility reports no breaking changes; UI handoff remains ready with 41 registered files",
+        "Compose interpolation passes with documented required values; repository migration runner applied migrations 069 and 070 successfully"
+      ],
+      "nextAction": "Commit integration evidence and push main",
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": [
+        "integration_qa"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "State, commits, push and completion evidence agree"
+      ],
+      "evidence": [
+        "Implementation commit 09d5525 and integration QA commit b018ca1 preserve checkpoint/test evidence",
+        "All approved sender, variable, validation and history improvements are implemented without screenshot capture",
+        "Main is ready to push with a clean working tree and the workspace check at 1260 passed, 0 skipped"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "Authoritative intake documents were read through docs/index.yaml routing",
+    "Screenshot capture remains excluded by the prior user-approved working constraint",
+    "Full workspace verification increased the test count from 1244 to 1260 with no skipped tests",
+    "No production deployment, external SMTP credential use or screenshot capture occurred"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-21T06:27:00Z"
+}

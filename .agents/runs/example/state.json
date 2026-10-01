@@ -1,0 +1,29 @@
+{
+  "runId": "example-approved-feature",
+  "goal": "Implement one approved vertical slice end-to-end",
+  "approval": {
+    "evidence": "Human approved the implementation plan",
+    "scope": ["contracts", "frontend", "backend", "tests", "documentation"],
+    "exclusions": ["production deployment", "destructive production data changes"]
+  },
+  "mode": "graph",
+  "status": "pending",
+  "currentNode": "intake",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "ready",
+      "attempt": 0,
+      "maxAttempts": 1,
+      "successConditions": ["Approval scope recorded"],
+      "evidence": [],
+      "nextAction": "Read authoritative routing documents",
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [],
+  "blocker": null,
+  "updatedAt": "2026-08-10T00:00:00Z"
+}

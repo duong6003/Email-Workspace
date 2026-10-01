@@ -1,0 +1,6 @@
+{
+  "name":"@eow/scheduler","private":true,"version":"0.1.0","type":"module",
+  "scripts":{"dev":"node ../../scripts/backend-dev.mjs apps/scheduler","build":"tsc -p tsconfig.json","typecheck":"tsc -p tsconfig.json --noEmit","test":"vitest run --passWithNoTests"},
+  "dependencies":{"@opentelemetry/api":"^1.9.1","@opentelemetry/auto-instrumentations-node":"^0.79.0","@opentelemetry/sdk-node":"^0.221.0","bullmq":"6.0.9","ioredis":"6.0.0","pino":"^10.3.1"},
+  "devDependencies":{"@types/node":"24.10.1","tsx":"4.23.11","typescript":"5.9.3","vitest":"4.1.10"}
+}

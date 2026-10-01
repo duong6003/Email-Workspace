@@ -1,0 +1,16 @@
+{
+  "title": "Email Operations Workspace",
+  "uid": "eow-observability",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {"type":"timeseries","title":"Queue lag (seconds)","targets":[{"expr":"max by (queue) (eow_queue_lag_seconds)"}]},
+    {"type":"timeseries","title":"Send throughput","targets":[{"expr":"sum(rate(eow_send_attempt_total{result=\"submitted\"}[5m]))"}]},
+    {"type":"timeseries","title":"Send error rate","targets":[{"expr":"sum(rate(eow_send_attempt_total{result=\"failed\"}[5m])) / clamp_min(sum(rate(eow_send_attempt_total[5m])), 0.001)"}]},
+    {"type":"timeseries","title":"Webhook lag p95","targets":[{"expr":"histogram_quantile(0.95, sum by (le, provider) (rate(eow_webhook_lag_seconds_bucket[5m])))"}]},
+    {"type":"timeseries","title":"Progress reconciliation drift","targets":[{"expr":"max(eow_progress_reconcile_drift)"}]},
+    {"type":"timeseries","title":"Notification delivery","targets":[{"expr":"sum by (channel) (rate(eow_notification_delivered_total[5m]))"}]},
+    {"type":"stat","title":"Dead-letter depth","targets":[{"expr":"sum(eow_dead_letter_depth)"}]}
+  ]
+}

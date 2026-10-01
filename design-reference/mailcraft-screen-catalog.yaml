@@ -1,0 +1,76 @@
+# Mailcraft screen catalog -- VENDORED COPY, do not hand-edit the body.
+#
+# Source: mailcraft-ui-handoff-v1/design-reference/screen-catalog.yaml
+# Copied: 2026-09-03 (S4 Task 24)
+#
+# The handoff package lives outside this repo (spec's own "ngoai repo, chi doc"
+# reference), so it is not guaranteed present on every checkout or in CI. Earlier
+# this list was hand-transcribed into a TypeScript constant inside
+# ARCH-MAILCRAFT-FIDELITY, which meant the gate's own drift guards compared that
+# constant to literals in the same file -- they could only ever agree with
+# themselves. Vendoring the file makes the gate parse the document instead of a
+# human reading of it.
+#
+# To re-sync: copy the source file over the body below, keep this header, and run
+#   pnpm --filter @eow/architecture-tests test mailcraft-fidelity
+# Every newly declared action or state fails the gate until it is given a check
+# or an addressed exclusion. That failure is the point.
+version: 1
+product: mailcraft
+screens:
+  - id: MC-UI-001
+    name: Studio workspace
+    entrypoint: app/studio.tsx
+    states: [clean, dirty, saving, save_failed, revision_conflict, permission_denied]
+    responsive: [desktop, tablet]
+  - id: MC-UI-002
+    name: Insert workspace
+    entrypoint: app/studio.tsx
+    states: [loading, empty, success]
+    actions: [insert_section, insert_row, insert_column, insert_element]
+  - id: MC-UI-003
+    name: Structure workspace
+    entrypoint: app/studio.tsx
+    states: [loading, empty, success]
+    actions: [select_node, expand_node, collapse_node, expand_all, collapse_all]
+  - id: MC-UI-004
+    name: Reusable block library
+    entrypoint: app/studio.tsx
+    states: [loading, empty, success, error]
+    actions: [search, insert, rename, delete, save_current_tree]
+  - id: MC-UI-005
+    name: Asset and logo library
+    entrypoint: app/studio.tsx
+    states: [loading, empty, success, error, missing_assets]
+    actions: [upload, replace, bind, mark_decorative]
+  - id: MC-UI-006
+    name: HTML import and analysis
+    entrypoint: app/studio.tsx
+    states: [file_selected, import_analyzing, import_partial, import_fallback, missing_assets, error]
+    actions: [upload_html, analyze, review_report, create_draft]
+  - id: MC-UI-007
+    name: Theme and document settings
+    entrypoint: app/studio.tsx
+    states: [clean, dirty, save_failed]
+    actions: [change_width, change_typography, change_surface, change_responsive_rules]
+  - id: MC-UI-008
+    name: Preview and content review
+    entrypoint: app/studio.tsx
+    states: [loading, success, error, permission_denied]
+    actions: [switch_device, render_variables, run_content_review]
+    responsive: [desktop, tablet, mobile]
+  - id: MC-UI-009
+    name: Version history
+    entrypoint: app/studio.tsx
+    states: [loading, empty, success, error]
+    actions: [compare, preview, create_draft]
+  - id: MC-UI-010
+    name: Publish handoff
+    entrypoint: app/studio.tsx
+    states: [publish_validating, publishing, published, publish_failed, registration_pending]
+    actions: [validate, publish, retry_registration]
+  - id: MC-UI-011
+    name: Custom HTML/CSS
+    entrypoint: app/studio.tsx
+    states: [clean, dirty, error, permission_denied]
+    actions: [edit_sanitized_html, validate, preview]

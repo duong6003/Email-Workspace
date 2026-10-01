@@ -1,0 +1,50 @@
+project:
+  name: Email Operations Workspace
+  version: 3.3.0
+  kind: modular-monolith
+  package_manager: pnpm@11.21.0
+  node: '>=22.13.0'
+  authoritative_timezone_storage: UTC
+baselines:
+  business_rules: 118
+  test_cases: 159
+  architecture_decisions: 24
+  reviewed_gaps: 75
+  realtime_events: 20
+  notification_rules: 16
+applications:
+  web: apps/web
+  api: apps/api
+  worker: apps/worker
+  scheduler: apps/scheduler
+contracts:
+  http: contracts/openapi.yaml
+  realtime: contracts/asyncapi.yaml
+  database: database/migrations/001_initial.sql
+entrypoints:
+  humans: docs/00-start-here.md
+  agents: AGENTS.md
+  routing: docs/index.yaml
+  orchestration: .agents/orchestration-policy.yaml
+  agent_loop: .agents/agent-loop.yaml
+  agent_graph: .agents/agent-graph.yaml
+  agent_schedule: .agents/agent-schedule.yaml
+  approval: .agents/approval-policy.yaml
+  deployment: docs/deployment/quick-deploy.md
+  ui_handoff: design-reference/README.md
+ui_source_of_truth:
+  name: email-operations-workspace-ui-handoff-v2
+  install_path: design-reference/ui-handoff-v2/source
+  contract: design-reference/ui-source-contract.yaml
+  status_command: python scripts/ui_handoff.py status
+  install_command: python scripts/ui_handoff.py install <folder-or-zip>
+  packaged_state: pending-user-copy
+  runtime_state: determined-by-status-command
+  authority:
+    presentation: ui-handoff-v2
+    behavior: accepted-business-rules
+    production_target: apps/web
+maturity:
+  specification: reviewed-baseline
+  starter_source: runnable-skeleton
+  production_readiness: requires-vertical-slice-implementation-and-security-review

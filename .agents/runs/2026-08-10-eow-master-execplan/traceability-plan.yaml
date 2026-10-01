@@ -1,0 +1,317 @@
+# Traceability plan — how rule → contract → code → test → evidence is closed
+# Produced by run 2026-08-10-eow-master-execplan.
+#
+# This file defines the CLOSURE MECHANISM and the per-milestone allocation.
+# It is the checklist the completion gate re-verifies. It does not itself
+# assert that any rule is implemented.
+
+version: 1
+run_id: 2026-08-10-eow-master-execplan
+
+# ---------------------------------------------------------------------------
+# 1. The chain
+# ---------------------------------------------------------------------------
+
+chain:
+  links:
+    - {step: 1, name: rule,             source: catalog/ba-rules.json, key: 'BR-*.id'}
+    - {step: 2, name: acceptance,       source: 'catalog/ba-rules.json .acceptance', key: same id}
+    - {step: 3, name: contract,         source: [contracts/openapi.yaml, contracts/asyncapi.yaml, database/migrations/*.sql]}
+    - {step: 4, name: code,             source: 'apps/**, packages/**', key: 'repository-relative path'}
+    - {step: 5, name: test,             source: catalog/test-cases.json, key: 'TC-*.id via .rule_ids'}
+    - {step: 6, name: runtime_evidence, source: 'structured log field, metric name, or audit_log.action'}
+    - {step: 7, name: deployment,       source: 'catalog/deployment-test-cases.json DEPLOY-*'}
+  rule: 'A rule is closed only when all seven links exist and the test executes in CI.'
+
+registry:
+  path: .agents/runs/2026-08-10-eow-master-execplan/traceability.csv
+  created_by: node `traceability-init` (first implementation node of M1)
+  columns: [rule_id, priority, milestone, slice, acceptance_summary, openapi_operation_ids,
+            asyncapi_channels, migration_files, code_paths, test_case_ids, test_files,
+            log_or_metric_or_audit, deploy_case_ids, status]
+  status_values: [not_started, in_progress, code_complete, test_passing, closed, waived]
+  waiver_rule: 'A `waived` row requires a Decision Log entry in EXECPLAN.md naming the reason
+                and the compensating control. P0 rules may not be waived.'
+  update_trigger: 'every slice completion; the milestone gate rejects any in-scope row that is
+                   not `closed`'
+
+# ---------------------------------------------------------------------------
+# 2. Screen-level traceability (Definition of Done, frontend scope)
+# ---------------------------------------------------------------------------
+
+screen_registry:
+  path: .agents/runs/2026-08-10-eow-master-execplan/screen-catalog.yaml
+  seed: design-reference/screen-catalog.template.yaml
+  created_by: node `ui_intake_register`
+  columns: [id, name, route, source_files, business_rules, api_operations, realtime_events,
+            required_states, viewports, visual_baseline_path, production_render_path,
+            diff_notes, test_files, status]
+  screens_in_scope: [UI-AUTH-001, UI-SHELL-001, UI-EMAIL-001, UI-EMAIL-002, UI-REC-001,
+                     UI-REC-002, UI-REC-003, UI-REC-004, UI-TPL-001, UI-CFG-001, UI-CFG-002,
+                     UI-HIS-001, UI-HIS-002]
+  overlays_in_scope: 39   # verified against the OverlayType union in action-overlays.tsx
+  completion_rule: >-
+    A screen is `complete` only when visual equivalence is verified at 1440x900,
+    768x1024 and 390x844 AND loading, empty, error, success, permission_denied and
+    (where realtime applies) reconnecting are implemented and tested.
+  evidence_location: .agents/runs/2026-08-10-eow-master-execplan/evidence/visual/
+  note: 'Screenshots are stored in run evidence, never in design-reference/ (visual-acceptance.md).'
+
+# ---------------------------------------------------------------------------
+# 3. Rule allocation — all 118 BA rules + 16 notification rules
+# ---------------------------------------------------------------------------
+
+allocation:
+
+  M1:
+    theme: Foundation, tenant, authentication, RBAC, audit, configuration, error model
+    rules: [BR-GEN-001, BR-GEN-002, BR-GEN-004, BR-GEN-006,
+            BR-AUTH-001, BR-AUTH-002, BR-AUTH-003, BR-AUTH-004, BR-AUTH-005, BR-AUTH-006,
+            BR-SEC-002, BR-SEC-008]
+    rule_count: 12
+    test_prefixes: [TC-GEN-*, TC-AUTH-*]
+    test_count_expected: 13   # 4 GEN + 9 AUTH
+    partial: 'BR-SEC-002 (audit) contributes the writer here; the query API and retention land in M7.
+              BR-SEC-001 (encryption) contributes cookie/transport here; secret storage lands in M5.'
+    screens: [UI-AUTH-001, UI-SHELL-001]
+    reallocated_out: 'BR-GEN-003 (timezone) and BR-GEN-005 (idempotency-key) were originally
+              allocated here by the `plan` node but cannot be honestly closed within M1: their
+              acceptance criteria name concrete surfaces (schedule; send/import/bulk-update jobs)
+              that do not exist until M5-S2 and M2-S4. Discovered during M1-S3 when attempting to
+              close them would have required inventing out-of-scope M2/M5 endpoints, or a
+              synthetic test with no real behaviour behind it -- and `waived` is unavailable
+              (both are P0). Reallocated to their real implementation homes instead (see M2/M5
+              below and EXECPLAN Decision Log DEC-027).'
+    waived_in_gate: 'M1-GATE closed BR-GEN-002 for real (tenant-scoped repository +
+              cross-tenant auth tests already existed from arch_contracts/M1-S1, just never
+              recorded in traceability.csv). It waived two P1/P2 rules instead of reallocating
+              them, because both name multiple future-milestone surfaces rather than one clean
+              new home: BR-GEN-006 (soft delete on recipient/list/tag/template/campaign, P1 --
+              none of those entities exist until M2/M3/M4; will be verified for real as each
+              entity slice ships, see EXECPLAN Decision Log DEC-029) and BR-SEC-008 (API
+              versioning, P2 -- the CI backward-compatibility gate is proven with a real
+              automated test, but no version-creation mechanism exists and none is currently
+              needed since no breaking change has shipped or is planned, see DEC-028).'
+
+  M2:
+    theme: Recipient, list, tag, custom field, import, bulk update
+    rules: [BR-REC-001, BR-REC-002, BR-REC-004, BR-REC-005, BR-REC-006, BR-REC-007,
+            BR-REC-008, BR-REC-009, BR-REC-010,
+            BR-SEG-001, BR-SEG-002, BR-SEG-003, BR-SEG-004, BR-SEG-005, BR-SEG-006, BR-SEG-007,
+            BR-SEG-010,
+            BR-CF-001, BR-CF-002, BR-CF-003, BR-CF-004, BR-CF-005, BR-CF-006, BR-CF-007,
+            BR-CF-009,
+            BR-IMP-001, BR-IMP-002, BR-IMP-003, BR-IMP-004, BR-IMP-005, BR-IMP-006, BR-IMP-007,
+            BR-GEN-005]
+    rule_count: 33
+    test_prefixes: [TC-REC-*, TC-SEG-*, TC-CF-*, TC-IMP-*, 'TC-GEN-005 (reallocated from M1)']
+    test_count_expected: 44   # 11 REC + 12 SEG + 11 CF + 9 IMP + 1 GEN; TC-CF-008/013 and TC-REC-003 move to M4
+    deferred: 'BR-SEG-008 (audience by segment) and BR-SEG-009 (exclusion) are consumed in M4;
+               the segment resolver is built here and exercised there.'
+    reallocated_in: 'BR-GEN-005 (Idempotency-Key on send/import/bulk-update) moved here from M1
+              (see M1.reallocated_out / EXECPLAN Decision Log DEC-027): M2-S4 (import/bulk update)
+              is the first slice with a real job endpoint the header can guard. M5-S3 (send) also
+              creates a qualifying job and must honour the same mechanism when it lands.'
+    reallocated_out: 'BR-CF-008 (campaign snapshot impact warning) and BR-REC-003 (audience-preview
+              acceptance detail) moved to M4 (see M4.reallocated_in / EXECPLAN Decision Log
+              DEC-044/DEC-045): both name a screen or campaign-persistence surface that does not
+              exist until M4. BR-REC-003''s data-model statement (4-state model, CHECK constraint)
+              stayed closed for real in M2-S1; only the still-open acceptance detail and the rule''s
+              milestone/count arithmetic moved.'
+    screens: [UI-REC-001, UI-REC-002, UI-REC-003, UI-REC-004]
+
+  M3:
+    theme: Template version, editor, variables, preview, validation
+    rules: [BR-TPL-002, BR-TPL-003, BR-TPL-004, BR-TPL-005, BR-TPL-006, BR-TPL-007,
+            BR-TPL-009, BR-TPL-010, BR-TPL-011]
+    rule_count: 9
+    test_prefixes: [TC-TPL-002, TC-TPL-003, TC-TPL-004, TC-TPL-005, TC-TPL-006, TC-TPL-007,
+                    TC-TPL-009, TC-TPL-010, TC-TPL-011, TC-TPL-013, TC-TPL-014]
+    test_count_expected: 11
+    reallocated_out: 'BR-TPL-001/BR-TPL-012 and TC-TPL-001/TC-TPL-012/TC-TPL-015 moved to
+              M4-S4-snapshot (EXECPLAN Decision Log DEC-046). Their literal acceptance and test
+              preconditions require a persisted campaign snapshot and an old campaign send,
+              surfaces which do not exist until M4. M3 still builds and records the template
+              lifecycle/version evidence that M4 consumes; final rule closure belongs to M4.
+              BR-TPL-008 and TC-TPL-008 moved to M4-S3-variable-policy (DEC-049) for the same
+              reason: both acceptance clauses ("validation blocks schedule/send", "transactional
+              campaigns have their own policy") name campaign-policy and schedule/send surfaces
+              that do not exist until M4/M5. M3-S2 still supplies the prerequisite -- the variable
+              parser must recognise the already-reserved system key unsubscribe_url -- without
+              falsely closing send-blocking policy.'
+    screens: [UI-TPL-001]
+    overlays: [templatePicker, importHtml, templateDetail, templateActions, templateFilter,
+               composePreview, sendTest]
+
+  M4:
+    theme: Campaign draft, audience query, immutable snapshot, policy validation
+    rules: [BR-CMP-001, BR-CMP-002, BR-CMP-003, BR-CMP-004, BR-CMP-005, BR-CMP-006, BR-CMP-007,
+            BR-CMP-008, BR-CMP-009, BR-CMP-010, BR-CMP-011, BR-CMP-012, BR-CF-008, BR-REC-003,
+            BR-SEG-008, BR-SEG-009, BR-TPL-001, BR-TPL-008, BR-TPL-012]
+    rule_count: 19
+    test_prefixes: [TC-CMP-*, TC-CF-008, TC-CF-013, TC-REC-003, TC-TPL-001, TC-TPL-008, TC-TPL-012,
+                    TC-TPL-015]
+    test_count_expected: 23
+    reallocated_in: 'BR-CF-008 from M2-S4-import-bulk (EXECPLAN Decision Log DEC-044) and BR-REC-003
+              from M2 (DEC-045) both name a screen or campaign-persistence surface -- audience
+              snapshot warning, audience-preview eligibility -- that only exists once M4 builds
+              real campaign persistence and audience resolution. BR-TPL-001/BR-TPL-012 and
+              TC-TPL-001/TC-TPL-012/TC-TPL-015 move from M3 under DEC-046 because final proof
+              likewise requires a real campaign snapshot; M3 supplies their template-version
+              prerequisites without falsely closing campaign behaviour. BR-TPL-008/TC-TPL-008 move
+              from M3 under DEC-049 and are owned by M4-S3-variable-policy, whose own success
+              conditions already carry the send-blocking policy gate this rule needs.'
+    screens: [UI-EMAIL-001, UI-EMAIL-002]
+    overlays: [recipientPicker, sender, customVariableBuilder, sendConfirm, sendSuccess,
+               draftSaved, draftActions]
+
+  M5:
+    theme: Scheduling, provider integration, worker, retry, webhook reconciliation
+    rules: [BR-SCH-001, BR-SCH-002, BR-SCH-003, BR-SCH-004, BR-SCH-005, BR-SCH-006, BR-SCH-007,
+            BR-SCH-008, BR-SCH-009, BR-SCH-010,
+            BR-SEND-001, BR-SEND-002, BR-SEND-006, BR-SEND-007, BR-SEND-008, BR-SEND-010,
+            BR-SEND-011, BR-SEND-012,
+            BR-CFG-001, BR-CFG-002, BR-CFG-003, BR-CFG-004, BR-CFG-005, BR-CFG-007,
+            BR-GEN-003]
+    rule_count: 25
+    test_prefixes: [TC-SCH-*, TC-CFG-*, 'TC-SEND-* (send-path subset)', 'TC-GEN-003 (reallocated from M1)']
+    test_count_expected: 22   # 13 SCH + 8 CFG, plus the SEND subset shared with M6, + 1 GEN
+    reallocated_in: 'BR-GEN-003 (UTC storage + IANA timezone display) moved here from M1 (see
+              M1.reallocated_out / EXECPLAN Decision Log DEC-027): schedule is the only feature
+              whose acceptance criteria names timezone-aware display, and M5-S2 is exactly
+              "stores UTC + the original IANA timezone".'
+    screens: [UI-CFG-001, UI-CFG-002]
+    overlays: [scheduleSend, mailConfigForm, editMailConfig, configActions, configFilter,
+               setDefaultConfirm, deleteConfigConfirm, testConnection, settingsSaved]
+
+  M6:
+    theme: Realtime progress, notification center, history, recovery
+    rules: [BR-SEND-003, BR-SEND-004, BR-SEND-005, BR-SEND-009,
+            BR-HIS-001, BR-HIS-002, BR-HIS-003, BR-HIS-004, BR-HIS-005, BR-HIS-006, BR-HIS-007,
+            BR-HIS-008,
+            BR-NOT-001, BR-NOT-002, BR-NOT-003, BR-NOT-004, BR-NOT-005, BR-NOT-006, BR-NOT-007,
+            BR-NOT-008, BR-NOT-009, BR-NOT-010, BR-NOT-011, BR-NOT-012, BR-NOT-013, BR-NOT-014,
+            BR-NOT-015, BR-NOT-016]
+    rule_count: 28   # 12 from ba-rules.json + 16 from notification-rules.json
+    test_prefixes: [TC-HIS-*, 'TC-SEND-* (progress subset)']
+    test_count_expected: 29   # 10 HIS + 19 SEND
+    note: 'BR-NOT-* live in catalog/notification-rules.json, not ba-rules.json. They have no
+           TC-NOT-* cases in catalog/test-cases.json — new tests must be authored and the new
+           IDs recorded in the registry with `source: authored-in-run`.'
+    screens: [UI-HIS-001, UI-HIS-002]
+    overlays: [notifications, historyFilter, historyDetail, resendConfirm, resendSuccess]
+
+  M7:
+    theme: Quota, security, performance, observability, backup/restore, production readiness
+    rules: [BR-CFG-006,
+            BR-SEND-013,
+            BR-SEC-001, BR-SEC-003, BR-SEC-004, BR-SEC-005, BR-SEC-006, BR-SEC-007]
+    rule_count: 8
+    test_prefixes: [TC-SEC-*, TC-CFG-006]
+    test_count_expected: 17
+    deploy_cases: [DEPLOY-001, DEPLOY-002, DEPLOY-003, DEPLOY-004, DEPLOY-005, DEPLOY-006,
+                   DEPLOY-007, DEPLOY-008, DEPLOY-009, DEPLOY-010]
+    screens: 'full sweep — all 13 screens re-verified at 3 viewports with a11y'
+
+coverage_check:
+  ba_rules_total: 118
+  allocated: 118
+  arithmetic: '12 + 33 + 9 + 19 + 25 + (28 - 16 BR-NOT) + 8 = 118'
+  reallocation_note: 'BR-GEN-003 and BR-GEN-005 moved M1 -> M5/M2 respectively after M1-S3
+              discovered they cannot be honestly closed within M1 (EXECPLAN Decision Log
+              DEC-027). Net rule count unchanged (118); only the milestone owner moved.'
+  notification_rules_total: 16
+  notification_rules_allocated: 16
+  test_cases_total: 159
+  test_cases_allocated: 159
+  arithmetic_tests: '13 + 44 + 11 + 23 + 22 + 29 + 17 = 159'
+  deployment_cases_total: 10
+  deployment_cases_allocated: 10
+
+# ---------------------------------------------------------------------------
+# 4. Test layers per slice
+# ---------------------------------------------------------------------------
+
+test_layers:
+  unit:
+    owns: [policy decisions, state machines, variable resolution, progress arithmetic,
+           idempotency key derivation, timezone/DST conversion]
+    tool: vitest
+    location: 'co-located *.test.ts next to the unit under test'
+  integration:
+    owns: [PostgreSQL constraints and tenant scoping, transactional outbox, BullMQ jobs,
+           Redis behaviour, provider/webhook adapters, migration forward-apply]
+    tool: 'vitest + testcontainers-style Compose services (pnpm infra:up)'
+    location: apps/api/test/integration/**
+  contract:
+    owns: [OpenAPI request/response conformance, AsyncAPI envelope conformance,
+           backward-compatibility diff against the previous milestone]
+    tool: 'schema validation in CI; the diff is a required gate step'
+    location: apps/api/test/contract/**
+    rule: 'Adding a field or path is allowed. Removing or narrowing anything requires a
+           superseding ADR (AGENTS.md §5).'
+  e2e:
+    owns: 'recipient → template → snapshot → schedule/send → progress → notification → history'
+    tool: '@playwright/test'
+    location: apps/web/e2e/**
+  security:
+    owns: [cross-tenant read/write attempts, RBAC negative cases, CSRF, session fixation,
+           webhook signature forgery, HTML/template injection, rate limits]
+    location: apps/api/test/security/**
+    rule: 'Every tenant-owned endpoint gets a cross-tenant negative test. No exceptions.'
+  recovery:
+    owns: [job retry, duplicate webhook, duplicate job, Redis reconnect, worker crash mid-batch,
+           schedule misfire, progress reconciliation drift]
+    location: apps/api/test/recovery/**
+  accessibility:
+    owns: [keyboard traversal, focus trap in overlays, focus return on close, visible focus ring,
+           role/aria correctness, contrast in light and dark]
+    tool: '@axe-core/playwright + explicit keyboard specs'
+  visual:
+    owns: 'handoff baseline vs production render at the three acceptance viewports'
+    tool: 'Playwright screenshots; handoff baseline captured by serving the handoff source once'
+    rule: 'Every material difference needs a written explanation in screen-catalog.yaml diff_notes
+           (design-reference/visual-acceptance.md).'
+
+# ---------------------------------------------------------------------------
+# 5. Observability evidence per rule family
+# ---------------------------------------------------------------------------
+
+runtime_evidence:
+  families:
+    - {family: 'BR-AUTH-*', evidence: 'audit_log.action in [auth.login, auth.login_failed, auth.logout, auth.locked]'}
+    - {family: 'BR-GEN-002 tenant', evidence: 'tenant_id present on every structured log line and span attribute'}
+    - {family: 'BR-GEN-005 idempotency', evidence: 'metric eow_idempotent_replay_total{resource}'}
+    - {family: 'BR-CF-* / BR-IMP-* bulk', evidence: 'audit_log.action = bulk.applied + metric eow_bulk_rows_total{result}'}
+    - {family: 'BR-TPL-* publish', evidence: 'audit_log.action = template.published with template_version_id'}
+    - {family: 'BR-CMP-007 snapshot', evidence: 'audit_log.action = campaign.snapshot_frozen with campaign_id + row count'}
+    - {family: 'BR-SCH-*', evidence: 'audit_log.action in [schedule.created, schedule.cancelled, schedule.missed] + metric eow_schedule_misfire_total'}
+    - {family: 'BR-SEND-*', evidence: 'metrics eow_send_attempt_total{result}, eow_send_retry_total, eow_provider_reject_total; trace span per batch'}
+    - {family: 'BR-SEND-003 progress', evidence: 'metric eow_progress_reconcile_drift (must be 0 at completion)'}
+    - {family: 'BR-NOT-*', evidence: 'metrics eow_notification_created_total, eow_notification_delivered_total, eow_notification_read_total'}
+    - {family: 'BR-CFG-006 quota', evidence: 'metric eow_quota_usage_ratio + quota.threshold_reached event emission'}
+    - {family: 'BR-SEC-003 PII', evidence: 'a redaction test asserting recipient custom values and email bodies never appear in logs'}
+  rule: 'No log, metric or audit field may contain an unmasked recipient custom value,
+         email body, session token or SMTP credential (docs/operations/security-baseline.md).'
+
+# ---------------------------------------------------------------------------
+# 6. Gate queries
+# ---------------------------------------------------------------------------
+
+gate_queries:
+  per_milestone:
+    - 'every allocated rule_id has status = closed (or a P1/P2 waiver with a Decision Log entry)'
+    - 'every allocated test_case_id maps to at least one executing test file'
+    - 'the executed test count for the milestone is > 0 and matches the registry'
+    - 'every screen in scope has visual evidence at 3 viewports and all 6 required states'
+    - 'openapi.yaml and asyncapi.yaml diff cleanly forward against the previous milestone tag'
+    - 'every new migration applies forward and database/migrate.sh checksum logic still passes'
+    - 'pnpm check exits 0 AND the test count increased'
+    - 'no P0/P1 defect open, no undocumented TODO on the critical path'
+  final:
+    - 'all 118 BA rules + 16 notification rules closed or waived with justification'
+    - 'all 159 catalogued test cases mapped and executing'
+    - 'all 10 DEPLOY-* cases have real Docker evidence'
+    - 'docs/delivery/definition-of-done.md satisfied clause by clause'
+    - 'backup taken and restore rehearsed in an isolated Compose project with RPO/RTO recorded'
+    - 'run state is terminal with evidence'

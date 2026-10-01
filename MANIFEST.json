@@ -1,0 +1,695 @@
+{
+  "version": "3.3.0",
+  "files": [
+    {
+      "path": ".agents/agent-graph.yaml",
+      "bytes": 1915,
+      "sha256": "8619022a781b5e571b4e78f722d0e980f70a5568b8673e95dbdf055dc55488d6"
+    },
+    {
+      "path": ".agents/agent-loop.yaml",
+      "bytes": 1015,
+      "sha256": "228f2a2f35903c62addb9e8fa4ade18f04e5158967c17119e2c7abdf0fde2fe1"
+    },
+    {
+      "path": ".agents/agent-schedule.yaml",
+      "bytes": 871,
+      "sha256": "0a74ea106ba225b9ab6b528d5e08c7fa5050eaca9cc4ba4c2c39afb14da50155"
+    },
+    {
+      "path": ".agents/approval-policy.yaml",
+      "bytes": 1234,
+      "sha256": "d5b282c220f17d9e16e028bffea7482f03a718b8a3425047e62d689768e096f3"
+    },
+    {
+      "path": ".agents/orchestration-policy.yaml",
+      "bytes": 1094,
+      "sha256": "8e3e4cfe4faee0c55bc688ca7b8ba247e01e1620492698d736a05b42042bb353"
+    },
+    {
+      "path": ".agents/roles/architect.md",
+      "bytes": 343,
+      "sha256": "53a8b34da9c4c06314d2db4d59ff14b1b6eea9f75a61b7cf9016f5d62660133c"
+    },
+    {
+      "path": ".agents/roles/ba.md",
+      "bytes": 360,
+      "sha256": "27498dcdfddb6345580bf1a7c13b281bd85ed50d802be2be233333aff58f029b"
+    },
+    {
+      "path": ".agents/roles/backend.md",
+      "bytes": 353,
+      "sha256": "50d498d2ac3cbb9ebeed97d04bcc0a758ba57475a9900abecca74c1d3bd86776"
+    },
+    {
+      "path": ".agents/roles/devops.md",
+      "bytes": 412,
+      "sha256": "619d2abb7ee6acecfa488744756044d29cf70069d4f99398cfe03a87b8b45f55"
+    },
+    {
+      "path": ".agents/roles/frontend.md",
+      "bytes": 571,
+      "sha256": "cf2b5ef4edba88b760b83cf6f741141c5fcc7ae3870adb98f63891f05dc2aba4"
+    },
+    {
+      "path": ".agents/roles/orchestrator.md",
+      "bytes": 422,
+      "sha256": "dc06f9dba59abe9c6fa8538ef7176a781260b9451aef2778d658c77f5db79330"
+    },
+    {
+      "path": ".agents/roles/qa.md",
+      "bytes": 360,
+      "sha256": "a57a8d8419cc8311b74bba8090be70691b0ca96f6c11e96fceea617bc363e213"
+    },
+    {
+      "path": ".agents/runs/example/state.json",
+      "bytes": 817,
+      "sha256": "004191f836aab623ad8d78cf654dab52078b64fcad13e0d863af2294721d9a53"
+    },
+    {
+      "path": ".agents/schemas/completion-report.schema.json",
+      "bytes": 713,
+      "sha256": "d50b79f9ee3b131930e7b67347bfda1a4ba11c86e3fcb6869aa4e63c6bd00212"
+    },
+    {
+      "path": ".agents/schemas/run-state.schema.json",
+      "bytes": 2750,
+      "sha256": "9e5a933d73500b589f9fadad68ff8dd9bb7f08441c4643e76b41ed0e26e5411d"
+    },
+    {
+      "path": ".agents/task-template.yaml",
+      "bytes": 379,
+      "sha256": "c0342d9ff8f18ba98bc58a302fc40cfe0376b17bc722834d9c9360368934a16e"
+    },
+    {
+      "path": ".dockerignore",
+      "bytes": 139,
+      "sha256": "32a0377c3e68e9e16e447821087c2df2b8d24a10f40ccd90308807cce0a22b25"
+    },
+    {
+      "path": ".editorconfig",
+      "bytes": 154,
+      "sha256": "292befa852cdc796d6798ea3a956a33bebd8cfaa0c8c84cb708e1e8644e72b2c"
+    },
+    {
+      "path": ".env.deploy.example",
+      "bytes": 451,
+      "sha256": "f682f1162beed4c1150981edd6b0bc5a03a59ac26e2d144fe0f831cea32ca839"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 345,
+      "sha256": "9800e3f5061ea5e13af69b99b0b4c8609dea3bd254abe46ccaa7d14cc7bf9e68"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "bytes": 241,
+      "sha256": "0a7594d3992e0fab0185b4c517fb034fbdc7c66f53c500df645494e17cb048e8"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 940,
+      "sha256": "6b6adec027e3954917bf0d8ebd384cd2032a2fd2ff3e16eb9b3fcf53de6b33ae"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 100,
+      "sha256": "f75915c3227b7283f55a0a542d27061706deec640fca7eb178be6591a6724775"
+    },
+    {
+      "path": ".npmrc",
+      "bytes": 35,
+      "sha256": "3b88d1057add6f92ec23dc22dd017e312ded13a042deb0ba6f08bad85d936456"
+    },
+    {
+      "path": ".nvmrc",
+      "bytes": 8,
+      "sha256": "88029f8a967e9b0a57e49328ab94fa6d74e07946e2b5d33626c82d0dc6e93d81"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 7041,
+      "sha256": "5c3532d2272302f3a4b68e7394b8f2244fb02283159e43371fd2954677d7d0ff"
+    },
+    {
+      "path": "CODEOWNERS",
+      "bytes": 269,
+      "sha256": "c910ebfd9f5c33dbefa0e564892fca00af4cd7f5f1bc72a62c07ce0619e2dcf2"
+    },
+    {
+      "path": "Dockerfile",
+      "bytes": 2306,
+      "sha256": "cb35b770f875034b6fceaf804f3b8ed3c26256a9fbc6fb1b9687357bf9b5bd7b"
+    },
+    {
+      "path": "NOTICE-THIRD-PARTY.md",
+      "bytes": 287,
+      "sha256": "c9212ab65825f7792d121c3b9e0b99c92b99c2e7500d2f5f32c8f1402eb19dc6"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2917,
+      "sha256": "9b18e8ec5bbef07397efa1e22782cd088759067fb622861068bc960aca8d1971"
+    },
+    {
+      "path": "apps/api/package.json",
+      "bytes": 672,
+      "sha256": "8f364c4c7b57e93b2a93af6058ffb3634454bd3ea00ce22185c1565ff4bfbf81"
+    },
+    {
+      "path": "apps/api/src/app.module.ts",
+      "bytes": 708,
+      "sha256": "a13d12920a0d1ac2edd17a82dee039b37184ae36644cf3e064af1e0ce9fc783d"
+    },
+    {
+      "path": "apps/api/src/campaigns.controller.ts",
+      "bytes": 670,
+      "sha256": "d9792ba59b84905f818da1bd0ec78071cd869f223994ffd434b12d06d81ebbd2"
+    },
+    {
+      "path": "apps/api/src/campaigns.service.ts",
+      "bytes": 952,
+      "sha256": "0c0f21646563cc7796bd6b84ea20e869368bd33d2fb01f336c57f8ef4fd4e1b7"
+    },
+    {
+      "path": "apps/api/src/health.controller.ts",
+      "bytes": 202,
+      "sha256": "e5b7a9862e5a26a452a4976ccb1ca83a4beb12bb7ca30e41c6cfbe07a91b5eae"
+    },
+    {
+      "path": "apps/api/src/main.ts",
+      "bytes": 350,
+      "sha256": "e68e9d7e7d0dccede1313b1bcefb11e25b1920e9afcc652cb9dc0d73f78ecbc2"
+    },
+    {
+      "path": "apps/api/src/notifications.controller.ts",
+      "bytes": 422,
+      "sha256": "c5d4f74ca13695d468a7a6e468bad79b4f32e94349b7879a2611c4ada2658fcc"
+    },
+    {
+      "path": "apps/api/src/notifications.service.ts",
+      "bytes": 607,
+      "sha256": "d092bd8901801843464293991e8d6ef4c45a88ae60c7ac4fd738bc86256032da"
+    },
+    {
+      "path": "apps/api/src/realtime.gateway.ts",
+      "bytes": 698,
+      "sha256": "541de1ebda1dda5057535f46d3734b89d80127b6e48e14b215128542f2697c62"
+    },
+    {
+      "path": "apps/api/tsconfig.json",
+      "bytes": 293,
+      "sha256": "ecff56d76b5fe669bd084791ace7a313d2cf823d03e79e211027a1d1542acd2b"
+    },
+    {
+      "path": "apps/scheduler/package.json",
+      "bytes": 394,
+      "sha256": "7e52a4d311805a3d56e5bf69f1409841ca71b8e97d95f6850800582de7573605"
+    },
+    {
+      "path": "apps/scheduler/src/main.ts",
+      "bytes": 1177,
+      "sha256": "a00066d95b47df69bebe86dfc51399c09806d4f4cb93293312cadea4bcfeff7b"
+    },
+    {
+      "path": "apps/scheduler/tsconfig.json",
+      "bytes": 182,
+      "sha256": "60e503b2b378febc9ef6f7d813b4b35f28c2d9db728477fee5ab6ef11fadd6d8"
+    },
+    {
+      "path": "apps/web/index.html",
+      "bytes": 274,
+      "sha256": "1b5b05cb92ffe68c0a10d4bf28d7954bd1e46d0f49d9784ffd2a6f0ff1838819"
+    },
+    {
+      "path": "apps/web/package.json",
+      "bytes": 682,
+      "sha256": "4f18e4b13a9d3d359f12bb6332a37171b73c1ababa16b178e6d155d9e780d94c"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "bytes": 2362,
+      "sha256": "19fa13cb9f15b73db282e63ece8881ca591e531b01fe303de64c13a4f6cf95a5"
+    },
+    {
+      "path": "apps/web/src/api.ts",
+      "bytes": 729,
+      "sha256": "d47e87a0cb5a54c3983522a0219a71ae6470b7781d40e23ce1bfb05a3f3eb6a1"
+    },
+    {
+      "path": "apps/web/src/main.tsx",
+      "bytes": 556,
+      "sha256": "8c91984beb859764704050a0658928f556da45c1fd81f442fe7ac531e82f6df1"
+    },
+    {
+      "path": "apps/web/src/realtime.ts",
+      "bytes": 227,
+      "sha256": "ca7d14052c6138df1a51ff8641d1eb9728146b49eb2eb13fd046042e0a5097ba"
+    },
+    {
+      "path": "apps/web/src/styles.css",
+      "bytes": 1629,
+      "sha256": "2e1e6708351f599725747ce78fbe6541c85c0265a02664ae13dcb502e532b490"
+    },
+    {
+      "path": "apps/web/tsconfig.json",
+      "bytes": 507,
+      "sha256": "5024f98c5cc6f3b7166153e9b438f10332011a94ab38607aa91e69ba333abf45"
+    },
+    {
+      "path": "apps/web/vite.config.ts",
+      "bytes": 156,
+      "sha256": "8fb0caf94889fdaa88314f2cc54002ffbb921557e53cdd9071ecc83e2eeaab0e"
+    },
+    {
+      "path": "apps/worker/package.json",
+      "bytes": 391,
+      "sha256": "fd89f83721fd0e0c9d7715fc9758d2c1e5d02f6db20fb23337064cb1e1e47eda"
+    },
+    {
+      "path": "apps/worker/src/main.ts",
+      "bytes": 1303,
+      "sha256": "b9f1be5155958bc9a412314c06af40e86a32dd06d50059aa94248ffb078b4e1f"
+    },
+    {
+      "path": "apps/worker/tsconfig.json",
+      "bytes": 182,
+      "sha256": "60e503b2b378febc9ef6f7d813b4b35f28c2d9db728477fee5ab6ef11fadd6d8"
+    },
+    {
+      "path": "catalog/api-baseline.json",
+      "bytes": 3516,
+      "sha256": "534c339f68cd221d7ab5458ac007af04f67f41407d10804aa8775241298acc6f"
+    },
+    {
+      "path": "catalog/ba-rules.csv",
+      "bytes": 30180,
+      "sha256": "064863e29166f4a784b7a8111a9d03d9d5cef54d2f20715c8eae038f4b470693"
+    },
+    {
+      "path": "catalog/ba-rules.json",
+      "bytes": 47307,
+      "sha256": "22ecbe64bc6717f4c0ee12f16413b407202c69f37a88edcb71dcc51a8b938795"
+    },
+    {
+      "path": "catalog/business-gaps.csv",
+      "bytes": 18366,
+      "sha256": "985f93f1d9677872d7341dc1d46a14aef64bfdfd991b274d8b226faaac15167e"
+    },
+    {
+      "path": "catalog/business-gaps.json",
+      "bytes": 31802,
+      "sha256": "9b1a1f3c3758555755c9dcfed171883f04e501f24816be667205945ad7e1cf9f"
+    },
+    {
+      "path": "catalog/deployment-test-cases.json",
+      "bytes": 1360,
+      "sha256": "a3f1b02add412af43f4d749ed9defd3ea6bda578b710f4b0bf471577b2a55eb3"
+    },
+    {
+      "path": "catalog/entities.json",
+      "bytes": 2781,
+      "sha256": "0d167649818a7b5187891f7c9a4f201a3cb47d216e27b4603ecab02da010c182"
+    },
+    {
+      "path": "catalog/library-decisions.json",
+      "bytes": 8323,
+      "sha256": "3a48c73e4ce9e97d012502e68739f6eb012c51f3d28d736dfe40f3e7edc7caee"
+    },
+    {
+      "path": "catalog/notification-rules.json",
+      "bytes": 3500,
+      "sha256": "115eb2f51275ad4fe6aab05e73f52ede4a83f1b50b4a6ef4ef73a676102b437e"
+    },
+    {
+      "path": "catalog/open-decisions.json",
+      "bytes": 1654,
+      "sha256": "a5f6f2704933058e8e955a24a24128d286895192c2c8dab4f2abf87b43db8f9d"
+    },
+    {
+      "path": "catalog/realtime-events.json",
+      "bytes": 4676,
+      "sha256": "e12e33b8aef5df0fc24e7a2057c9cc76f985c2e3d366179bee715d31244486a2"
+    },
+    {
+      "path": "catalog/test-cases.csv",
+      "bytes": 98932,
+      "sha256": "8e3e607ba4c6f4b970bab587f0ef6e2c2d92260e80518d8bcbe8c80b9104de03"
+    },
+    {
+      "path": "catalog/test-cases.json",
+      "bytes": 142078,
+      "sha256": "16cd8d5040e7c20b07690733bb09456f1d2c1448da00b49591f03278c9ca8b38"
+    },
+    {
+      "path": "compose.yaml",
+      "bytes": 5439,
+      "sha256": "c76ae413d70ba17a6e445e290e6f7df99ba825896691968b342a257bccea3fdf"
+    },
+    {
+      "path": "contracts/asyncapi.yaml",
+      "bytes": 3832,
+      "sha256": "b786f49723e83686fa2f39c16679d087a3177e142f6b756f5c5a9c70c2ee1562"
+    },
+    {
+      "path": "contracts/openapi.yaml",
+      "bytes": 4117,
+      "sha256": "24002ef09a6b495dba34e3be1f01198bb191fa81f04f70e8a1e1a9fd908d8ad1"
+    },
+    {
+      "path": "database/migrate.sh",
+      "bytes": 941,
+      "sha256": "8aa26ab4c01bc2ae60e607dfbee5131077ea80328e50e25e0663c1d018fa7da8"
+    },
+    {
+      "path": "database/migrations/001_initial.sql",
+      "bytes": 5957,
+      "sha256": "51598df7dad41dddf515a3fdce66718d29701c34cd54d0de1b8cdbdcdfa1e926"
+    },
+    {
+      "path": "deploy/nginx/default.conf",
+      "bytes": 777,
+      "sha256": "892f8e6c375207da280d56429ff51aa918b8be025f2435c6320d894a2dbb6a91"
+    },
+    {
+      "path": "design-reference/README.md",
+      "bytes": 1388,
+      "sha256": "0927600a2c3ac88c8e3e32dbabfe9346690f7f3408001b66ba4a4bbecd67aa57"
+    },
+    {
+      "path": "design-reference/screen-catalog.template.yaml",
+      "bytes": 332,
+      "sha256": "ba0e27078f975c9048c605f642a76d8df2e488e23944647867c1163bc9f91f8d"
+    },
+    {
+      "path": "design-reference/ui-handoff-v2/source/COPY-UI-HANDOFF-V2-HERE.md",
+      "bytes": 342,
+      "sha256": "7ad07a5125e2b366c6521350c1985ef95ba455432d94202373bd45dc833149f1"
+    },
+    {
+      "path": "design-reference/ui-source-contract.yaml",
+      "bytes": 1414,
+      "sha256": "bec8b2616de12b9f0217ddcdc0de15a1697a0520e9d1d415e90dd7833999a629"
+    },
+    {
+      "path": "design-reference/visual-acceptance.md",
+      "bytes": 730,
+      "sha256": "be6a94cecf0b61cce1a907208c59a76d48d96c46223fafd12b6785beec3a78d9"
+    },
+    {
+      "path": "docs/00-start-here.md",
+      "bytes": 1492,
+      "sha256": "db03bb39b857dc6a3e42dfbbb94a5ce0672d0fcc5f0d0652825738505e0e1482"
+    },
+    {
+      "path": "docs/adr/adr-001-modular-monolith-with-separate-runtime-profiles.md",
+      "bytes": 386,
+      "sha256": "49b34e89a6677aea51a8d40c42c75841b4f85f61e6ebcdf4f749988b7fdf5827"
+    },
+    {
+      "path": "docs/adr/adr-002-frontend-foundation.md",
+      "bytes": 351,
+      "sha256": "4b192d7da4be3567e3d219bb1ec0135fa04620e151f041f4edcbbae14fdbb05d"
+    },
+    {
+      "path": "docs/adr/adr-003-backend-seed.md",
+      "bytes": 291,
+      "sha256": "7475755b21afc5951fd7915959e6cd5a01485a3dd4f89264d337f4cddbb9ab1b"
+    },
+    {
+      "path": "docs/adr/adr-004-repository-topology.md",
+      "bytes": 262,
+      "sha256": "b3264ace6dadf2bdb55f565ada60372c00d6d25139325ca7bfa9cc82a540240b"
+    },
+    {
+      "path": "docs/adr/adr-005-external-api-style.md",
+      "bytes": 322,
+      "sha256": "85d3d0f6da6acb5a61279bed90de8b34d652d2133bc3d53246c7d2fee75bd164"
+    },
+    {
+      "path": "docs/adr/adr-006-browser-authentication.md",
+      "bytes": 304,
+      "sha256": "06a0bd8e07f68f376d1f959b4be330c723dfd6fd5d9ced0438af5658df27e385"
+    },
+    {
+      "path": "docs/adr/adr-007-persistence.md",
+      "bytes": 293,
+      "sha256": "d2c62f28d976ec136f1255a519ae4de0bf276c4d7ea0ca541a797ba848fbf0d6"
+    },
+    {
+      "path": "docs/adr/adr-008-background-processing.md",
+      "bytes": 294,
+      "sha256": "5f537d2919bbefd4b3153a7c6cb413a216285c1a68e64197655a48d8c4d91608"
+    },
+    {
+      "path": "docs/adr/adr-009-realtime-transport.md",
+      "bytes": 313,
+      "sha256": "1f7d7bd7c898a18e846903aa8e32af3344dad6e209bd31721e8a47ca819e968e"
+    },
+    {
+      "path": "docs/adr/adr-010-realtime-consistency.md",
+      "bytes": 324,
+      "sha256": "4b633ee68dde0748c42a2bfef0358f14bded22db41aff747edab2ff72bdbdb58"
+    },
+    {
+      "path": "docs/adr/adr-011-durable-notification-model.md",
+      "bytes": 300,
+      "sha256": "717b151873d3ae376129cb1470c885eed0725abe5b5dccf3cdd7589a195e786d"
+    },
+    {
+      "path": "docs/adr/adr-012-domain-event-reliability.md",
+      "bytes": 286,
+      "sha256": "51d53161c9e93fc6a5d4f27674fc36aa58fb0008df215c54dd19d62bafc2e72b"
+    },
+    {
+      "path": "docs/adr/adr-013-campaign-snapshot.md",
+      "bytes": 305,
+      "sha256": "99bcea6925642ee58f7543d586736fc6da6f1cafb0099459d897cb271dc5d299"
+    },
+    {
+      "path": "docs/adr/adr-014-email-provider-integration.md",
+      "bytes": 314,
+      "sha256": "b8c13d70b40c10cbdf7b73a7102b595ceff670a0c16c260fd04fe3bfddc05d75"
+    },
+    {
+      "path": "docs/adr/adr-015-template-rendering.md",
+      "bytes": 299,
+      "sha256": "25d0e59e224622dfb8fd1ab02193be419e2225f99c507349bc90a0459f476224"
+    },
+    {
+      "path": "docs/adr/adr-016-progress-aggregation.md",
+      "bytes": 317,
+      "sha256": "8ecd1a7b1377bf5bf116a5af095c4bdaf40242daca8527c1ab5224e0d531a383"
+    },
+    {
+      "path": "docs/adr/adr-017-observability.md",
+      "bytes": 282,
+      "sha256": "2fd7a284c22daee5e99984a40b5466841c67af4db0efb529f9fb39a54d943ff9"
+    },
+    {
+      "path": "docs/adr/adr-018-dependency-version-policy.md",
+      "bytes": 348,
+      "sha256": "5bc3d9b5d3bc0d081799427ba4de5ea62709e38bbfb0c4411415e1313ba52abe"
+    },
+    {
+      "path": "docs/adr/adr-019-email-visual-editor.md",
+      "bytes": 343,
+      "sha256": "fbe6def0caba2a6ccbbcd490c1074722dc265a2a0ee1c0fe848650ec9548e45b"
+    },
+    {
+      "path": "docs/adr/adr-020-notification-service-boundary.md",
+      "bytes": 326,
+      "sha256": "101c62b733f932ced3a87223865b47a4d36890713f2f25c8007f6d107f401daa"
+    },
+    {
+      "path": "docs/adr/adr-021-autonomous-agent-execution.md",
+      "bytes": 711,
+      "sha256": "98f0c4f85c1badf01669c9474c9916f2d926a353e76ef7d0e632fa73e3ef24df"
+    },
+    {
+      "path": "docs/adr/adr-022-agent-loop-graph-schedule.md",
+      "bytes": 572,
+      "sha256": "af018f358a03328054cc277b5dd718f612993300bc2b18eb4fb4f29cd8cfddae"
+    },
+    {
+      "path": "docs/adr/adr-023-separate-agent-and-runtime-orchestration.md",
+      "bytes": 567,
+      "sha256": "2b195402d8ce64f5ea96b35dd6e84ced93bf94b798acb93509ef65456948ccd9"
+    },
+    {
+      "path": "docs/adr/adr-024-one-command-container-deployment.md",
+      "bytes": 1157,
+      "sha256": "67982500dbf798fe0f8b1606dc1a249e63e0c7b0bd60efc6e0e1fee6338a4c7c"
+    },
+    {
+      "path": "docs/agent-workflow.md",
+      "bytes": 2551,
+      "sha256": "a3881eabb7a350f8dc33d140a93d4c4bc97a80fc1f3e28e0b9e20bf2229bfa01"
+    },
+    {
+      "path": "docs/architecture/realtime-and-notification.md",
+      "bytes": 780,
+      "sha256": "a3248a04818c9785ec316d91d2f83d80b6eed79ab9476d51dbffa6b6ef86f659"
+    },
+    {
+      "path": "docs/architecture/runtime-orchestration.md",
+      "bytes": 887,
+      "sha256": "7cf8e708e8f718ab9e0c343d6701e23832a6e5a45cdd344d8d011b701454f9fa"
+    },
+    {
+      "path": "docs/architecture/system-architecture.md",
+      "bytes": 1220,
+      "sha256": "bd7d069a44a4bfaf204b5adbdd8dcc67bfe55de10e637343c23c27c28f15a6ed"
+    },
+    {
+      "path": "docs/delivery/definition-of-done.md",
+      "bytes": 624,
+      "sha256": "8df16decff72f020ecd80890c5847ba5672627a6111bee5a6701149158638e40"
+    },
+    {
+      "path": "docs/delivery/definition-of-ready.md",
+      "bytes": 366,
+      "sha256": "803c7164e90176986db7ed163823c29b86a110861af66c47f7236526fdc69153"
+    },
+    {
+      "path": "docs/delivery/start-coding-with-agent.md",
+      "bytes": 1896,
+      "sha256": "3f9da292f3aeffafddebc6d58c22dd4fd49e4f17231335bd1b6fcc4b1ffc6f6e"
+    },
+    {
+      "path": "docs/deployment/acceptance-tests.md",
+      "bytes": 1567,
+      "sha256": "274d6b9c70b6a266658242c0deb1f839f2b6343168c7881cf0c164f1948077c2"
+    },
+    {
+      "path": "docs/deployment/environment-variables.md",
+      "bytes": 2483,
+      "sha256": "edcacdec5cfdef2f62dbddecea840c7b2ae354eb4f1e8042198071f40aea33fa"
+    },
+    {
+      "path": "docs/deployment/operations.md",
+      "bytes": 1341,
+      "sha256": "ed04087e1ea21e5ab62774bae17401839187105d871a63d8d5d8ec88c8df0f5f"
+    },
+    {
+      "path": "docs/deployment/quick-deploy.md",
+      "bytes": 1619,
+      "sha256": "d0ca991c5eeb8ecd3537b3571f8d9d2be45a32a0054f5a712ee75f133d31df49"
+    },
+    {
+      "path": "docs/index.yaml",
+      "bytes": 2194,
+      "sha256": "0504db13849bd50d3d04e3a5c98967446cb9991ca58a972244927d60b61edcd0"
+    },
+    {
+      "path": "docs/operations/runbook.md",
+      "bytes": 733,
+      "sha256": "98fba987f2c21bfb457c56c07c44f520db8fb667fa95fca61cba192bd0054e10"
+    },
+    {
+      "path": "docs/operations/security-baseline.md",
+      "bytes": 541,
+      "sha256": "4fcdc07c0c5c3f73d0f386c36218bf2ee0bc72dbfd2b368638aec3371c4fd05f"
+    },
+    {
+      "path": "docs/operations/upstream-fork-checklist.md",
+      "bytes": 299,
+      "sha256": "8c512746e257d552c8c47262b07f08a2bdc863af1dba4b40dfac7a9b484c6ae4"
+    },
+    {
+      "path": "docs/reference/Email-Operations-Workspace_Architecture-ADR-Gap-Traceability_v2.0.xlsx",
+      "bytes": 36120,
+      "sha256": "050d9520791a7fead03605d431a1c890e38191ffa8ab68aaefaa885374faecce"
+    },
+    {
+      "path": "docs/reference/Email-Operations-Workspace_BA-Rules_Backend-Design_v1.0.docx",
+      "bytes": 294099,
+      "sha256": "5d9b3c98623b9e108001c3716a17c93792f51c7753d9fde4a1b99185ae5e4147"
+    },
+    {
+      "path": "docs/reference/Email-Operations-Workspace_System-Architecture_ADR-Gap-Review_v2.0.docx",
+      "bytes": 406366,
+      "sha256": "de86f9e7d2b7eced27217e8ac2c070be53c007e05275181a95c035edb13aa180"
+    },
+    {
+      "path": "docs/reference/Email-Operations-Workspace_Test-Cases_Traceability_v1.0.xlsx",
+      "bytes": 68030,
+      "sha256": "9e59eabb5061b5b32ee95941704926c66127ee72aec8b670b80551aa091d8530"
+    },
+    {
+      "path": "docs/source-selection.md",
+      "bytes": 2040,
+      "sha256": "92d65dcac045ba4ff8e935689a7bb686d2dff3341a27dc98a24c35b1615f1ca1"
+    },
+    {
+      "path": "docs/testing/test-strategy.md",
+      "bytes": 923,
+      "sha256": "5ca15a6dd928bdd8f2465b864b565da5be9be6ea7f005252567bf9e004b8c891"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1003,
+      "sha256": "230fba50a8a7ec3fe70ffb088ad58a81db70a1fe5ea70065dbb1fa42c8a17b3f"
+    },
+    {
+      "path": "packages/runtime-orchestration/package.json",
+      "bytes": 253,
+      "sha256": "40b2e7a20ace7f6b8e9b49ed97a78ec66cc1f7fea78f30b43c0f826e0f247d37"
+    },
+    {
+      "path": "packages/runtime-orchestration/src/decision.test.ts",
+      "bytes": 593,
+      "sha256": "a30f2a588a78e215a1b3f2e95b35694010ed1f01487ea46154f5e2590354bbbb"
+    },
+    {
+      "path": "packages/runtime-orchestration/src/decision.ts",
+      "bytes": 1266,
+      "sha256": "6165046b5b557609ab66ec375ab6d06b7e0e2740f29afd367a82936d8d567b09"
+    },
+    {
+      "path": "packages/runtime-orchestration/tsconfig.json",
+      "bytes": 182,
+      "sha256": "60e503b2b378febc9ef6f7d813b4b35f28c2d9db728477fee5ab6ef11fadd6d8"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 84773,
+      "sha256": "6f8eae831e60e0388547aa8781ded00788374bb787514e75eb446ddb21af1019"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "bytes": 90,
+      "sha256": "6dc4efe96f481e6923282fde8d40e4e07fb6e54eaa718b69f1438431deb44e89"
+    },
+    {
+      "path": "project.manifest.yaml",
+      "bytes": 1603,
+      "sha256": "acf7db3b35bb6023341a3df4ea2a5f2456c1e677e6a998dd1cdac7ade425f4f5"
+    },
+    {
+      "path": "scripts/build_manifest.py",
+      "bytes": 1143,
+      "sha256": "3ead454a0fe4614af2229e6f35f685db98f881a54ea74f07291b60ca9860f668"
+    },
+    {
+      "path": "scripts/smoke_deploy.py",
+      "bytes": 784,
+      "sha256": "4cec2d61de77fa1c1c3417604a6997689c9314687360f2c0a4bc5f5694f05266"
+    },
+    {
+      "path": "scripts/test_ui_handoff.py",
+      "bytes": 2096,
+      "sha256": "21e4172406f2ef79f293ad2e2272b3f9c348af5f5fad9ae839f2df2413cd7694"
+    },
+    {
+      "path": "scripts/ui_handoff.py",
+      "bytes": 7622,
+      "sha256": "763987a266ee4a5759e3a5d44783410f28898906bfc6a4eabbb8f28cc8668874"
+    },
+    {
+      "path": "scripts/validate_bundle.py",
+      "bytes": 4586,
+      "sha256": "7256760c0adedfba24ce381c07ed036d0b6da4cfd65ef7750d0e2e0424c97c3f"
+    }
+  ]
+}

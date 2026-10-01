@@ -1,0 +1,330 @@
+{
+  "runId": "2026-08-25-campaigns-section-restructure",
+  "goal": "Replace the Email and Lich su gui sidebar entries with one Chien dich section: a single campaign list at /campaigns covering every status with multi-select bulk actions, and per-campaign send history at /campaigns/:id",
+  "approval": {
+    "evidence": "User approved the restructure on 2026-08-25 through a six-question design dialogue (rename, information architecture, list data source, selection semantics, bulk mechanism, composer entry point) plus two mockup revisions; spec approved and committed at db70d72, plan at d4a207a",
+    "scope": [
+      "rename the Email nav entry to Chien dich and remove the separate Lich su gui entry",
+      "serve drafts and non-drafts from one campaign list endpoint, gated on content:manage and draft ownership (ADR-034)",
+      "add a synchronous POST /campaigns/bulk for delete, duplicate and cancel with per-campaign outcomes",
+      "rebuild the list screen with row selection, a bulk action bar and in-place partial-failure reporting",
+      "move send history under /campaigns/:id and retire DraftsScreen",
+      "redirect the legacy /email/* and /history/* URLs",
+      "fix two defects the work touches: the detail screen back link and the filter dialog's missing statuses",
+      "update unit tests, e2e specs, contracts and ADR/traceability evidence"
+    ],
+    "exclusions": [
+      "the composer surface (preview, content editing, HTML view, variable insertion) - a separate spec",
+      "bulk report export",
+      "production deployment",
+      "destructive data operations",
+      "external SMTP credentials"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": "completion_gate",
+  "nodes": [
+    {
+      "id": "intake",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Approved scope and baseline recorded"
+      ],
+      "evidence": [
+        "main was clean at d92cdbc when the work started",
+        "User raised three problems on 2026-08-25: the Email label, the missing campaign list with selection, and send history living apart from campaigns"
+      ],
+      "nextAction": "Trace the current campaign, drafts and history surfaces",
+      "failureClass": null
+    },
+    {
+      "id": "discovery",
+      "dependsOn": [
+        "intake"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Current surfaces and their data sources are traced"
+      ],
+      "evidence": [
+        "DraftsScreen at /email/drafts is unreachable: no sidebar entry and no tab links to it; the approved handoff's .email-workspace-tabs strip was dropped during the react-router migration and its CSS is still in globals.css",
+        "GET /campaigns filters status = 'draft' (campaigns.repository.ts:19) and GET /campaigns/history filters status <> 'draft' (history-query.ts:51): the two lists are exact complements of one entity",
+        "pageMeta is keyed by exact pathname, so every route with a dynamic segment already renders an empty h1 - /history/:campaignId does this today",
+        "CampaignProgressDrawer's back link points at /email/compose, so back lands in the composer instead of a list",
+        "HistoryFilterDialog offers 6 of 12 campaign statuses and its radios cannot be cleared",
+        "RecipientsScreen already has the selection pattern (.recipient-bulk-bar, is-selected rows, header checkbox) to reuse",
+        "bulk_job/bulk_job_row exist but are recipient-shaped: bulk_job_row.recipient_id is a hard uuid column and the worker only understands recipient actions"
+      ],
+      "nextAction": "Resolve the design questions with the user",
+      "failureClass": null
+    },
+    {
+      "id": "design",
+      "dependsOn": [
+        "discovery"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "Design decisions recorded in a committed spec and approved by the user"
+      ],
+      "evidence": [
+        "Six design questions resolved with the user; a mockup built against the real globals.css was reviewed and revised twice",
+        "Rejected during review: a separate bulk-result screen (it is the same list rendered twice) and a status chip strip (a second input over the same query.status field the filter dialog owns)",
+        "Mockup showed long reason strings wrap and break the table's column alignment, so reasons are fixed short strings keyed by code, never the server message",
+        "Spec committed at db70d72: docs/superpowers/specs/2026-08-25-campaigns-section-restructure-design.md"
+      ],
+      "nextAction": "Turn the spec into a task-by-task plan",
+      "failureClass": null
+    },
+    {
+      "id": "plan",
+      "dependsOn": [
+        "design"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 1,
+      "successConditions": [
+        "A task-by-task plan exists, ordered so the build stays green between tasks"
+      ],
+      "evidence": [
+        "Plan committed at d4a207a and reordered so the ADR runs first (AGENTS.md section 2) and the directory rename runs second",
+        "Reorder found that renaming HistoryScreen in place, rather than deleting and rebuilding it, removes a broken-build window spanning fifteen tasks",
+        "23 tasks across seven phases: docs/superpowers/plans/2026-08-25-campaigns-section-restructure.md"
+      ],
+      "nextAction": "Write ADR-034 before touching the permission-bearing query",
+      "failureClass": null
+    },
+    {
+      "id": "adr",
+      "dependsOn": [
+        "plan"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "ADR-034 records the campaign-list draft-visibility change and is committed"
+      ],
+      "evidence": [
+        "ADR-034 written in the repo's house format (Status: line, not a ## Status heading) and committed at e2c2f18",
+        "docs/index.yaml references docs/adr/ as a directory, so no index entry was needed"
+      ],
+      "nextAction": "Rename the history screens into screens/campaigns",
+      "failureClass": null
+    },
+    {
+      "id": "foundations",
+      "dependsOn": [
+        "adr"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "screens/history is renamed to screens/campaigns with the same test count",
+        "api/history.ts is renamed to api/campaign-list.ts with includeDrafts, scope and the bulk client",
+        "pnpm --filter @eow/web typecheck passes"
+      ],
+      "evidence": [
+        "e4d6943 renamed screens/history to screens/campaigns: HistoryScreen to CampaignListScreen, CampaignProgressDrawer to CampaignDetailScreen, URLs unchanged",
+        "Test count identical across the move: 4 test files / 19 tests before and after",
+        "87be435 renamed api/history.ts to api/campaign-list.ts, added includeDrafts/scope to the query and the bulkCampaignAction client",
+        "pnpm --filter @eow/web typecheck exits 0 after both commits"
+      ],
+      "nextAction": "Widen historyListQuerySchema with includeDrafts and scope",
+      "failureClass": null
+    },
+    {
+      "id": "backend_list",
+      "dependsOn": [
+        "foundations"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "includeDrafts and scope accepted by historyListQuerySchema",
+        "buildHistoryListSql's draft predicate mirrors assertDraftAccess exactly",
+        "pnpm contracts:compat-check passes on the additive change"
+      ],
+      "evidence": [
+        "482c3a5 widened historyListQuerySchema: all 12 campaign statuses, includeDrafts, scope. 16 tests (was 12)",
+        "includeDrafts deliberately does not use z.coerce.boolean(): that is Boolean(input) and query params are strings, so includeDrafts=false would coerce to TRUE. The plan carried that bug and was corrected in the same commit",
+        "3ee2608 made the draft predicate conditional in buildHistoryListSql, mirroring assertDraftAccess; an actor with no id collapses to no-drafts. 23 tests (was 16)",
+        "c711c9d additive OpenAPI change; openapi-compat-check reports no breaking changes",
+        "packages/contracts/src/openapi.d.ts is gitignored and regenerated at build time; regeneration verified to carry includeDrafts"
+      ],
+      "nextAction": "Build the bulk endpoint",
+      "failureClass": null
+    },
+    {
+      "id": "backend_bulk",
+      "dependsOn": [
+        "backend_list"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "POST /campaigns/bulk returns per-campaign outcomes and never aborts on one failure",
+        "cancel dispatches by status across cancelCampaignSchedule, cancelCampaign and cancelCampaignSend",
+        "per-action permissions enforced in the service, not the route decorator"
+      ],
+      "evidence": [
+        "cd753b9 campaignBulkSchema, bounded at 100 ids. 7 tests",
+        "47c0729 pure bulkPrecondition and requiredBulkPermission. 12 tests",
+        "eba840a bulkAction plus runBulkRow: per-row transaction, skipped vs failed, cancel dispatching across cancelCampaignSchedule/cancelCampaign/cancelCampaignSend with a per-row idempotency key",
+        "bulkFailure orders its instanceof checks by specificity because every Nest exception extends HttpException; ForbiddenException first so a 403 is not reported as a state conflict",
+        "e7a4da9 POST /campaigns/bulk declared before the parameterised POST routes so Nest does not route it as id='bulk'",
+        "api campaigns suite: 13 files / 125 tests pass; api typecheck exit 0; compat-check clean"
+      ],
+      "nextAction": "Build the five pure web logic units",
+      "failureClass": null
+    },
+    {
+      "id": "web_units",
+      "dependsOn": [
+        "foundations"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "page-meta, campaign-row-target, campaign-selection, bulk-outcome and active-filters each pass their own vitest suite"
+      ],
+      "evidence": [
+        "f096968 added page-meta, campaign-row-target, campaign-selection, bulk-outcome and active-filters: 38 new tests, web suite 41 files / 164 tests",
+        "Built by five parallel subagents; they wrote files and ran their own suites but ran no git command, so five concurrent commits could not contend for .git/index.lock"
+      ],
+      "nextAction": "Rewire nav and routes",
+      "failureClass": null
+    },
+    {
+      "id": "web_routing",
+      "dependsOn": [
+        "web_units"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Sidebar shows Chien dich and no Lich su gui entry",
+        "/campaigns, /campaigns/new, /campaigns/:id/edit and /campaigns/:id all resolve",
+        "Every legacy /email/* and /history/* URL redirects, including /email/compose?draft=<id>"
+      ],
+      "evidence": [
+        "a3bfa30 moved the whole campaign lifecycle under /campaigns with legacy redirects that translate their id rather than dropping it",
+        "isNavItemActive now matches route descendants, with a trailing-slash test so /campaigns-archive cannot claim the entry",
+        "Fixed: login redirected to the composer, and /campaigns/new mints a draft as a side effect of being visited -- every sign-in would have created an empty draft",
+        "Fixed: the detail screen's back link pointed at the composer",
+        "DraftsScreen deleted here rather than in its planned later task: its last route was gone, so leaving it would fail ARCH-NO-ORPHANS in between",
+        "Typecheck alone was not enough to catch the dead routePermissions keys -- the non-null assertion hid them, so tasks 16-18 were committed together rather than leaving a runtime-broken tree"
+      ],
+      "nextAction": "Grow the list screen",
+      "failureClass": null
+    },
+    {
+      "id": "web_screens",
+      "dependsOn": [
+        "web_routing",
+        "backend_bulk"
+      ],
+      "status": "completed",
+      "attempt": 2,
+      "maxAttempts": 2,
+      "successConditions": [
+        "The list shows drafts and non-drafts together with row selection and a bulk bar",
+        "Unfinished bulk rows stay selected and show a short reason in place of the subject",
+        "The filter dialog offers all 12 statuses and can be cleared",
+        "ARCH-NO-ORPHANS passes after DraftsScreen is removed"
+      ],
+      "evidence": [
+        "81c5edd unified list with selection, bulk bar, filter chips and status-based row routing; filter dialog gains all 12 statuses plus a clear option",
+        "416e07d fixed two architecture-test failures a green typecheck/build/unit run had missed: ARCH-HANDOFF (generalising .recipient-bulk-bar edited approved handoff CSS; .bulk-bar is now an appended duplicate block) and ARCH-CROSS-TENANT (POST /campaigns/bulk had no negative test, plus a decorator-shaped example inside a comment was scanned as a phantom route)",
+        "campaign-drafts integration suite 7 -> 10 tests: cross-tenant isolation, per-row outcomes on a mixed selection, and a 403 for an actor holding only campaign:read",
+        "585d4ee fixed three defects found only by running it: no create-campaign entry point existed at all, unnamed drafts rendered as blank rows, and the bulk summary claimed unfinished rows were 'still selected below with a reason' when a vanished row had neither",
+        "orphanReasons must be derived while rendering: computing it in the handler looked correct but the list had not reloaded yet, so the row about to disappear still counted as visible and its reason was dropped. The browser caught the first fix being wrong",
+        "Verified live on dev servers: nav, drafts in the list, selection rules, bulk duplicate and delete round-trips, 13-option filter, chips, row routing, all four legacy redirects",
+        "Not verified live: the inline reason on a surviving row -- the dev database holds no non-draft campaign to produce CAMPAIGN_NOT_DRAFT, and forcing one would mean editing the user's data. Covered by unit and integration tests only"
+      ],
+      "nextAction": "Update e2e and run the workspace check",
+      "failureClass": null
+    },
+    {
+      "id": "verification",
+      "dependsOn": [
+        "web_screens"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "e2e nav labels and route literals updated; grep for /email/ and /history/ in e2e comes back clean",
+        "pnpm check passes with a test count and skip count compared against the pre-work baseline, not just a green exit code",
+        "All required states walked manually at 1440, 768 and 390, including the viewer variant and the partial-failure state"
+      ],
+      "evidence": [
+        "def1697 updated the e2e suite; auth + rbac + errors: 12 passed, 0 failed",
+        "17 waitForURL regexes inside the signIn helpers were the real breakage, not the goto() literals a first grep found",
+        "custom-fields:23 and recipients:22 still fail; proven pre-existing by stashing the e2e changes and running the original specs against the original containerised build, which failed the identical two",
+        "pnpm check exit 0. api-schematics 1/1, architecture-tests 18 files / 125 tests, two 3-test packages, api 124 files / 901 tests, web 41 files / 168 tests, worker 36 files / 158 tests. 1359 tests, 0 failed, 0 skipped",
+        "architecture-tests matches its measured pre-work baseline of 125 exactly",
+        "openapi-compat-check clean on both additive contract changes; run as `node scripts/openapi-compat-check.mjs <old> <new>` because the pnpm script takes two arguments and exits 2 with a usage message when run bare"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "completion_gate",
+      "dependsOn": [
+        "verification"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "Completion report written with evidence; traceability updated or its absence justified"
+      ],
+      "evidence": [
+        "Completion report written to .agents/runs/2026-08-25-campaigns-section-restructure/completion-report.json",
+        "Composer work (preview, editing, variable insertion) deliberately untouched and carried into its own spec"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "db70d72 docs(spec): design for the Chien dich section restructure",
+    "d4a207a docs(plan): implementation plan for the Chien dich section restructure",
+    "e2c2f18 docs(adr): record campaign-list draft visibility",
+    "e4d6943 refactor(web): rename the history screens under screens/campaigns",
+    "87be435 refactor(web): rename the history client to campaign-list and add bulk",
+    "482c3a5 feat(api): allow includeDrafts and scope on the campaign list query",
+    "3ee2608 feat(api): gate campaign-list draft rows on permission and ownership",
+    "c711c9d feat(api): serve drafts from the campaign list endpoint",
+    "cd753b9 feat(api): add the campaign bulk request schema",
+    "47c0729 feat(api): add pure precondition rules for campaign bulk actions",
+    "eba840a feat(api): add bulkAction with per-campaign outcomes",
+    "e7a4da9 feat(api): expose POST /campaigns/bulk",
+    "f096968 feat(web): add the five pure campaign-list logic units",
+    "a3bfa30 feat(web): move the whole campaign lifecycle under /campaigns",
+    "81c5edd feat(web): unified campaign list with selection and bulk actions",
+    "416e07d fix: satisfy ARCH-HANDOFF and ARCH-CROSS-TENANT for the campaign list",
+    "585d4ee fix(web): three defects found by running the campaign list for real",
+    "def1697 test(e2e): follow the Chiến dịch routes and nav labels",
+    "b21e0bb chore(run): checkpoint web_units, web_routing and web_screens",
+    "pnpm check: 1359 tests passed, 0 failed, 0 skipped"
+  ],
+  "blocker": null,
+  "updatedAt": "2026-08-25T06:22:04Z"
+}

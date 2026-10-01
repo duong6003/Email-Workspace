@@ -1,0 +1,12 @@
+[
+  {"id":"DEPLOY-001","priority":"P0","scenario":"Blank required secret","expected":"Compose fails before container startup and names the variable"},
+  {"id":"DEPLOY-002","priority":"P0","scenario":"Clean one-command boot","expected":"Long-running services healthy/running and migration exits 0"},
+  {"id":"DEPLOY-003","priority":"P0","scenario":"Public smoke test","expected":"Web and proxied API health return 2xx"},
+  {"id":"DEPLOY-004","priority":"P0","scenario":"Idempotent second boot","expected":"No schema recreation failure or volume data loss"},
+  {"id":"DEPLOY-005","priority":"P0","scenario":"Migration drift","expected":"Changed published checksum blocks deployment"},
+  {"id":"DEPLOY-006","priority":"P0","scenario":"Database unavailable","expected":"Dependent services never report a ready stack"},
+  {"id":"DEPLOY-007","priority":"P1","scenario":"Redis restart","expected":"Runtime recovers or exposes unhealthy state without business-truth loss"},
+  {"id":"DEPLOY-008","priority":"P1","scenario":"Host port conflict","expected":"Operator receives actionable bind/port failure"},
+  {"id":"DEPLOY-009","priority":"P1","scenario":"Stop and redeploy","expected":"Named volumes persist and smoke test passes"},
+  {"id":"DEPLOY-010","priority":"P1","scenario":"Config and log inspection","expected":"Config is valid and logs contain no secrets"}
+]

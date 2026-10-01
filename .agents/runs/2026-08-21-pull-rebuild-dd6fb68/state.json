@@ -1,0 +1,117 @@
+{
+    "runId":  "2026-08-21-pull-rebuild-dd6fb68",
+    "goal":  "Pull latest origin/main at dd6fb68, configure the new local sender credential encryption key, build the current source, apply migration 068, and recreate the complete local Docker Compose stack",
+    "approval":  {
+                     "evidence":  "User explicitly requested pull and rebuild on 2026-08-21",
+                     "scope":  [
+                                   "inspect branch and working tree",
+                                   "pull origin/main using fast-forward only",
+                                   "generate required local sender credential encryption key when absent",
+                                   "build current source into Docker images",
+                                   "apply forward migrations",
+                                   "recreate Compose services without deleting volumes",
+                                   "verify health, served frontend assets, migration evidence, and runtime logs"
+                               ],
+                     "exclusions":  [
+                                        "production deployment",
+                                        "destructive data or volume removal",
+                                        "discarding unrelated local untracked files",
+                                        "exposing generated secret values"
+                                    ]
+                 },
+    "mode":  "loop",
+    "status":  "completed",
+    "currentNode":  null,
+    "nodes":  [
+                  {
+                      "id":  "pull",
+                      "dependsOn":  [
+
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  2,
+                      "successConditions":  [
+                                                "Local main fast-forwards to origin/main without overwriting local files"
+                                            ],
+                      "evidence":  [
+                                       "git pull --ff-only updated b939516 to dd6fb68",
+                                       "48 files changed: 771 insertions and 52 deletions",
+                                       "Untracked run evidence and .claude/settings.local.json were preserved"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "configure",
+                      "dependsOn":  [
+                                        "pull"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  2,
+                      "successConditions":  [
+                                                "New required sender credential encryption key is present and valid for local Compose"
+                                            ],
+                      "evidence":  [
+                                       "Compose initially rejected missing EOW_SENDER_CREDENTIAL_KEY",
+                                       "Generated and stored a local 64-character hexadecimal key in ignored .env",
+                                       "Compose config validation passed without exposing the key"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "build-recreate",
+                      "dependsOn":  [
+                                        "configure"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "Images build from pulled source, migration 068 applies, and all services recreate"
+                                            ],
+                      "evidence":  [
+                                       "docker compose --env-file .env up -d --build --force-recreate --wait completed",
+                                       "New image IDs: web d59241c7cb74, api baa08ab3a906, worker 3ee54abf2890, scheduler 5bd7ab908430",
+                                       "Migration 068_encrypted_sender_credentials applied",
+                                       "Migration container exited 0"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  },
+                  {
+                      "id":  "verify",
+                      "dependsOn":  [
+                                        "build-recreate"
+                                    ],
+                      "status":  "completed",
+                      "attempt":  1,
+                      "maxAttempts":  3,
+                      "successConditions":  [
+                                                "All services healthy, new frontend bundle served, HTTP smoke checks pass, and logs are clean"
+                                            ],
+                      "evidence":  [
+                                       "postgres, redis, mailpit, api, worker, scheduler, and web reported healthy",
+                                       "Frontend serves /assets/index-D4UfKgL9.js and /assets/index-DQHduova.css",
+                                       "Web health, API liveness, API readiness, and Mailpit returned HTTP 200",
+                                       "Database and Redis readiness checks returned ok",
+                                       "No application error, fatal, or unhandled exception patterns found after rebuild"
+                                   ],
+                      "nextAction":  null,
+                      "failureClass":  null
+                  }
+              ],
+    "schedule":  null,
+    "evidence":  [
+                     "Repository HEAD is dd6fb68 smtp-config completion_gate: close persistence and auth repair",
+                     "Latest origin/main was pulled via fast-forward",
+                     "Required local sender credential encryption configuration was added securely",
+                     "Complete stack rebuilt and recreated from pulled source",
+                     "Forward migration 068 applied successfully",
+                     "No named volumes were removed and no destructive action was performed"
+                 ],
+    "blocker":  null,
+    "updatedAt":  "2026-08-21T00:26:00Z"
+}

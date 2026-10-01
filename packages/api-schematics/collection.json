@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/@angular-devkit/schematics/collection-schema.json",
+  "schematics": {
+    "tenant-module": {
+      "factory": "./dist/tenant-module/index#tenantModule",
+      "schema": "./src/tenant-module/schema.json",
+      "description": "Generate the canonical EOW tenant-scoped Nest API module."
+    }
+  }
+}

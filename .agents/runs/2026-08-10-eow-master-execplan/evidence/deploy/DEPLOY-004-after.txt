@@ -1,0 +1,45 @@
+ count 
+-------
+     1
+(1 row)
+
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 026_campaign_execution already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 027_delivery_events already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 028_progress_counters already applied.
+migrate_1    | BEGIN
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | CREATE TABLE
+migrate_1    | COMMIT
+migrate_1    | Migration 029_history_recovery already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 030_campaign_snapshot_lineage_immutability already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 031_reconcile_scan_newest_first already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 032_history_retention already applied.
+migrate_1    | BEGIN
+migrate_1    | CREATE TABLE
+migrate_1    | NOTICE:  relation "schema_migrations" already exists, skipping
+migrate_1    | COMMIT
+migrate_1    | Migration 033_export_artifact_purge already applied.

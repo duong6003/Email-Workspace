@@ -1,0 +1,74 @@
+routes:
+  onboarding:
+    - README.md
+    - docs/00-start-here.md
+    - project.manifest.yaml
+  product_or_ba:
+    - docs/reference/Email-Operations-Workspace_BA-Rules_Backend-Design_v1.0.docx
+    - catalog/ba-rules.json
+    - catalog/open-decisions.json
+  architecture:
+    - docs/reference/Email-Operations-Workspace_System-Architecture_ADR_Gap-Review_v2.0.docx
+    - docs/architecture/system-architecture.md
+    - docs/architecture/module-template.md
+    - docs/adr/
+  frontend:
+    - design-reference/README.md
+    - design-reference/ui-source-contract.yaml
+    - design-reference/ui-handoff-v2/source/
+    - design-reference/visual-acceptance.md
+    - docs/source-selection.md
+    - contracts/openapi.yaml
+    - contracts/asyncapi.yaml
+    - docs/architecture/realtime-and-notification.md
+    - docs/frontend/form-validation.md
+    # Mailcraft builder (origin: 'builder'): overall picture and the conventions
+    # every new screen obeys. Read the spec before the plan.
+    - docs/superpowers/specs/2026-08-31-mailcraft-builder-screen-design.md
+    - docs/frontend/mailcraft-design-direction.md
+    - docs/frontend/mailcraft-integration-requirements.md
+    - apps/web/
+  backend:
+    - contracts/openapi.yaml
+    - contracts/asyncapi.yaml
+    - database/migrations/001_initial.sql
+    - docs/architecture/system-architecture.md
+    - apps/api/
+    - apps/worker/
+    - apps/scheduler/
+  qa:
+    - docs/reference/Email-Operations-Workspace_Test-Cases_Traceability_v1.0.xlsx
+    - catalog/test-cases.json
+    - docs/testing/test-strategy.md
+  devops:
+    - compose.yaml
+    - Dockerfile
+    - .env.deploy.example
+    - docs/deployment/quick-deploy.md
+    - docs/deployment/environment-variables.md
+    - docs/deployment/operations.md
+    - docs/deployment/acceptance-tests.md
+    - catalog/deployment-test-cases.json
+    - docs/operations/runbook.md
+    - docs/operations/security-baseline.md
+    - .github/workflows/ci.yml
+  agent_execution:
+    - AGENTS.md
+    - .agents/orchestration-policy.yaml
+    - .agents/approval-policy.yaml
+    - .agents/agent-loop.yaml
+    - .agents/agent-graph.yaml
+    - .agents/agent-schedule.yaml
+    - .agents/schemas/run-state.schema.json
+    - docs/agent-workflow.md
+    - docs/delivery/start-coding-with-agent.md
+  ui_design:
+    - design-reference/README.md
+    - design-reference/ui-source-contract.yaml
+    - design-reference/ui-handoff-v2/source/
+    - design-reference/screen-catalog.template.yaml
+    - design-reference/visual-acceptance.md
+  runtime_orchestration:
+    - docs/architecture/runtime-orchestration.md
+    - apps/worker/
+    - apps/scheduler/

@@ -1,0 +1,34 @@
+version: 1
+scope: coding_agent_delivery_dag
+default_graph:
+  nodes:
+    intake: {depends_on: [], output: approved_scope}
+    discovery: {depends_on: [intake], output: impact_and_evidence}
+    ui_intake: {depends_on: [discovery], output: approved_ui_inventory_and_baseline}
+    plan: {depends_on: [discovery], output: executable_plan}
+    architecture_contracts: {depends_on: [plan], output: decisions_and_contracts}
+    frontend: {depends_on: [architecture_contracts, ui_intake], output: frontend_change}
+    backend: {depends_on: [architecture_contracts], output: backend_change}
+    database: {depends_on: [architecture_contracts], output: migration_and_model_change}
+    integration: {depends_on: [frontend, backend, database], output: integrated_slice}
+    packaging: {depends_on: [integration], output: reproducible_one_command_deployment}
+    qa_security: {depends_on: [integration, packaging], output: verification_evidence}
+    documentation: {depends_on: [integration, packaging], output: docs_and_traceability}
+    completion_gate: {depends_on: [qa_security, documentation], output: completion_report}
+tailoring:
+  omit_irrelevant_nodes: true
+  ui_intake_required_when: scope_includes_frontend_or_visual_behavior
+  ui_intake_blocker: approved_ui_handoff_missing_or_unverifiable
+  add_node_when: a_distinct_owner_contract_or_failure_boundary_exists
+  parallelize_when: dependencies_are_stable_and_workspaces_do_not_conflict
+  join_requires: all_required_predecessors_terminal_success
+node_contract:
+  required: [id, purpose, depends_on, inputs, outputs, success_conditions, checks, retry_budget]
+  states: [pending, ready, running, verifying, completed, blocked, failed, skipped]
+rules:
+  - no_implicit_dependency
+  - no_cycle
+  - no_downstream_start_before_required_outputs
+  - every_code_node_has_verification
+  - completion_gate_rechecks_definition_of_done
+  - persist_state_after_every_node_transition

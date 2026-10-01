@@ -1,0 +1,9 @@
+Starting web ... 
+Host is already in use by another container
+Starting web ... error
+
+ERROR: for web  Cannot start service web: failed to set up container networking: driver failed programming external connectivity on endpoint eow-m7s4_web_1 (41a9ca7702a5114cfbc07974b88c8e5f2381810cecdaacabc2c7076c6edee1ee): failed to bind host port 0.0.0.0:8080/tcp: address already in use
+No containers to start
+1
+
+exit=1

@@ -1,0 +1,19 @@
+{
+  "name": "@eow/api-schematics",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ../../scripts/copy-api-schematic-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build && vitest run --reporter=default --reporter=../../scripts/no-skipped-tests-reporter.mjs"
+  },
+  "devDependencies": {
+    "@angular-devkit/core": "19.2.17",
+    "@angular-devkit/schematics": "19.2.17",
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

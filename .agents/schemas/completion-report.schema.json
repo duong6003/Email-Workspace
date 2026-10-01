@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["runId", "status", "scopeDelivered", "changes", "verification", "traceability", "remainingRisks"],
+  "properties": {
+    "runId": {"type": "string"},
+    "status": {"enum": ["completed", "blocked", "cancelled", "failed"]},
+    "scopeDelivered": {"type": "array", "items": {"type": "string"}},
+    "changes": {"type": "array", "items": {"type": "string"}},
+    "verification": {"type": "array", "items": {"type": "string"}},
+    "traceability": {"type": "array", "items": {"type": "string"}},
+    "remainingRisks": {"type": "array", "items": {"type": "string"}},
+    "resumeNode": {"type": ["string", "null"]}
+  }
+}

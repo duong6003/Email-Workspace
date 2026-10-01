@@ -1,0 +1,7 @@
+ count 
+-------
+     1
+(1 row)
+
+eow-m7s4_postgres_data
+eow-m7s4_redis_data
