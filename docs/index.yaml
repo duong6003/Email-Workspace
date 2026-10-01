@@ -30,6 +30,7 @@ routes:
     - apps/web/
   backend:
     - contracts/openapi.yaml
+    - docs/audit/
     - contracts/asyncapi.yaml
     - database/migrations/001_initial.sql
     - docs/architecture/system-architecture.md

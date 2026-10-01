@@ -1,0 +1,122 @@
+{
+  "runId": "2026-10-01-send-audit-and-template-data-design",
+  "goal": "Verify the campaign send mechanism against its configuration, attribute slowness to configuration vs code with measurements, and design dynamic template data (list/table variables, per-send datasets, data reuse across sends).",
+  "approval": {
+    "evidence": "User request 2026-10-01: 'check xem ve co che gui da dung nhu cai dat ki vong chua, va cham la do cach cai dat hay thuc su code cham; ve template hay thiet ke giai phap ... chuan chi'",
+    "scope": [
+      "send-path audit with benchmark evidence",
+      "template dynamic-data design spec",
+      "ADR-053 and ADR-054 as Proposed"
+    ],
+    "exclusions": [
+      "no production code changes to send path or renderer until ADR-053/054 are accepted",
+      "no migrations"
+    ]
+  },
+  "mode": "graph",
+  "status": "completed",
+  "currentNode": null,
+  "nodes": [
+    {
+      "id": "baseline",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "worker suite runs against real PG16/Redis/Mailpit"
+      ],
+      "evidence": [
+        "apps/worker vitest: 162 tests, 161 passed, 1 failed (worker-restart.integration.test.ts: SIGKILL/compose topology, unrelated to send path), 0 skipped"
+      ],
+      "nextAction": null,
+      "failureClass": "environment"
+    },
+    {
+      "id": "send-benchmark",
+      "dependsOn": [
+        "baseline"
+      ],
+      "status": "completed",
+      "attempt": 3,
+      "maxAttempts": 4,
+      "successConditions": [
+        "per-message cost split SMTP vs DB/Redis",
+        "config ceiling per tick measured"
+      ],
+      "evidence": [
+        "apps/worker/bench/send-throughput.ts",
+        "current 58.7 ms/msg (0ms RTT), 233.8 ms/msg (30ms RTT); DB+Redis 4.2 ms/msg",
+        "stock config: 60 sent/tick; tenant 6000 + batch 1000: still 60 (hidden sender limit)",
+        "nodemailer without TCP_NODELAY: 44 ms/msg loopback vs 1.4 ms with NODELAY+pool"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "freeze-scale-probe",
+      "dependsOn": [
+        "baseline"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "freezeCampaignSnapshot exercised above 5k recipients"
+      ],
+      "evidence": [
+        "4000 recipients: OK, 10.6 s",
+        "6000 recipients: 'bind message has 12464 parameter formats but 0 parameters' (probe test not committed)"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "audit-report",
+      "dependsOn": [
+        "send-benchmark",
+        "freeze-scale-probe"
+      ],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "findings with evidence and prioritized plan"
+      ],
+      "evidence": [
+        "docs/audit/2026-10-01-campaign-send-performance-audit.md",
+        "docs/adr/adr-054-send-throughput-continuous-drain-and-pooled-smtp.md (Proposed)"
+      ],
+      "nextAction": null,
+      "failureClass": null
+    },
+    {
+      "id": "template-data-design",
+      "dependsOn": [],
+      "status": "completed",
+      "attempt": 1,
+      "maxAttempts": 2,
+      "successConditions": [
+        "data contract vs binding model",
+        "grammar",
+        "dataset import flow",
+        "storage/snapshot",
+        "rules/tests",
+        "phasing",
+        "open decisions"
+      ],
+      "evidence": [
+        "docs/superpowers/specs/2026-10-01-template-dynamic-data-design.md",
+        "docs/adr/adr-053-dynamic-template-data-and-campaign-datasets.md (Proposed)"
+      ],
+      "nextAction": "Await human acceptance of ADR-053/054 and the open decisions in spec section 10 before implementation (G0 first).",
+      "failureClass": null
+    }
+  ],
+  "schedule": null,
+  "evidence": [
+    "No traceability change: no rule closed and no code behaviour changed; proposed rule/test IDs listed in spec section 8."
+  ],
+  "blocker": null,
+  "updatedAt": "2026-10-01T15:30:00Z"
+}
