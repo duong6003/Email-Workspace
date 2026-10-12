@@ -53,6 +53,7 @@ const senderSettingsStyles = `
   .sender-settings-screen .config-detail-panel,
   .sender-settings-screen .config-detail-body { min-height: 0; }
   .sender-settings-screen .config-detail-body { overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; -webkit-overflow-scrolling: touch; }
+  .sender-settings-screen .config-detail-body > .detail-section { flex-shrink: 0; }
   .sender-settings-screen .config-detail-body > .detail-section:last-of-type { margin-bottom: 8px; }
   .sender-settings-screen .action-overlay .overlay-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   @media (max-width: 1150px) { .sender-settings-screen .config-detail-actions .connection-state { display: inline-flex; } }
