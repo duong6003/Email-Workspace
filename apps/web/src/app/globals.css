@@ -2256,3 +2256,11 @@ a.primary-button,a.secondary-button,a.text-button{display:inline-flex;align-item
 .unsubscribe-help{font-size:12px;color:var(--color-text-muted,#68766f)}
 .unsubscribe-ok{color:var(--color-success,#2f8062);font-weight:700}
 .unsubscribe-bad{color:var(--color-danger,#a34540);font-weight:700}
+
+/* Tables scroll horizontally at every width, not only below 760px. The
+   handoff's base .table-wrap{overflow:hidden} (kept above for ARCH-HANDOFF)
+   silently cut off trailing columns between 761px and ~1000px -- on the
+   Settings custom-field and global-variable tables that included the row
+   action menu, so "Chỉnh sửa trường"/"Cập nhật biến" could not be reached.
+   overflow-x:auto still clips to the rounded border. */
+.table-wrap{overflow-x:auto}
